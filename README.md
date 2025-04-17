@@ -107,6 +107,6 @@ You are free to use, modify, extend, and build commercial or personal tools on t
 
 ## 🧠 Created by
 
-Ryan Mulligan – [@mulligan](https://github.com/mulligan)  
+Ryan Mulligan – [@rmulligan](https://github.com/rmulligan)  
 Senior Software Engineer • Musician • Workflow Optimizer  
 Proudly crafting the Zettelkasten of the Future™.
