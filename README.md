@@ -17,30 +17,39 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 ### ✨ Core Features
 
 - **🧠 AI-Augmented Notes:** Ask questions directly from handwritten notes. Receive structured, editable responses in `.rm` format.
-- **🌐 Web-to-Ink Sharing:** Send web content to your tablet as ink-friendly pages, perfect for annotation and long-form reading.
-- **✍️ Handwriting Transcription:** Automatically convert handwritten content into structured text using OCR + NLP.
+- **🌐 Web-to-Ink Sharing:** Send web content to your tablet and convert it to editable *native ink*, not static text or PDFs. Move, resize, clip, and restructure AI-generated or imported text as if you'd written it by hand.
+- **✍️ Hybrid Handwriting Recognition:** Fast, accurate transcription powered by MyScript, with optional verification using local vision models for improved accuracy.
 - **📅 Task & Calendar Integration:** Detect tasks in your notes and sync them with your calendar (e.g. Motion, org-agenda).
 - **🗂 Smart Indexing:** Generate and maintain table of contents, index pages, and note links using symbols or QR codes.
-- **🔌 Modular AI Workflows with MCP:** Supports Multi-Connection Protocol (MCP) for real-time agent communication and modular toolchains. Swap in your favorite AI, planner, or search tools with minimal config.
+- **🔌 Modular AI Workflows (MCP-ready):** Supports Multi-Connection Protocol (MCP) for real-time agent communication and toolchain integration.
+- **☁️ One-Click reMarkable Setup:** Connect to your reMarkable account with a single click using the “Device Link” flow — no terminal, no token copy-pasting, no dev skills required.
+- **🔄 Automatic Sync & Tag-Driven Actions:** Notes sync automatically from your reMarkable. Tags like `#summarize`, `#task`, or `#calendar` trigger AI-powered workflows with no extra steps.
+- **🧠 Visual Knowledge Graph:** Automatically generate a personal knowledge graph from your notes — powered by entity recognition, backlinks, and concept clustering.
 
 ---
 
 ## 📷 Example Use Cases
 
-- Annotate a shared web article and get a summary, follow-up research, or counterpoints delivered to your notebook.
-- Write a to-do list by hand, and watch it populate your digital planner or calendar.
-- Brainstorm song lyrics or code ideas and send them to an LLM for creative or technical assistance — all from e-ink.
+- Send a web article or AI-generated summary to your reMarkable and edit it as ink — rearrange, clip, highlight, and remix it freely without breaking your writing flow.
+- Write a to-do list by hand and sync tasks with your calendar automatically.
+- Ask a handwritten question and receive an answer in native ink format — ready to move, rephrase, or expand with a pen.
+- Add `#summarize` to a dense page and get a clean summary beside it, ready to rearrange in ink.
+- Use `#calendar` in a note and have appointments sync to your external calendar.
+- Explore your evolving thoughts in a live visual knowledge graph powered by your handwriting.
 
 ---
 
 ## 🛠 Architecture Overview
 
 - Languages: Python + Ruby (CLI + backend utilities)
-- reMarkable Cloud API / `rmapi` for syncing
-- Handwriting recognition via MyScript or Tesseract
-- AI orchestration with Flowise, LangChain, or OpenAI APIs
-- Modular messaging via [MCP](https://github.com/multiprocess-protocol/mcp) for dynamic tool integration
-- Optional integrations: Emacs (org-roam/org-agenda), Motion, Apple Shortcuts, Drafts, etc.
+- One-click Device Link setup via reMarkable Cloud API
+- Ink rendering via `drawj2d` to preserve native editing experience
+- Handwriting recognition with **MyScript** (primary), plus optional **vision model verification**
+- AI orchestration using Flowise, LangChain, or OpenAI APIs
+- Modular messaging via MCP (Multi-Connection Protocol)
+- Tag-based AI triggers (`#summarize`, `#calendar`, `#index`, etc.)
+- Background sync engine with customizable frequency and event-based triggers
+- Optional integrations: Emacs/org-roam/org-agenda, Motion, Apple Shortcuts
 
 ---
 
@@ -49,35 +58,35 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 _(Early alpha — setup guide coming soon!)_
 
 Expected modules:
-- CLI tools to send and receive `.rm` pages
-- Local server or hosted agent for AI processing
-- MCP-based messaging layer for extensibility
-- Optional sync to calendars and org-mode agenda views
+- Web-based settings page with one-click Device Link to connect your tablet
+- Background sync daemon (local or hosted)
+- Tag-based AI dispatch engine
+- CLI tools for debugging, inspection, and manual sync
+- Optional UI for previewing flows and graph structure
 
 ---
 
-## 🔌 Extending with MCP
+## 🔌 Integrations
 
-InkLink uses the [Multi-Connection Protocol (MCP)](https://github.com/multiprocess-protocol/mcp) to support real-time, modular interactions between note events and intelligent services.
+InkLink is built with modularity in mind. Through MCP, it can connect to external tools and services like calendars, research agents, or lifelogging platforms.
 
-This means you can:
-- Plug in your own AI agent (local or cloud-based)
-- Route structured data to/from org-mode, Motion, or other tools
-- Add handlers for QR code-based triggers, search requests, or task capture
-- Interact with InkLink from Emacs, a terminal app, or mobile-friendly tools
+Standalone integration modules (coming soon):
+- `inklink-mcp-limitless`: Sync lifelog entries from the Limitless Pendant and convert them into editable ink for review, summarization, or planning.
 
-MCP makes InkLink behave like a brainstem — you bring the neurons.
+> Want to build your own? Stay tuned for the `inklink-mcp-template` to roll your own plug-ins.
 
 ---
 
 ## 🧪 Roadmap
 
-- [ ] MVP: AI question/answer roundtrip via `.rm` files
+- [ ] MVP: AI Q&A roundtrip via `.rm` files
 - [ ] Web-to-ink article parser and converter
 - [ ] NLP: handwriting transcription + entity/tag extraction
-- [ ] Task & calendar module with auto-sync
-- [ ] Live TOC/index generator with backreference linking
-- [ ] Optional hosted platform with API hooks
+- [ ] Tag-based automation: `#summarize`, `#calendar`, `#index`, etc.
+- [ ] Calendar sync module
+- [ ] Visual knowledge graph builder
+- [ ] Hosted version with user-friendly flows
+- [ ] First MCP integration: Limitless Pendant
 
 ---
 
