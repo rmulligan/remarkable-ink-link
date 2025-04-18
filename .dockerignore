@@ -1,0 +1,16 @@
+__pycache__
+*.py[cod]
+*$py.class
+build
+dist
+
+.venv
+venv
+env
+
+.env
+
+.git
+docker-compose.override.yml
+
+node_modules

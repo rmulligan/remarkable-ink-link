@@ -55,14 +55,59 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 
 ## 📦 Installation
 
-_(Early alpha — setup guide coming soon!)_
+Make sure you have:
+- Node.js and Yarn
+- Python 3.10 or higher
+- Docker and Docker Compose (optional)
 
-Expected modules:
-- Web-based settings page with one-click Device Link to connect your tablet
-- Background sync daemon (local or hosted)
-- Tag-based AI dispatch engine
-- CLI tools for debugging, inspection, and manual sync
-- Optional UI for previewing flows and graph structure
+To install dependencies and set up the local environment, run:
+
+```bash
+yarn
+```
+
+This will install Python dependencies via Poetry.
+
+For a barebones local install without Docker:
+
+```bash
+poetry install
+```
+
+Or with Yarn:
+
+```bash
+yarn install:bare
+```
+
+To build and start the application in Docker (default):
+
+```bash
+yarn install:docker
+```
+
+This will build the Docker image and start the container.
+
+Once installed, you can:
+- Run the app locally: `yarn start`
+  
+## 🔐 Authentication
+
+Set up reMarkable Cloud pairing and auto configure rmapi using the ddvk fork:
+```bash
+# Start the authentication UI (default at http://127.0.0.1:8000/auth)
+yarn auth
+```
+Open the auth page in your browser, enter your reMarkable credentials, and click Connect. InkLink will invoke `rmapi config` under the hood to store your credentials.
+
+- Run tests: `yarn test`
+- Lint code: `yarn lint`
+- Format code: `yarn format`
+
+For Docker control:
+- Build image: `yarn docker:build`
+- Start containers: `yarn docker:up`
+- Stop containers: `yarn docker:down`
 
 ---
 

@@ -1,0 +1,18 @@
+{
+  "name": "inklink",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "poetry install",
+    "install:bare": "poetry install",
+    "install:docker": "docker-compose up --build",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "start": "poetry run inklink server",
+    "auth": "poetry run inklink auth",
+    "test": "poetry run pytest",
+    "lint": "poetry run flake8 src tests",
+    "format": "poetry run black src tests"
+  }
+}

@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  inklink:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    command: ["poetry", "run", "inklink"]
+    environment:
+      - PYTHONUNBUFFERED=1
