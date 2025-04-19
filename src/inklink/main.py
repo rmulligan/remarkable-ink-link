@@ -26,6 +26,3 @@ def auth(host, port):
 
 if __name__ == '__main__':
     cli()
-
-if __name__ == "__main__":
-    main()
