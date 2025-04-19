@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 class IQRCodeService(ABC):
     @abstractmethod
@@ -39,4 +39,20 @@ class IRemarkableService(ABC):
     @abstractmethod
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
         """Upload document to Remarkable Cloud"""
+        pass
+
+class IHandwritingRecognitionService(ABC):
+    @abstractmethod
+    def extract_strokes(self, rm_file_path: str) -> List[Dict[str, Any]]:
+        """Extract strokes from a reMarkable file"""
+        pass
+    
+    @abstractmethod
+    def recognize_handwriting(self, strokes: List[Dict[str, Any]], language: str = "en_US") -> Dict[str, Any]:
+        """Send strokes to handwriting recognition service and return results"""
+        pass
+    
+    @abstractmethod
+    def extract_and_recognize(self, rm_file_path: str, language: str = "en_US") -> Dict[str, Any]:
+        """Extract strokes and perform handwriting recognition in one step"""
         pass
