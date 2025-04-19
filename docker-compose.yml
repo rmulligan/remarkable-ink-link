@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/app
-    command: ["poetry", "run", "inklink"]
+    # Run the InkLink HTTP server by default
+    command: ["poetry", "run", "inklink", "server", "--host", "0.0.0.0", "--port", "9999"]
     environment:
       - PYTHONUNBUFFERED=1
