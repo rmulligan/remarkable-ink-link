@@ -52,6 +52,21 @@ CONFIG = {
 os.makedirs(CONFIG['TEMP_DIR'], exist_ok=True)
 os.makedirs(CONFIG['OUTPUT_DIR'], exist_ok=True)
 
+# Auto-detect local ddvk rmapi fork if present
+try:
+    from shutil import which
+except ImportError:
+    which = None
+# ddvk rmapi location
+ddvk_rmapi = os.path.expanduser('~/Projects/rmapi/rmapi')
+if os.path.exists(ddvk_rmapi):
+    CONFIG['RMAPI_PATH'] = ddvk_rmapi
+# Detect drawj2d in PATH
+if which:
+    drawj2d_path = which('drawj2d')
+    if drawj2d_path:
+        CONFIG['DRAWJ2D_PATH'] = drawj2d_path
+
 # Configure logging
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
