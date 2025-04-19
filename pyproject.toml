@@ -21,7 +21,7 @@ httpx = "^0.24.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
-black = "^23.1.0"
+black = "^24.3.0"
 flake8 = "^6.0"
 
 [tool.poetry.scripts]
