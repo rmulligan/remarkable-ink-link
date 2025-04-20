@@ -16,7 +16,7 @@ PyPDF2 = "^3.0.0"
 markdown = "^3.4.1"
 fastapi = "^0.95.2"
 uvicorn = { version = "^0.23.2", extras = ["standard"] }
-python-multipart = "^0.0.6"
+python-multipart = "^0.0.18"
 httpx = "^0.24.1"
 
 [tool.poetry.dev-dependencies]
