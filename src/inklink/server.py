@@ -105,8 +105,7 @@ class URLHandler(BaseHTTPRequestHandler):
         # Try to decode as JSON
         try:
             data = json.loads(post_data.decode("utf-8"))
-            url = data.get("url")
-            if url:
+            if url := data.get("url"):
                 from urllib.parse import urlparse
                 parsed = urlparse(url)
                 if parsed.scheme in ("http", "https") and parsed.netloc:
