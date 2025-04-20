@@ -96,3 +96,50 @@ def format_error(error_type: str, message: str, details: Any = None) -> str:
             error_msg += f" ({details})"
 
     return error_msg
+ 
+# Shared HTML parsing utility to extract structured content and images
+from typing import Tuple, List, Dict, Any, Optional
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+def parse_html_container(
+    container: BeautifulSoup,
+    base_url: Optional[str] = None
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
+    """Parse a BeautifulSoup container to structured content and images."""
+    structured: List[Dict[str, Any]] = []
+    images: List[Dict[str, str]] = []
+    for tag in container.find_all(
+        ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "pre", "img"]
+    ):
+        name = tag.name.lower()
+        if name == "img":
+            src = tag.get("src", "") or ""
+            if src:
+                img_url = urljoin(base_url, src) if base_url else src
+                alt = tag.get("alt", "").strip()
+                images.append({"url": img_url, "caption": alt})
+                structured.append({"type": "image", "url": img_url, "caption": alt})
+        elif name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+            structured.append({"type": name, "content": tag.get_text(strip=True)})
+        elif name == "p":
+            text = tag.get_text(strip=True)
+            if text:
+                structured.append({"type": "paragraph", "content": text})
+        elif name in ["ul", "ol"]:
+            items = [
+                li.get_text(strip=True)
+                for li in tag.find_all("li")
+                if li.get_text(strip=True)
+            ]
+            if items:
+                structured.append({"type": "list", "items": items})
+        elif name == "pre":
+            code = tag.get_text()
+            if code:
+                structured.append({"type": "code", "content": code})
+    # Fallback to plain text if nothing extracted
+    if not structured:
+        text = container.get_text(separator=" ", strip=True)
+        structured.append({"type": "paragraph", "content": text})
+    return structured, images
