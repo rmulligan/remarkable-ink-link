@@ -3,6 +3,7 @@ from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import subprocess
 import os
+from inklink.config import CONFIG
 
 app = FastAPI()
 
@@ -25,8 +26,8 @@ def auth_form():
 
 @app.post("/auth", response_class=HTMLResponse)
 def auth_submit(username: str = Form(...), password: str = Form(...)):
-    # Run ddvk rmapi config
-    rmapi = os.getenv('RMAPI_PATH', 'rmapi')
+    # Run ddvk rmapi config using configured path
+    rmapi = CONFIG.get('RMAPI_PATH', os.getenv('RMAPI_PATH', 'rmapi'))
     cmd = [rmapi, 'config', '--username', username, '--password', password]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
