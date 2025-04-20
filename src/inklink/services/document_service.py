@@ -102,7 +102,13 @@ class DocumentService:
                     item_type = item.get('type', 'paragraph')
                     # Allow list items with 'items'
                     if item_type == 'list' and item.get('items'):
-                        item_content = None
+                        for sub_item in item.get('items', []):
+                            sub_item_content = sub_item.get('content', '')
+                            if not sub_item_content:
+                                continue
+                            # Render each sub-item as a bullet point
+                            f.write(f'puts "text {self.margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n')
+                            y_pos += self.line_height
                     else:
                         item_content = item.get('content', '')
                         if not item_content:
