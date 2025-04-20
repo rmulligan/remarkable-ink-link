@@ -4,6 +4,12 @@ import logging
 from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+try:
+    from readability import Document
+except ImportError:
+    Document = None
 
 # Import utility functions for error handling
 from inklink.utils import retry_operation, format_error
@@ -42,13 +48,35 @@ class WebScraperService:
             title = soup.title.string.strip()
         if not title:
             title = url
-        # Structured content extraction
-        body = soup.body
+        # Attempt reader mode extraction with Mozilla Readability if available
+        # Fallback to simple BeautifulSoup parsing
+        if Document:
+            try:
+                doc = Document(resp.text)
+                doc_title = doc.short_title()
+                if doc_title and doc_title.strip():
+                    title = doc_title.strip()
+                content_html = doc.summary()
+                container = BeautifulSoup(content_html, 'html.parser')
+            except Exception as e:
+                logger.warning(f"Readability extraction failed: {e}")
+                container = soup.body or soup
+        else:
+            container = soup.body or soup
+
         structured = []
-        if body:
-            for tag in body.find_all(['h1','h2','h3','h4','h5','h6','p','ul','ol','pre']):
+        images = []
+        if container:
+            for tag in container.find_all(['h1','h2','h3','h4','h5','h6','p','ul','ol','pre','img']):
                 name = tag.name.lower()
-                if name in ['h1','h2','h3','h4','h5','h6']:
+                if name == 'img':
+                    src = tag.get('src') or ''
+                    if src:
+                        img_url = urljoin(url, src)
+                        alt = tag.get('alt', '').strip()
+                        images.append({"url": img_url, "caption": alt})
+                        structured.append({"type": "image", "url": img_url, "caption": alt})
+                elif name in ['h1','h2','h3','h4','h5','h6']:
                     structured.append({"type": name, "content": tag.get_text(strip=True)})
                 elif name == 'p':
                     text = tag.get_text(strip=True)
@@ -62,11 +90,12 @@ class WebScraperService:
                     code = tag.get_text()
                     if code:
                         structured.append({"type": "code", "content": code})
+        # Fallback to raw text if nothing extracted
         if not structured:
-            # Fallback to raw text
             text = soup.get_text(separator=' ', strip=True)
             structured.append({"type": "paragraph", "content": text})
-        return {"title": title, "structured_content": structured, "images": []}
+
+        return {"title": title, "structured_content": structured, "images": images}
     
     def _extract_title_directly(self, url: str) -> str:
         """Extract title directly from URL using requests and BeautifulSoup.

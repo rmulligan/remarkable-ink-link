@@ -74,7 +74,8 @@ class DocumentService:
                 # Add title
                 title = content.get('title', 'Untitled Document')
                 f.write(f'puts "text {self.margin} {y_pos} \\"{self._escape_hcl(title)}\\""\n')
-                y_pos += self.line_height * 1.5  # Extra spacing after title
+                # Space after title
+                y_pos += self.line_height
                 
                 # Add URL under title
                 f.write(f'puts "set_font {self.body_font} 20"\n')
@@ -99,10 +100,13 @@ class DocumentService:
                 
                 for item in structured_content:
                     item_type = item.get('type', 'paragraph')
-                    item_content = item.get('content', '')
-                    
-                    if not item_content:
-                        continue
+                    # Allow list items with 'items'
+                    if item_type == 'list' and item.get('items'):
+                        item_content = None
+                    else:
+                        item_content = item.get('content', '')
+                        if not item_content:
+                            continue
                         
                     # Check if we need a new page
                     if y_pos > (self.page_height - self.margin * 2):
@@ -278,16 +282,8 @@ class DocumentService:
                 logger.error(error_msg)
                 return None
                     
-            # If drawj2d is not available, create a stub .rm file so the pipeline can proceed
-            if not os.path.exists(self.drawj2d_path):
-                logger.warning(f"drawj2d executable not found at {self.drawj2d_path}; creating stub .rm file: {rm_path}")
-                # Ensure output directory exists
-                os.makedirs(os.path.dirname(rm_path), exist_ok=True)
-                # Write a minimal stub file (must be non-empty)
-                stub_content = ("STUB RMDATA: drawj2d missing, placeholder .rm file\n" * 3).encode('utf-8')
-                with open(rm_path, 'wb') as rf:
-                    rf.write(stub_content)
-                return rm_path
+            # Always attempt real conversion via drawj2d
+            # (Stub branch removed to ensure conversion is attempted in tests)
             
             # Double check file contents
             try:
