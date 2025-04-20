@@ -17,13 +17,17 @@ RUN wget -qO /tmp/drawj2d.deb \
     && apt-get update \
     && apt-get install -y --no-install-recommends /tmp/drawj2d.deb \
     && rm -f /tmp/drawj2d.deb \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Ensure drawj2d is executable
+    && chmod +x /usr/bin/drawj2d || true
 
 # Build and install ddvk rmapi (reMarkable cloud client)
 RUN git clone https://github.com/ddvk/rmapi.git /tmp/rmapi \
     && cd /tmp/rmapi \
     && go build -o /usr/local/bin/rmapi . \
-    && rm -rf /tmp/rmapi
+    && rm -rf /tmp/rmapi \
+    # Prepare rmapi config directory for credentials
+    && mkdir -p /root/.config/rmapi && chmod 700 /root/.config/rmapi
 
 RUN pip install --upgrade pip && pip install poetry
 

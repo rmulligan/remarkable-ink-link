@@ -28,10 +28,12 @@ class RemarkableService(IRemarkableService):
                 logger.error(error_msg)
                 return False, error_msg
             
-            # If rmapi is not available, skip actual upload and stub success
+            # If rmapi is not available, report error
             if not os.path.exists(self.rmapi_path):
-                logger.warning(f"rmapi executable not found at {self.rmapi_path}; skipping upload and returning stub success for: {title}")
-                return True, f"Document '{title}' uploaded via stub (rmapi missing)"
+                # rmapi tool is required for upload
+                error_msg = f"rmapi executable not found at {self.rmapi_path}"
+                logger.error(error_msg)
+                return False, error_msg
 
             # Use the upload method with retries from the central utility
             sanitized_title = self._sanitize_filename(title)
