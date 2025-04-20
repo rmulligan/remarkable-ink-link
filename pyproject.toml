@@ -7,6 +7,9 @@ readme = "README.md"
 packages = [{ include = "inklink", from = "src" }]
 
 [tool.poetry.dependencies]
+google-api-python-client = "^2.89.0"
+google-auth = "^2.16.0"
+google-auth-oauthlib = "^0.10.0"
 python = "^3.10"
 qrcode = "^7.3"
 Pillow = "^10.3.0"
