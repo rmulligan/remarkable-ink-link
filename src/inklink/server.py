@@ -123,6 +123,8 @@ class URLHandler(BaseHTTPRequestHandler):
             parsed = urlparse(raw)
             if parsed.scheme in ("http", "https") and parsed.netloc:
                 return raw
+        except Exception:
+            # Failed to parse as plain text URL
             pass
 
         return None
