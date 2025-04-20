@@ -219,16 +219,6 @@ def run_server(host: str = None, port: int = None):
     except KeyboardInterrupt:
         logger.info("Shutting down server")
         httpd.server_close()
-        self.send_response(400)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        
-        response = json.dumps({
-            "success": False,
-            "error": message
-        })
-        
-        self.wfile.write(response.encode('utf-8'))
 
 def main():
     """Start the HTTP server."""
