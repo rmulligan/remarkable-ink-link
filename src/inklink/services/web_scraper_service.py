@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Tuple, List
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 try:
     from readability import Document

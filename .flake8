@@ -1,0 +1,16 @@
+[flake8]
+# Exclude virtual environments and build artifacts
+exclude =
+    .venv,
+    .git,
+    __pycache__,
+    src/output,
+    src/temp,
+    tests/__pycache__,
+    build,
+    dist
+# Match Black's line length and ignore minor conflicts
+# Match Black's line length
+max-line-length = 88
+# Ignore common flake8 errors that conflict with project style or external deps
+ignore = E203, E501, F401, F541, F821, W503
