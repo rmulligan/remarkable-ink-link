@@ -116,16 +116,14 @@ class URLHandler(BaseHTTPRequestHandler):
 
         # Try as plain text
         try:
-            raw = post_data.decode("utf-8")
-            # Reject URLs containing any whitespace or control characters
+            raw = post_data.decode("utf-8").strip()
+            # Reject URLs containing any internal whitespace or control characters
             if any(c.isspace() for c in raw):
                 return None
-            text = raw.strip()
             from urllib.parse import urlparse
-            parsed = urlparse(text)
+            parsed = urlparse(raw)
             if parsed.scheme in ("http", "https") and parsed.netloc:
-                return text
-        except UnicodeDecodeError:
+                return raw
             pass
 
         return None
