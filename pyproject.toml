@@ -6,16 +6,17 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 packages = [{ include = "inklink", from = "src" }]
 
-[tool.poetry.dependencies]
-google-api-python-client = "^2.89.0"
-google-auth = "^2.16.0"
-google-auth-oauthlib = "^0.10.0"
+ [tool.poetry.dependencies]
+# Google API clients are optional; install manually if needed
+# google-api-python-client = "^2.89.0"
+# google-auth = "^2.16.0"
+# google-auth-oauthlib = "^0.10.0"
 python = "^3.10"
 qrcode = "^7.3"
 Pillow = "^10.3.0"
 requests = "^2.28.0"
 beautifulsoup4 = "^4.11.1"
-readability-lxml = "^0.9.1"
+ # readability-lxml = "^0.9.1"
 PyPDF2 = "^3.0.0"
 markdown = "^3.4.1"
 fastapi = "^0.95.2"

@@ -45,7 +45,8 @@ class IRemarkableService(ABC):
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
         """Upload document to Remarkable Cloud"""
         pass
-  
+
+
 class IGoogleDocsService(ABC):
     @abstractmethod
     def fetch(self, url_or_id: str) -> Dict:

@@ -5,6 +5,7 @@ import logging
 from typing import Dict, Any, Tuple, List, Optional
 
 from bs4 import BeautifulSoup
+
 try:
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -20,14 +21,15 @@ from inklink.utils import retry_operation, format_error
 
 logger = logging.getLogger(__name__)
 
+
 class GoogleDocsService:
     """Service to fetch and convert Google Docs documents."""
 
-    SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+    SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
-    def __init__(self,
-                 credentials_path: Optional[str] = None,
-                 token_path: Optional[str] = None):
+    def __init__(
+        self, credentials_path: Optional[str] = None, token_path: Optional[str] = None
+    ):
         """
         Initialize Google Docs service.
 
@@ -35,8 +37,8 @@ class GoogleDocsService:
             credentials_path: Path to OAuth2 client secrets JSON.
             token_path: Path to store user credentials.
         """
-        self.credentials_path = credentials_path or os.getenv('GOOGLE_CREDENTIALS_PATH')
-        self.token_path = token_path or os.getenv('GOOGLE_TOKEN_PATH', 'token.json')
+        self.credentials_path = credentials_path or os.getenv("GOOGLE_CREDENTIALS_PATH")
+        self.token_path = token_path or os.getenv("GOOGLE_TOKEN_PATH", "token.json")
         self.creds: Optional[Credentials] = None
         self.drive_service = None
         self._authenticate()
@@ -45,25 +47,29 @@ class GoogleDocsService:
         """Authenticate with Google and build Drive service."""
         # If Google API client libraries are unavailable, skip authentication
         if not all([Request, Credentials, InstalledAppFlow, build]):
-            logger.warning('Google API client libraries not installed; authentication disabled.')
+            logger.warning(
+                "Google API client libraries not installed; authentication disabled."
+            )
             return
         try:
             if os.path.exists(self.token_path):
                 self.creds = Credentials.from_authorized_user_file(
-                    self.token_path, self.SCOPES)
+                    self.token_path, self.SCOPES
+                )
             if not self.creds or not self.creds.valid:
                 if self.creds and self.creds.expired and self.creds.refresh_token:
                     self.creds.refresh(Request())
                 else:
                     flow = InstalledAppFlow.from_client_secrets_file(
-                        self.credentials_path, self.SCOPES)
+                        self.credentials_path, self.SCOPES
+                    )
                     self.creds = flow.run_local_server(port=0)
                 # Save credentials
-                with open(self.token_path, 'w', encoding='utf-8') as token_file:
+                with open(self.token_path, "w", encoding="utf-8") as token_file:
                     token_file.write(self.creds.to_json())
-            self.drive_service = build('drive', 'v3', credentials=self.creds)
+            self.drive_service = build("drive", "v3", credentials=self.creds)
         except Exception as e:
-            logger.error(format_error('auth', 'Google Docs authentication failed', e))
+            logger.error(format_error("auth", "Google Docs authentication failed", e))
             raise
 
     def fetch(self, url_or_id: str) -> Dict[str, Any]:
@@ -74,75 +80,91 @@ class GoogleDocsService:
         """
         doc_id = self._extract_doc_id(url_or_id)
         try:
+
             def export_html():
-                return self.drive_service.files() \
-                    .export(fileId=doc_id, mimeType='text/html') \
+                return (
+                    self.drive_service.files()
+                    .export(fileId=doc_id, mimeType="text/html")
                     .execute()
-            html_content = retry_operation(export_html, operation_name='Google Docs export')
-            soup = BeautifulSoup(html_content, 'html.parser')
-            title = (soup.title.string.strip() if soup.title and soup.title.string
-                     else url_or_id)
+                )
+
+            html_content = retry_operation(
+                export_html, operation_name="Google Docs export"
+            )
+            soup = BeautifulSoup(html_content, "html.parser")
+            title = (
+                soup.title.string.strip()
+                if soup.title and soup.title.string
+                else url_or_id
+            )
             container = soup.body or soup
             structured, images = self._process_container(container, url_or_id)
-            return {'title': title, 'structured_content': structured, 'images': images}
+            return {"title": title, "structured_content": structured, "images": images}
         except Exception as e:
-            logger.error(format_error('googledocs', 'Failed to fetch Google Docs document', e))
+            logger.error(
+                format_error("googledocs", "Failed to fetch Google Docs document", e)
+            )
             return {
-                'title': url_or_id,
-                'structured_content': [
-                    {'type': 'paragraph',
-                     'content': f'Could not fetch Google Docs doc {url_or_id}: {e}'}
+                "title": url_or_id,
+                "structured_content": [
+                    {
+                        "type": "paragraph",
+                        "content": f"Could not fetch Google Docs doc {url_or_id}: {e}",
+                    }
                 ],
-                'images': []
+                "images": [],
             }
 
     def _extract_doc_id(self, url_or_id: str) -> str:
         """
         Extract document ID from Google Docs URL, or return as-is.
         """
-        if 'docs.google.com' in url_or_id:
-            parts = url_or_id.split('/d/')
+        if "docs.google.com" in url_or_id:
+            parts = url_or_id.split("/d/")
             if len(parts) > 1:
-                doc = parts[1].split('/')
+                doc = parts[1].split("/")
                 if doc:
                     return doc[0]
         return url_or_id
 
-    def _process_container(self, container: BeautifulSoup, base_url: str
-                           ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
+    def _process_container(
+        self, container: BeautifulSoup, base_url: str
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
         """
         Process a BeautifulSoup container to extract structured tags and images.
         """
         structured: List[Dict[str, Any]] = []
         images: List[Dict[str, str]] = []
-        for tag in container.find_all([
-                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'p', 'ul', 'ol', 'pre', 'img']):
+        for tag in container.find_all(
+            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "pre", "img"]
+        ):
             name = tag.name.lower()
-            if name == 'img':
-                src = tag.get('src', '') or ''
+            if name == "img":
+                src = tag.get("src", "") or ""
                 if src:
-                    img_url = src if src.startswith('http') else base_url + src
-                    alt = tag.get('alt', '').strip()
-                    images.append({'url': img_url, 'caption': alt})
-                    structured.append({'type': 'image', 'url': img_url, 'caption': alt})
-            elif name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                structured.append({'type': name,
-                                   'content': tag.get_text(strip=True)})
-            elif name == 'p':
+                    img_url = src if src.startswith("http") else base_url + src
+                    alt = tag.get("alt", "").strip()
+                    images.append({"url": img_url, "caption": alt})
+                    structured.append({"type": "image", "url": img_url, "caption": alt})
+            elif name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                structured.append({"type": name, "content": tag.get_text(strip=True)})
+            elif name == "p":
                 text = tag.get_text(strip=True)
                 if text:
-                    structured.append({'type': 'paragraph', 'content': text})
-            elif name in ['ul', 'ol']:
-                items = [li.get_text(strip=True)
-                         for li in tag.find_all('li') if li.get_text(strip=True)]
+                    structured.append({"type": "paragraph", "content": text})
+            elif name in ["ul", "ol"]:
+                items = [
+                    li.get_text(strip=True)
+                    for li in tag.find_all("li")
+                    if li.get_text(strip=True)
+                ]
                 if items:
-                    structured.append({'type': 'list', 'items': items})
-            elif name == 'pre':
+                    structured.append({"type": "list", "items": items})
+            elif name == "pre":
                 code = tag.get_text()
                 if code:
-                    structured.append({'type': 'code', 'content': code})
+                    structured.append({"type": "code", "content": code})
         if not structured:
-            text = container.get_text(separator=' ', strip=True)
-            structured.append({'type': 'paragraph', 'content': text})
+            text = container.get_text(separator=" ", strip=True)
+            structured.append({"type": "paragraph", "content": text})
         return structured, images
