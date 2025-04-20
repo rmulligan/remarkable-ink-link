@@ -75,10 +75,8 @@ class DocumentService:
                 y_pos = self.margin
 
                 # Add title
-                title = content.get("title", "Untitled Document")
-                f.write(
-                    f'puts "text {self.margin} {y_pos} \\"{self._escape_hcl(title)}\\""\n'
-                )
+                title = content.get('title', 'Untitled Document')
+                f.write(f'puts "text {self.margin} {y_pos} \\"{self._escape_hcl(title)}\\""\n')
                 # Space after title
                 y_pos += self.line_height
 
@@ -112,15 +110,21 @@ class DocumentService:
                 structured_content = content.get("structured_content", [])
 
                 for item in structured_content:
-                    item_type = item.get("type", "paragraph")
+                    item_type = item.get('type', 'paragraph')
                     # Allow list items with 'items'
-                    if item_type == "list" and item.get("items"):
-                        item_content = None
+                    if item_type == 'list' and item.get('items'):
+                        for sub_item in item.get('items', []):
+                            sub_item_content = sub_item.get('content', '')
+                            if not sub_item_content:
+                                continue
+                            # Render each sub-item as a bullet point
+                            f.write(f'puts "text {self.margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n')
+                            y_pos += self.line_height
                     else:
-                        item_content = item.get("content", "")
+                        item_content = item.get('content', '')
                         if not item_content:
                             continue
-
+                            
                     # Check if we need a new page
                     if y_pos > (self.page_height - self.margin * 2):
                         f.write('puts "newpage"\n')
@@ -334,7 +338,7 @@ class DocumentService:
                 error_msg = format_error("input", "HCL file not found", hcl_path)
                 logger.error(error_msg)
                 return None
-
+                    
             # Always attempt real conversion via drawj2d
             # (Stub branch removed to ensure conversion is attempted in tests)
 
