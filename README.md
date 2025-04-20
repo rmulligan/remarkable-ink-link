@@ -22,7 +22,7 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - **📅 Task & Calendar Integration:** Detect tasks in your notes and sync them with your calendar (e.g. Motion, org-agenda).
 - **🗂 Smart Indexing:** Generate and maintain table of contents, index pages, and note links using symbols or QR codes.
 - **🔌 Modular AI Workflows (MCP-ready):** Supports Multi-Connection Protocol (MCP) for real-time agent communication and toolchain integration.
-- **☁️ One-Click reMarkable Setup:** Connect to your reMarkable account with a single click using the “Device Link” flow — no terminal, no token copy-pasting, no dev skills required.
+- **☁️ One-Click reMarkable Setup:** Connect to your reMarkable account with a single click using the "Device Link" flow — no terminal, no token copy-pasting, no dev skills required.
 - **🔄 Automatic Sync & Tag-Driven Actions:** Notes sync automatically from your reMarkable. Tags like `#summarize`, `#task`, or `#calendar` trigger AI-powered workflows with no extra steps.
 - **🧠 Visual Knowledge Graph:** Automatically generate a personal knowledge graph from your notes — powered by entity recognition, backlinks, and concept clustering.
 
@@ -57,8 +57,8 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 
 Make sure you have:
 - Node.js and Yarn
-- Python 3.10 or higher
-- Docker and Docker Compose (optional)
+- Python 3.10 or higher
+- Docker and Docker Compose (optional)
 
 To install dependencies and set up the local environment, run:
 
@@ -109,6 +109,32 @@ For Docker control:
 - Start containers: `yarn docker:up`
 - Stop containers: `yarn docker:down`
 
+## 📬 Using the Web-to-Ink Endpoint
+
+Currently, the main functionality available is the web-to-ink conversion service. Once the server is running:
+
+1. Send a POST request to the `/share` endpoint with a URL to convert
+2. The service will:
+   - Generate a QR code linking back to the original content
+   - Process the content (supporting both web pages and PDFs)
+   - Convert to native reMarkable ink format (.rm)
+   - Upload to your reMarkable cloud account
+
+Example using curl:
+```bash
+curl -X POST http://localhost:9999/share -d '{"url":"https://example.com"}'
+```
+
+Or with a simple request containing just the URL:
+```bash
+curl -X POST http://localhost:9999/share -d "https://example.com"
+```
+
+The response will contain success status and a message:
+```json
+{"success": true, "message": "Webpage uploaded to Remarkable: Example Domain"}
+```
+
 ---
 
 ## 🔌 Integrations
@@ -124,13 +150,17 @@ Standalone integration modules (coming soon):
 
 ## 🧪 Roadmap
 
-- [ ] MVP: AI Q&A roundtrip via `.rm` files
-- [ ] Web-to-ink article parser and converter
-- [ ] NLP: handwriting transcription + entity/tag extraction
+- [x] Core infrastructure and Docker environment setup
+- [x] Web-to-ink conversion for articles and webpages  
+- [x] PDF-to-ink conversion with source linking
+- [x] reMarkable Cloud authentication UI
+- [ ] AI Q&A roundtrip via `.rm` files
+- [ ] Handwriting recognition (MyScript Cloud integration)
 - [ ] Tag-based automation: `#summarize`, `#calendar`, `#index`, etc.
 - [ ] Calendar sync module
 - [ ] Visual knowledge graph builder
 - [ ] Hosted version with user-friendly flows
+- [ ] Two-way sync and auto-update
 - [ ] First MCP integration: Limitless Pendant
 
 ---
