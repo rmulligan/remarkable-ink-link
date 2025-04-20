@@ -1,0 +1,47 @@
+name: Auto Add to Kanban
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      projects: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        uses: cli/cli@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure gh-project extension
+        run: |
+          if ! gh extension list | grep -q '^github/gh-project'; then
+            gh extension install github/gh-project
+          fi
+
+      - name: Add new issue/PR to InkLink Kanban
+        env:
+          REPO: rmulligan/remarkable-ink-link
+          PROJECT_NAME: InkLink Kanban
+        run: |
+          # Determine the URL of the new item (issue or PR)
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            ITEM_URL="${{ github.event.issue.html_url }}"
+          else
+            ITEM_URL="${{ github.event.pull_request.html_url }}"
+          fi
+          # Find the project number
+          PROJ_NUM=$(gh project list --repo "$REPO" --json number,name --jq '.[] | select(.name=="'"$PROJECT_NAME"'").number')
+          echo "Adding $ITEM_URL to project '$PROJECT_NAME' (number $PROJ_NUM)"
+          gh project item-add "$PROJ_NUM" --repo "$REPO" --url "$ITEM_URL"
