@@ -127,21 +127,38 @@ class URLHandler(BaseHTTPRequestHandler):
         # Try as plain text: decode and validate the raw URL string
         try:
             raw = post_data.decode("utf-8")
-            # Reject if any whitespace or control characters present
-            if any(c.isspace() for c in raw):
-                return None
-            # Trim extraneous whitespace
-            raw = raw.strip()
-            from urllib.parse import urlparse
+        except UnicodeDecodeError:
+            return None
 
-            parsed = urlparse(raw)
-            # Validate scheme and netloc
-            if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
-                return raw
+        # Reject if any whitespace or control characters present
+        if any(c.isspace() for c in raw):
+            return None
+        # Trim extraneous whitespace at ends
+        raw = raw.strip()
 
-        except Exception:
-            # Not a valid plain URL
-            pass
+        from urllib.parse import urlparse
+        parsed = urlparse(raw)
+        # Validate scheme and netloc
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            return None
+
+        # If the entire URL is safe, return it
+        if self._is_safe_url(raw):
+            return raw
+
+        # If there is a '<' suffix, strip it and validate the prefix
+        if '<' in raw:
+            prefix = raw.split('<', 1)[0]
+            parsed_pref = urlparse(prefix)
+            if (
+                parsed_pref.scheme in ("http", "https")
+                and parsed_pref.netloc
+                and self._is_safe_url(prefix)
+            ):
+                return prefix
+
+        # Not a valid URL
+        return None
 
         return None
 
