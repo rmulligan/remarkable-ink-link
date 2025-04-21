@@ -138,7 +138,12 @@ class URLHandler(BaseHTTPRequestHandler):
                 return raw
 
             # fallback: extract longest safe URL prefix before trailing invalid chars
-            for i in range(len(raw), 0, -1):
+            end = len(raw)
+            # Identify the start of the invalid suffix
+            while end > 0 and not raw[end - 1].isspace() and raw[end - 1].isprintable():
+                end -= 1
+
+            for i in range(end, 0, -1):
                 candidate = raw[:i]
                 if self._is_safe_url(candidate):
                     parsed_pfx = urlparse(candidate)
