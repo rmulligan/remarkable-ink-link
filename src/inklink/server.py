@@ -134,7 +134,8 @@ class URLHandler(BaseHTTPRequestHandler):
             from urllib.parse import urlparse
 
             parsed = urlparse(raw)
-            if parsed.scheme in ("http", "https") and parsed.netloc:
+            # Only accept the full raw if fully safe
+            if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
                 return raw
 
             # fallback: extract longest safe URL prefix before trailing invalid chars
