@@ -17,7 +17,7 @@ except ImportError:
     InstalledAppFlow = None
     build = None
 
-from inklink.utils import retry_operation, format_error
+from inklink.utils import retry_operation, format_error, parse_html_container
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +129,10 @@ class GoogleDocsService:
                     doc = parts[1].split("/")
                     if doc:
                         return doc[0]
-        except Exception as e:
-            logger.warning(f"Failed to parse URL: {url_or_id}. Error: {e}")
-
+        except Exception:
+            # If parsing fails, assume it's a document ID
+            pass
+          
         return url_or_id
 
     def _process_container(
@@ -140,38 +141,5 @@ class GoogleDocsService:
         """
         Process a BeautifulSoup container to extract structured tags and images.
         """
-        structured: List[Dict[str, Any]] = []
-        images: List[Dict[str, str]] = []
-        for tag in container.find_all(
-            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "pre", "img"]
-        ):
-            name = tag.name.lower()
-            if name == "img":
-                src = tag.get("src", "") or ""
-                if src:
-                    img_url = src if src.startswith("http") else base_url + src
-                    alt = tag.get("alt", "").strip()
-                    images.append({"url": img_url, "caption": alt})
-                    structured.append({"type": "image", "url": img_url, "caption": alt})
-            elif name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-                structured.append({"type": name, "content": tag.get_text(strip=True)})
-            elif name == "p":
-                text = tag.get_text(strip=True)
-                if text:
-                    structured.append({"type": "paragraph", "content": text})
-            elif name in ["ul", "ol"]:
-                items = [
-                    li.get_text(strip=True)
-                    for li in tag.find_all("li")
-                    if li.get_text(strip=True)
-                ]
-                if items:
-                    structured.append({"type": "list", "items": items})
-            elif name == "pre":
-                code = tag.get_text()
-                if code:
-                    structured.append({"type": "code", "content": code})
-        if not structured:
-            text = container.get_text(separator=" ", strip=True)
-            structured.append({"type": "paragraph", "content": text})
-        return structured, images
+        # Delegate to shared parsing utility
+        return parse_html_container(container, base_url)

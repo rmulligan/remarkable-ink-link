@@ -115,7 +115,19 @@ class DocumentService:
                     item_type = item.get("type", "paragraph")
                     # Allow list items with 'items'
                     if item_type == "list" and item.get("items"):
-                        item_content = None
+                        for sub_item in item.get("items", []):
+                            # Support list items as dicts or plain strings
+                            if isinstance(sub_item, dict):
+                                sub_item_content = sub_item.get("content", "")
+                            else:
+                                sub_item_content = str(sub_item)
+                            if not sub_item_content:
+                                continue
+                            # Render each sub-item as a bullet point
+                            f.write(
+                                f'puts "text {self.margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n'
+                            )
+                            y_pos += self.line_height
                     else:
                         item_content = item.get("content", "")
                         if not item_content:
@@ -430,9 +442,8 @@ class DocumentService:
             Processed plain text with proper formatting
         """
         plain_content = ""
-        structured_content = content.get("structured_content", [])
 
-        if structured_content:
+        if structured_content := content.get("structured_content", []):
             for item in structured_content:
                 content_type = item.get("type", "paragraph")
                 text = item.get("content", "")

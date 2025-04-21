@@ -53,6 +53,16 @@ class URLHandler(BaseHTTPRequestHandler):
             logger.error(f"Error initializing services: {str(e)}")
             logger.error(traceback.format_exc())
 
+    def _is_safe_url(self, url: str) -> bool:
+        """Validate URL starts with http(s) and contains only safe characters."""
+        import re
+
+        # Only allow http or https and a limited set of URL-safe chars
+        SAFE_URL_REGEX = re.compile(
+            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\'"\(\)\*\+,;=%]+$'
+        )
+        return bool(SAFE_URL_REGEX.match(url))
+
     def do_POST(self):
         """Handle POST request with URL to process."""
         if self.path != "/share":
@@ -96,18 +106,38 @@ class URLHandler(BaseHTTPRequestHandler):
         # Try to decode as JSON
         try:
             data = json.loads(post_data.decode("utf-8"))
-            url = data.get("url")
-            if url and url.startswith(("http://", "https://")):
-                return url
+
+            if url := data.get("url"):
+                # Reject URLs containing any whitespace or control characters
+                if any(c.isspace() for c in url):
+                    return None
+                # Trim and parse
+                url = url.strip()
+                from urllib.parse import urlparse
+
+                parsed = urlparse(url)
+                if parsed.scheme in ("http", "https") and parsed.netloc:
+                    return url
+
         except json.JSONDecodeError:
             pass
 
         # Try as plain text
         try:
-            text = post_data.decode("utf-8").strip()
-            if text.startswith(("http://", "https://")):
-                return text
-        except UnicodeDecodeError:
+            # Decode without stripping so we can detect leading/trailing whitespace
+            raw = post_data.decode("utf-8")
+            # Reject URLs containing any whitespace or control characters
+            if any(c.isspace() for c in raw):
+                return None
+            # Trim any accidental newline/space after validation
+            raw = raw.strip()
+            from urllib.parse import urlparse
+
+            parsed = urlparse(raw)
+            if parsed.scheme in ("http", "https") and parsed.netloc:
+                return raw
+        except Exception:
+            # Failed to parse as plain text URL
             pass
 
         return None

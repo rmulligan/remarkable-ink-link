@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Tuple, List
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 try:
     from readability import Document
@@ -12,7 +12,7 @@ except ImportError:
     Document = None
 
 # Import utility functions for error handling
-from inklink.utils import retry_operation, format_error
+from inklink.utils import retry_operation, format_error, parse_html_container
 
 logger = logging.getLogger(__name__)
 
@@ -53,72 +53,64 @@ class WebScraperService:
         if not title:
             title = url
 
-        # Use helper to apply Readability extraction and get content container
-        title, container = self._extract_readability(resp.text, title, soup, url)
-
-        # Use helper to process tags and extract structured content and images
-        structured, images = self._process_container(container, url)
-
-        return {"title": title, "structured_content": structured, "images": images}
-
-    def _extract_readability(
-        self, html: str, default_title: str, soup: BeautifulSoup, url: str
-    ) -> Tuple[str, BeautifulSoup]:
-        """Extract content using Mozilla Readability (if available), returning (title, container)."""
+        # Attempt reader mode extraction with Mozilla Readability if available
+        # Fallback to simple BeautifulSoup parsing
         if Document:
             try:
-                doc = Document(html)
-                short_title = (
-                    doc.short_title().strip() if doc.short_title() else default_title
-                )
+                doc = Document(resp.text)
+                doc_title = doc.short_title()
+                if doc_title and doc_title.strip():
+                    title = doc_title.strip()
                 content_html = doc.summary()
                 container = BeautifulSoup(content_html, "html.parser")
-                return short_title, container
             except Exception as e:
                 logger.warning(f"Readability extraction failed: {e}")
-        # Fallback to raw HTML body or full soup
-        return default_title, soup.body or soup
+                container = soup.body or soup
+        else:
+            container = soup.body or soup
 
-    def _process_container(
-        self, container: BeautifulSoup, url: str
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
-        """Process a BeautifulSoup container, extracting structured tags and images."""
-        structured: List[Dict[str, Any]] = []
-        images: List[Dict[str, str]] = []
-        for tag in container.find_all(
-            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "pre", "img"]
-        ):
-            name = tag.name.lower()
-            if name == "img":
-                src = tag.get("src", "") or ""
-                if src:
-                    img_url = urljoin(url, src)
-                    alt = tag.get("alt", "").strip()
-                    images.append({"url": img_url, "caption": alt})
-                    structured.append({"type": "image", "url": img_url, "caption": alt})
-            elif name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-                structured.append({"type": name, "content": tag.get_text(strip=True)})
-            elif name == "p":
-                text = tag.get_text(strip=True)
-                if text:
-                    structured.append({"type": "paragraph", "content": text})
-            elif name in ["ul", "ol"]:
-                items = [
-                    li.get_text(strip=True)
-                    for li in tag.find_all("li")
-                    if li.get_text(strip=True)
-                ]
-                if items:
-                    structured.append({"type": "list", "items": items})
-            elif name == "pre":
-                code = tag.get_text()
-                if code:
-                    structured.append({"type": "code", "content": code})
+        structured = []
+        images = []
+        if container:
+            for tag in container.find_all(
+                ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "pre", "img"]
+            ):
+                name = tag.name.lower()
+                if name == "img":
+                    src = tag.get("src") or ""
+                    if src:
+                        img_url = urljoin(url, src)
+                        alt = tag.get("alt", "").strip()
+                        images.append({"url": img_url, "caption": alt})
+                        structured.append(
+                            {"type": "image", "url": img_url, "caption": alt}
+                        )
+                elif name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                    structured.append(
+                        {"type": name, "content": tag.get_text(strip=True)}
+                    )
+                elif name == "p":
+                    text = tag.get_text(strip=True)
+                    if text:
+                        structured.append({"type": "paragraph", "content": text})
+                elif name in ["ul", "ol"]:
+                    items = [
+                        li.get_text(strip=True)
+                        for li in tag.find_all("li")
+                        if li.get_text(strip=True)
+                    ]
+                    if items:
+                        structured.append({"type": "list", "items": items})
+                elif name == "pre":
+                    code = tag.get_text()
+                    if code:
+                        structured.append({"type": "code", "content": code})
         # Fallback to raw text if nothing extracted
         if not structured:
-            text = container.get_text(separator=" ", strip=True)
+            text = soup.get_text(separator=" ", strip=True)
             structured.append({"type": "paragraph", "content": text})
-        return structured, images
+
+        return {"title": title, "structured_content": structured, "images": images}
 
     def _extract_title_directly(self, url: str) -> str:
         """Extract title directly from URL using requests and BeautifulSoup.

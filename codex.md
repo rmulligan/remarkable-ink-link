@@ -2,7 +2,24 @@
 
 This repo is for InkLink — a toolkit that enables users to interact with AI directly from their reMarkable tablet.
 
-Primary project goals:
+## Implementation Status (April 2025)
+
+### Completed Features
+- **Web-to-Ink Sharing**: HTTP server endpoint for receiving URLs, processing content, and uploading to reMarkable
+- **PDF Processing**: Detection, downloading, and conversion of PDF documents to editable ink
+- **QR Code Generation**: For each processed document, automatically adding a QR code linking back to the source
+- **Authentication UI**: Simple web UI for reMarkable Cloud authentication using the ddvk rmapi fork
+- **Document Conversion**: Structured conversion pipeline using drawj2d for native .rm file generation
+- **Docker Environment**: Containerized setup with all dependencies pre-installed
+
+### In Progress / Next Steps
+- **AI Integration**: Adding LLM connectivity and response formatting
+- **Handwriting Recognition**: Integration with MyScript and/or local models
+- **Tag-based Actions**: Detection and handling of special tags like #summarize, #calendar
+- **Knowledge Graph**: Entity extraction and graph construction from notes
+- **Two-way Sync**: Push/pull content to/from reMarkable
+
+## Primary project goals:
 - Convert AI and web responses into editable ink layers (.rm files)
 - Allow tagging of pages to trigger workflows (e.g., #summarize, #calendar)
 - Enable automatic sync to/from reMarkable via `rmapi`
