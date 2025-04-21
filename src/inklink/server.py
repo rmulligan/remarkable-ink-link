@@ -52,10 +52,11 @@ class URLHandler(BaseHTTPRequestHandler):
         except Exception as e:
             logger.error(f"Error initializing services: {str(e)}")
             logger.error(traceback.format_exc())
-    
+
     def _is_safe_url(self, url: str) -> bool:
         """Validate URL starts with http(s) and contains only safe characters."""
         import re
+
         # Only allow http or https and a limited set of URL-safe chars
         SAFE_URL_REGEX = re.compile(
             r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\'"\(\)\*\+,;=%]+$'
@@ -107,6 +108,7 @@ class URLHandler(BaseHTTPRequestHandler):
             data = json.loads(post_data.decode("utf-8"))
             if url := data.get("url"):
                 from urllib.parse import urlparse
+
                 parsed = urlparse(url)
                 if parsed.scheme in ("http", "https") and parsed.netloc:
                     return url
@@ -120,6 +122,7 @@ class URLHandler(BaseHTTPRequestHandler):
             if any(c.isspace() for c in raw):
                 return None
             from urllib.parse import urlparse
+
             parsed = urlparse(raw)
             if parsed.scheme in ("http", "https") and parsed.netloc:
                 return raw

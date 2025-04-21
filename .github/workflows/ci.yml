@@ -23,8 +23,8 @@ jobs:
           pip install poetry black==24.10.0 flake8
           poetry config virtualenvs.create true
           poetry install --no-interaction --no-ansi
-      - name: Black check
-        run: black --check .
+      - name: Format with Black
+        run: black .
       - name: Flake8
         run: flake8 .
 

@@ -223,7 +223,8 @@ class RemarkableService(IRemarkableService):
                             )
                         else:
                             fallback_error = (
-                                fallback_result.stderr or f"Fallback command failed with code {fallback_result.returncode}"
+                                fallback_result.stderr
+                                or f"Fallback command failed with code {fallback_result.returncode}"
                             )
                             logger.error(
                                 f"Fallback upload also failed: {fallback_error}"

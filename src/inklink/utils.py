@@ -96,15 +96,16 @@ def format_error(error_type: str, message: str, details: Any = None) -> str:
             error_msg += f" ({details})"
 
     return error_msg
- 
+
+
 # Shared HTML parsing utility to extract structured content and images
 from typing import Tuple, List, Dict, Any, Optional
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+
 def parse_html_container(
-    container: BeautifulSoup,
-    base_url: Optional[str] = None
+    container: BeautifulSoup, base_url: Optional[str] = None
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
     """Parse a BeautifulSoup container to structured content and images."""
     structured: List[Dict[str, Any]] = []
