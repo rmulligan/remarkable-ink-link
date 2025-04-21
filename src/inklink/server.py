@@ -61,7 +61,8 @@ class URLHandler(BaseHTTPRequestHandler):
         SAFE_URL_REGEX = re.compile(
             r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$'
         )
-        return bool(SAFE_URL_REGEX.match(url))
+        # Use fullmatch to ensure the entire URL string matches allowed pattern
+        return bool(SAFE_URL_REGEX.fullmatch(url))
 
     def do_POST(self):
         """Handle POST request with URL to process."""
@@ -123,39 +124,24 @@ class URLHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             pass
 
-        # Try as plain text
+        # Try as plain text: decode and validate the raw URL string
         try:
-            # Decode without stripping so we can detect leading/trailing whitespace
             raw = post_data.decode("utf-8")
-            # Reject URLs containing any whitespace or control characters
+            # Reject if any whitespace or control characters present
             if any(c.isspace() for c in raw):
                 return None
-            # Trim any accidental newline/space after validation
+            # Trim extraneous whitespace
             raw = raw.strip()
             from urllib.parse import urlparse
 
             parsed = urlparse(raw)
 
-            # Validate scheme, netloc, and allowed characters
+            # Validate scheme and netloc
             if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
                 return raw
 
-            # fallback: extract longest safe URL prefix before trailing invalid chars
-            end = len(raw)
-            # Define allowed URL characters
-            allowed_url_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=")
-            # Identify the start of the invalid suffix
-            while end > 0 and raw[end - 1] in allowed_url_chars:
-                end -= 1
-
-            for i in range(end, 0, -1):
-                candidate = raw[:i]
-                if self._is_safe_url(candidate):
-                    parsed_pfx = urlparse(candidate)
-                    if parsed_pfx.scheme in ("http", "https") and parsed_pfx.netloc:
-                        return candidate
         except Exception:
-            # Failed to parse as plain text URL
+            # Not a valid plain URL
             pass
 
         return None
