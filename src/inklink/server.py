@@ -59,7 +59,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
         # Only allow http or https and a limited set of URL-safe chars
         SAFE_URL_REGEX = re.compile(
-            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\'"\(\)\*\+,;=%]+$'
+            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$'
         )
         return bool(SAFE_URL_REGEX.match(url))
 
@@ -116,7 +116,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 from urllib.parse import urlparse
 
                 parsed = urlparse(url)
-                if parsed.scheme in ("http", "https") and parsed.netloc:
+                # Validate scheme, netloc, and allowed characters
+                if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(url):
                     return url
 
         except json.JSONDecodeError:
@@ -134,7 +135,8 @@ class URLHandler(BaseHTTPRequestHandler):
             from urllib.parse import urlparse
 
             parsed = urlparse(raw)
-            if parsed.scheme in ("http", "https") and parsed.netloc:
+            # Validate scheme, netloc, and allowed characters
+            if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
                 return raw
         except Exception:
             # Failed to parse as plain text URL
