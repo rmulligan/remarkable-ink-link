@@ -2,7 +2,9 @@
 
 import time
 import logging
-from typing import Any, Callable, TypeVar, Optional
+from typing import Any, Callable, TypeVar, Optional, Tuple, List, Dict
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
 
 # Import configuration with proper relative import
 try:
@@ -99,9 +101,6 @@ def format_error(error_type: str, message: str, details: Any = None) -> str:
 
 
 # Shared HTML parsing utility to extract structured content and images
-from typing import Tuple, List, Dict, Any, Optional
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
 
 def parse_html_container(
