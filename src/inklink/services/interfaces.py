@@ -1,17 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
 
+
 class IQRCodeService(ABC):
     @abstractmethod
     def generate_qr(self, url: str) -> Tuple[str, str]:
         """Generate QR code for URL and return (filepath, filename)"""
         pass
 
+
 class IWebScraperService(ABC):
     @abstractmethod
     def scrape(self, url: str) -> Dict:
         """Scrape webpage content and return structured data"""
         pass
+
 
 class IDocumentService(ABC):
     @abstractmethod
@@ -24,6 +27,7 @@ class IDocumentService(ABC):
         """Convert HCL to Remarkable document"""
         pass
 
+
 class IPDFService(ABC):
     @abstractmethod
     def is_pdf_url(self, url: str) -> bool:
@@ -35,8 +39,16 @@ class IPDFService(ABC):
         """Process PDF URL and return document info"""
         pass
 
+
 class IRemarkableService(ABC):
     @abstractmethod
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
         """Upload document to Remarkable Cloud"""
+        pass
+
+
+class IGoogleDocsService(ABC):
+    @abstractmethod
+    def fetch(self, url_or_id: str) -> Dict:
+        """Fetch Google Docs document by URL or ID and return structured data"""
         pass
