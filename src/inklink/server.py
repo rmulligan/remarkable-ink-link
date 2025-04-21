@@ -136,10 +136,9 @@ class URLHandler(BaseHTTPRequestHandler):
 
             parsed = urlparse(raw)
             # Validate scheme and netloc
-            if parsed.scheme in ("http", "https") and parsed.netloc:
-                # Ensure entire URL contains only safe characters
-                if self._is_safe_url(raw):
-                    return raw
+            if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
+                return raw
+
         except Exception:
             # Not a valid plain URL
             pass
