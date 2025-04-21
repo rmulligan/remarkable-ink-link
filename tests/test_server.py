@@ -33,6 +33,9 @@ def test_extract_url_valid_plain(payload, expected):
         b"http://",                       # missing netloc
         b"https://example.com<evil>",     # invalid character '<'
         b"https://example.com|bar",       # invalid character '|'
+        b'https://example.com\'quote',     # invalid character: single quote
+        b'https://example.com"double',      # invalid character: double quote
+        b"https://example.com`backtick",    # invalid character: backtick
     ],
 )
 def test_extract_url_invalid_plain(payload):
