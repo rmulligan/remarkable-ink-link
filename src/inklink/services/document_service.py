@@ -116,7 +116,11 @@ class DocumentService:
                     # Allow list items with 'items'
                     if item_type == "list" and item.get("items"):
                         for sub_item in item.get("items", []):
-                            sub_item_content = sub_item.get("content", "")
+                            # Support list items as dicts or plain strings
+                            if isinstance(sub_item, dict):
+                                sub_item_content = sub_item.get("content", "")
+                            else:
+                                sub_item_content = str(sub_item)
                             if not sub_item_content:
                                 continue
                             # Render each sub-item as a bullet point

@@ -107,6 +107,11 @@ class URLHandler(BaseHTTPRequestHandler):
         try:
             data = json.loads(post_data.decode("utf-8"))
             if url := data.get("url"):
+                # Reject URLs containing any whitespace or control characters
+                if any(c.isspace() for c in url):
+                    return None
+                # Trim and parse
+                url = url.strip()
                 from urllib.parse import urlparse
 
                 parsed = urlparse(url)
@@ -117,10 +122,13 @@ class URLHandler(BaseHTTPRequestHandler):
 
         # Try as plain text
         try:
-            raw = post_data.decode("utf-8").strip()
-            # Reject URLs containing any internal whitespace or control characters
+            # Decode without stripping so we can detect leading/trailing whitespace
+            raw = post_data.decode("utf-8")
+            # Reject URLs containing any whitespace or control characters
             if any(c.isspace() for c in raw):
                 return None
+            # Trim any accidental newline/space after validation
+            raw = raw.strip()
             from urllib.parse import urlparse
 
             parsed = urlparse(raw)

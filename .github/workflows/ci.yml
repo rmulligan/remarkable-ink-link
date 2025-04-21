@@ -45,8 +45,9 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create true
           poetry install --no-interaction --no-ansi
-      - name: Run pytest
-        run: pytest --maxfail=1 --disable-warnings -q
+      - name: Run tests
+        # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
+        run: poetry run pytest --maxfail=1 --disable-warnings -q
 
   build-and-push:
     name: Build and Push Docker Image
