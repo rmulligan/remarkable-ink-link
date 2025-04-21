@@ -23,10 +23,16 @@ def test_extract_url_valid_plain(payload, expected):
 @pytest.mark.parametrize(
     "payload",
     [
+        # Existing invalid patterns
         b"https://good.com\nmalicious",  # contains newline
-        b" ftp://leading-scheme.com",  # wrong scheme
-        b"https://trailing-space.com ",  # trailing space
-        b"http:// no-host",  # space after scheme
+        b" ftp://leading-scheme.com",      # wrong scheme
+        b"https://trailing-space.com ",    # trailing space
+        b"http:// no-host",                # space after scheme
+        # New invalid patterns
+        b"htt://example.com",              # invalid scheme typo
+        b"http://",                       # missing netloc
+        b"https://example.com<evil>",     # invalid character '<'
+        b"https://example.com|bar",       # invalid character '|'
     ],
 )
 def test_extract_url_invalid_plain(payload):

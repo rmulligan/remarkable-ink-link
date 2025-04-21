@@ -116,7 +116,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 from urllib.parse import urlparse
 
                 parsed = urlparse(url)
-                if parsed.scheme in ("http", "https") and parsed.netloc:
+                # Validate scheme, netloc, and allowed characters
+                if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(url):
                     return url
 
         except json.JSONDecodeError:
@@ -134,7 +135,8 @@ class URLHandler(BaseHTTPRequestHandler):
             from urllib.parse import urlparse
 
             parsed = urlparse(raw)
-            if parsed.scheme in ("http", "https") and parsed.netloc:
+            # Validate scheme, netloc, and allowed characters
+            if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(raw):
                 return raw
         except Exception:
             # Failed to parse as plain text URL
