@@ -10,6 +10,8 @@ on:
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
     permissions:
       contents: read
       issues: write
@@ -23,7 +25,7 @@ jobs:
       - name: Install GitHub CLI
         uses: cli/cli@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.GH_TOKEN }}
 
       - name: Ensure gh-projects extension
         run: |
