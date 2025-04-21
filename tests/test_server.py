@@ -41,6 +41,7 @@ def test_extract_url_valid_plain(payload, expected):
 def test_extract_url_invalid_plain(payload):
     assert call_extract(payload) is None
 
+
 def test_extract_url_prefix_strips_invalid_suffix():
     # Valid URL prefix followed by invalid '<' character and text
     payload = b"https://example.com/page<evil>"
