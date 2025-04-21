@@ -59,7 +59,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
         # Only allow http or https and a limited set of URL-safe chars
         SAFE_URL_REGEX = re.compile(
-            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\'"\(\)\*\+,;=%]+$'
+            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$'
         )
         return bool(SAFE_URL_REGEX.match(url))
 
