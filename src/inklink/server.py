@@ -106,6 +106,7 @@ class URLHandler(BaseHTTPRequestHandler):
         # Try to decode as JSON
         try:
             data = json.loads(post_data.decode("utf-8"))
+
             if url := data.get("url"):
                 # Reject URLs containing any whitespace or control characters
                 if any(c.isspace() for c in url):
@@ -117,6 +118,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 parsed = urlparse(url)
                 if parsed.scheme in ("http", "https") and parsed.netloc:
                     return url
+
         except json.JSONDecodeError:
             pass
 

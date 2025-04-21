@@ -132,6 +132,7 @@ class GoogleDocsService:
         except Exception:
             # If parsing fails, assume it's a document ID
             pass
+          
         return url_or_id
 
     def _process_container(

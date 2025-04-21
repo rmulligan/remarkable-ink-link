@@ -442,6 +442,7 @@ class DocumentService:
             Processed plain text with proper formatting
         """
         plain_content = ""
+
         if structured_content := content.get("structured_content", []):
             for item in structured_content:
                 content_type = item.get("type", "paragraph")
