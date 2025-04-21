@@ -142,8 +142,10 @@ class URLHandler(BaseHTTPRequestHandler):
 
             # fallback: extract longest safe URL prefix before trailing invalid chars
             end = len(raw)
+            # Define allowed URL characters
+            allowed_url_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=")
             # Identify the start of the invalid suffix
-            while end > 0 and not raw[end - 1].isspace() and raw[end - 1].isprintable():
+            while end > 0 and raw[end - 1] in allowed_url_chars:
                 end -= 1
 
             for i in range(end, 0, -1):
