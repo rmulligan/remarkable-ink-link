@@ -119,12 +119,19 @@ class GoogleDocsService:
         """
         Extract document ID from Google Docs URL, or return as-is.
         """
-        if "docs.google.com" in url_or_id:
-            parts = url_or_id.split("/d/")
-            if len(parts) > 1:
-                doc = parts[1].split("/")
-                if doc:
-                    return doc[0]
+        from urllib.parse import urlparse
+
+        try:
+            parsed_url = urlparse(url_or_id)
+            if parsed_url.hostname == "docs.google.com":
+                parts = parsed_url.path.split("/d/")
+                if len(parts) > 1:
+                    doc = parts[1].split("/")
+                    if doc:
+                        return doc[0]
+        except Exception as e:
+            logger.warning(f"Failed to parse URL: {url_or_id}. Error: {e}")
+
         return url_or_id
 
     def _process_container(
