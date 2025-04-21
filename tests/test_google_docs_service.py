@@ -45,6 +45,7 @@ def test_extract_doc_id():
     url_simple = "https://docs.google.com/document/d/DEF67890"
     assert service._extract_doc_id(url_simple) == "DEF67890"
 
+
 @pytest.mark.parametrize("url_or_id", [
     # Hostname not exactly docs.google.com
     "https://evil.docs.google.com/document/d/ABC12345/edit",
