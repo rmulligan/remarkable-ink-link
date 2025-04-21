@@ -123,16 +123,17 @@ class GoogleDocsService:
 
         try:
             parsed_url = urlparse(url_or_id)
+            # Only extract ID for official Google Docs URLs at the expected path
             if parsed_url.hostname == "docs.google.com":
-                parts = parsed_url.path.split("/d/")
-                if len(parts) > 1:
-                    doc = parts[1].split("/")
-                    if doc:
-                        return doc[0]
+                # Expect path like '/document/d/<ID>/...'
+                path = parsed_url.path or ""
+                # Split into segments ['', 'document', 'd', '<ID>', ...]
+                segments = path.split("/")
+                if len(segments) >= 4 and segments[1] == "document" and segments[2] == "d" and segments[3]:
+                    return segments[3]
         except Exception:
-            # If parsing fails, assume it's a document ID
+            # If parsing fails or unexpected format, return input as-is
             pass
-          
         return url_or_id
 
     def _process_container(
