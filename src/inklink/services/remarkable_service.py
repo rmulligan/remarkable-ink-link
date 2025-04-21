@@ -153,9 +153,8 @@ class RemarkableService(IRemarkableService):
                     return True, f"Document uploaded to Remarkable: {title}"
                 else:
                     error_details = (
-                        result.stderr
-                        if result.stderr
-                        else f"Command failed with code {result.returncode}"
+                        result.stderr or f"Command failed with code {result.returncode}"
+
                     )
                     error_msg = format_error(
                         "upload", "Failed to upload document", error_details
