@@ -136,6 +136,14 @@ class URLHandler(BaseHTTPRequestHandler):
             parsed = urlparse(raw)
             if parsed.scheme in ("http", "https") and parsed.netloc:
                 return raw
+
+            # fallback: extract longest safe URL prefix before trailing invalid chars
+            for i in range(len(raw), 0, -1):
+                candidate = raw[:i]
+                if self._is_safe_url(candidate):
+                    parsed_pfx = urlparse(candidate)
+                    if parsed_pfx.scheme in ("http", "https") and parsed_pfx.netloc:
+                        return candidate
         except Exception:
             # Failed to parse as plain text URL
             pass
