@@ -31,7 +31,7 @@ def test_extract_url_valid_plain(payload, expected):
         # New invalid patterns
         b"htt://example.com",              # invalid scheme typo
         b"http://",                       # missing netloc
-        b"https://example.com<evil>",     # invalid character '<'
+        # b"https://example.com<evil>",     # invalid character '<' (prefix stripping handled separately)
         b"https://example.com|bar",       # invalid character '|'
         b'https://example.com\'quote',     # invalid character: single quote
         b'https://example.com"double',      # invalid character: double quote
@@ -40,6 +40,11 @@ def test_extract_url_valid_plain(payload, expected):
 )
 def test_extract_url_invalid_plain(payload):
     assert call_extract(payload) is None
+
+def test_extract_url_prefix_strips_invalid_suffix():
+    # Valid URL prefix followed by invalid '<' character and text
+    payload = b"https://example.com/page<evil>"
+    assert call_extract(payload) == "https://example.com/page"
 
 
 def test_extract_url_valid_json():
