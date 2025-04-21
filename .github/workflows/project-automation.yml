@@ -1,10 +1,11 @@
 name: Auto Add to Kanban
 
 on:
+  workflow_dispatch:
   issues:
     types: [opened]
   pull_request:
-    types: [opened]
+    types: [opened, synchronize]
 
 jobs:
   add-to-project:
@@ -29,6 +30,8 @@ jobs:
           if ! gh extension list | grep -q 'github/gh-projects'; then
             gh extension install github/gh-projects
           fi
+      - name: Bootstrap Kanban project
+        run: bash scripts/manage_project.sh
 
       - name: Add new issue/PR to InkLink Kanban
         env:
