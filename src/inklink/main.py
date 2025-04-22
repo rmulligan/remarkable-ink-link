@@ -31,5 +31,10 @@ def auth(host, port):
     uvicorn.run(app, host=host, port=port)
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the application."""
     cli()
+
+
+if __name__ == "__main__":
+    main()
