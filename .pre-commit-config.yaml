@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.10
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.7.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+
+  - repo: local
+    hooks:
+      - id: poetry-lock
+        name: poetry lock
+        entry: poetry lock
+        language: system
+        files: ^pyproject\.toml$
+        verbose: false
