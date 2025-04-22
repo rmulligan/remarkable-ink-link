@@ -66,6 +66,10 @@ To install dependencies and set up the local environment, run:
 ```bash
 yarn
 ```
+After installing, set up Git hooks to enforce formatting and dependency locks:
+```bash
+pre-commit install
+```
 
 This will install Python dependencies via Poetry.
 
