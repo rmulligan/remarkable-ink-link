@@ -158,8 +158,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 return prefix
 
         # If there is a '^' suffix, strip it and validate the prefix
-        if '^' in raw:
-            prefix = raw.split('^', 1)[0]
+        if raw.endswith('^'):
+            prefix = raw[:-1]  # Remove the trailing '^'
             parsed_pref = urlparse(prefix)
             if (
                 parsed_pref.scheme in ("http", "https")
