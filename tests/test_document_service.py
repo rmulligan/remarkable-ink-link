@@ -136,9 +136,11 @@ def test_convert_to_remarkable(mock_run, document_service):
     # Verify the command was called correctly
     mock_run.assert_called_once()
     args = mock_run.call_args[0][0]
+    # First element is the drawj2d executable
     assert args[0] == document_service.drawj2d_path
-    assert "-Trm" in args
-    assert "-rmv6" in args
+    # Should specify frontend HCL and type RM
+    assert args[1:5] == ["-F", "hcl", "-T", "rm"]
+    # Output and input paths present
     assert "-o" in args
     assert rm_path in args
     assert hcl_path in args

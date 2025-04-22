@@ -1,4 +1,3 @@
-
 """Document creation service for Pi Share Receiver.
 
 This service converts web content to reMarkable-compatible documents
@@ -64,8 +63,10 @@ class DocumentService:
 
             logger.info(f"Creating HCL document for: {content.get('title', url)}")
 
-            # Generate HCL file path
-            hcl_filename = f"doc_{hash(url)}_{int(time.time())}.hcl"
+            # Use the page title for the filename, sanitized for filesystem safety
+            page_title = content.get("title", f"Page from {url}")
+            safe_title = ''.join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in page_title).strip().replace(' ', '_')
+            hcl_filename = f"doc_{safe_title}_{int(time.time())}.hcl"
             hcl_path = os.path.join(self.temp_dir, hcl_filename)
 
             with open(hcl_path, "w", encoding="utf-8") as f:
@@ -133,6 +134,9 @@ class DocumentService:
                                 f'puts "text {self.margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n'
                             )
                             y_pos += self.line_height
+                        # Skip duplicate processing for list items and add spacing
+                        y_pos += self.line_height * 0.5
+                        continue
                     else:
                         item_content = item.get("content", "")
                         if not item_content:
@@ -308,6 +312,23 @@ class DocumentService:
                     )
                     y_pos += qr_size + self.line_height
 
+                # Embed PDF vector outlines if in outline mode and no raster images
+                # drawj2d will interpret PDF and redraw vector data as editable strokes
+                mode = CONFIG.get("PDF_RENDER_MODE", "outline")
+                if not images and mode == "outline":
+                    # Use configured page and scale
+                    page = CONFIG.get("PDF_PAGE", 1)
+                    scale = CONFIG.get("PDF_SCALE", 1.0)
+                    # Position at left margin
+                    f.write(f'puts "moveto {self.margin} 0"\n')
+                    # Embed specified PDF page at given scale
+                    f.write(f'puts "image {pdf_path} {page} 0 0 {scale}"\n')
+                    # Add timestamp at bottom
+                    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+                    f.write(
+                        f'puts "text {self.margin} {self.page_height - self.margin} \\"Generated: {ts}\\""\n'
+                    )
+                    return hcl_path
                 # Embed raster images if provided
                 if images:
                     for img_path in images:
@@ -354,9 +375,9 @@ class DocumentService:
         """Convert HCL to Remarkable document."""
         try:
             timestamp = int(time.time())
+            # Name output using .rm extension for raw reMarkable page
             rm_filename = f"rm_{hash(url)}_{timestamp}.rm"
             rm_path = os.path.join(self.temp_dir, rm_filename)
-
             return self._convert_to_remarkable(hcl_path, rm_path)
         except Exception as e:
             logger.error(f"Error in create_rmdoc: {e}")
@@ -392,11 +413,19 @@ class DocumentService:
                 logger.info(f"Creating output directory: {output_dir}")
                 os.makedirs(output_dir, exist_ok=True)
 
-            # Use parameters for Remarkable format - fixed to not use `-r229` flag
-            # -Trm: Target is Remarkable
+            # Use parameters for raw reMarkable page format
+            # -Trm: Target is raw reMarkable page format
+            # -rmv6: Use version 6 file format
             # -o: Specify output file
-            # -rmv6: Use rmv6 format introduced in Remarkable firmware 3.0
-            cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
+            # Use drawj2d to generate raw reMarkable page format
+            # Explicitly specify frontend as HCL and output type RM
+            cmd = [
+                self.drawj2d_path,
+                "-F", "hcl",
+                "-T", "rm",
+                "-o", rm_path,
+                hcl_path,
+            ]
             logger.info(f"Conversion command: {' '.join(cmd)}")
 
             # Define the conversion function that will be retried if it fails
@@ -455,7 +484,21 @@ class DocumentService:
         """Escape special characters for HCL."""
         if not text:
             return ""
-        return text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+        # Escape special characters for Hecl (drawj2d HCL) parsing
+        # - backslashes must be doubled
+        # - double quotes must be escaped
+        # - dollar signs must be escaped to prevent variable substitution
+        # - square brackets must be escaped to prevent command substitution
+        # - backticks replaced to avoid markup/internal use
+        # - newlines replaced by spaces
+        s = text.replace("\\", "\\\\")
+        s = s.replace("\"", "\\\"")
+        s = s.replace("$", "\\$")
+        s = s.replace("[", "\\[")
+        s = s.replace("]", "\\]")
+        s = s.replace("`", "'")
+        s = s.replace("\n", " ")
+        return s
 
     def _process_content(self, content: Dict[str, Any]) -> str:
         """Process content dictionary into plain text.

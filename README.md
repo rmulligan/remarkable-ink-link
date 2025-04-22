@@ -116,12 +116,25 @@ Once installed, you can:
   
 ## 🔐 Authentication
 
-Set up reMarkable Cloud pairing and auto configure rmapi using the ddvk fork:
-```bash
-# Start the authentication UI (default at http://127.0.0.1:8000/auth)
-yarn auth
-```
-Open the auth page in your browser, enter your reMarkable credentials, and click Connect. InkLink will invoke `rmapi config` under the hood to store your credentials.
+Follow these steps to authenticate your reMarkable account:
+
+1. Start the InkLink server (default on port 9999):
+
+   ```bash
+   docker-compose up -d inklink
+   ```
+
+2. In your browser, visit:
+
+   ```
+   http://localhost:9999/auth
+   ```
+
+3. On the authentication page:
+   • Click the link to go to the reMarkable device connect page and retrieve your one‑time code.  
+   • Paste the code into the form and submit.
+
+InkLink will invoke `rmapi login` under the hood and store your credentials. Once authenticated, you can use the `/share` endpoint to upload documents without additional prompts.
 
 - Run tests: `yarn test`
 - Lint code: `yarn lint`

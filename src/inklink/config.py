@@ -38,7 +38,10 @@ CONFIG = {
     "LOG_LEVEL": os.environ.get("INKLINK_LOG_LEVEL", "INFO"),
     "LOG_FILE": os.environ.get("INKLINK_LOG_FILE", "inklink.log"),
     # PDF rendering mode: "outline" for vector outlines via drawj2d or "raster" for PNG rasterization
-    "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "outline"),
+    "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "raster"),
+    # Default PDF page number and scale for outline embedding
+    "PDF_PAGE": int(os.environ.get("INKLINK_PDF_PAGE", 1)),
+    "PDF_SCALE": float(os.environ.get("INKLINK_PDF_SCALE", 1.0)),
 }
 
 # Ensure required directories exist
