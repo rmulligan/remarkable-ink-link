@@ -56,14 +56,37 @@ def test_is_pdf_url_header(monkeypatch, pdf_service):
 
 
 def test_process_pdf(monkeypatch, tmp_path, pdf_service):
+
+def test_process_pdf_raster_mode(monkeypatch, tmp_path, pdf_service):
+    """Test raster mode generates PNG images for each PDF page."""
+    from inklink.config import CONFIG
+    import pdf2image
+    from PIL import Image
+
+    # Enable raster mode
+    monkeypatch.setitem(CONFIG, "PDF_RENDER_MODE", "raster")
+
     # Prepare dummy PDF content
+    pdf_bytes = b"%PDF-1.4 dummy pdf"
     pdf_bytes = b"%PDF-1.4 dummy content"
 
     def fake_get(url, stream, timeout):
         return DummyGetResponse(pdf_bytes)
 
     monkeypatch.setattr(requests, "get", fake_get)
+
+    # Mock convert_from_path to return two dummy images
+    def fake_convert(path):
+        return [Image.new("RGB", (100, 200)), Image.new("RGB", (200, 100))]
+    monkeypatch.setattr(pdf2image, "convert_from_path", fake_convert)
+
     result = pdf_service.process_pdf("http://example.com/test.pdf", qr_path="")
+    assert "images" in result
+    images = result["images"]
+    assert isinstance(images, list) and len(images) == 2
+    for img_path in images:
+        assert os.path.exists(img_path)
+        assert img_path.lower().endswith(".png")
     assert result is not None
     pdf_path = result.get("pdf_path")
     assert pdf_path and os.path.exists(pdf_path)

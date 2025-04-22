@@ -37,6 +37,8 @@ CONFIG = {
     # Logging
     "LOG_LEVEL": os.environ.get("INKLINK_LOG_LEVEL", "INFO"),
     "LOG_FILE": os.environ.get("INKLINK_LOG_FILE", "inklink.log"),
+    # PDF rendering mode: "outline" for vector outlines via drawj2d or "raster" for PNG rasterization
+    "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "outline"),
 }
 
 # Ensure required directories exist

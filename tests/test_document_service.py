@@ -148,6 +148,7 @@ def test_convert_to_remarkable(mock_run, document_service):
     assert result is None
 
 
+
 def test_create_rmdoc(document_service, monkeypatch):
     """Test creation of RM document."""
 
@@ -173,3 +174,29 @@ def test_create_rmdoc(document_service, monkeypatch):
     assert os.path.exists(result)
     assert os.path.basename(result).startswith("rm_")
     assert os.path.basename(result).endswith(".rm")
+
+def test_create_pdf_hcl_with_images(document_service, tmp_path):
+    """Test creation of PDF HCL embedding raster images."""
+    from PIL import Image
+
+    # Create dummy images
+    img1 = tmp_path / "img1.png"
+    img2 = tmp_path / "img2.png"
+    for path, size in [(img1, (50, 100)), (img2, (200, 100))]:
+        Image.new("RGB", size).save(str(path))
+
+    images = [str(img1), str(img2)]
+    # Generate HCL script with images
+    hcl_path = document_service.create_pdf_hcl(
+        pdf_path="dummy.pdf", title="Test Page", images=images
+    )
+    assert hcl_path and os.path.exists(hcl_path)
+    content = open(hcl_path, "r", encoding="utf-8").read()
+
+    # Check for newpage and image commands
+    assert content.count('puts "newpage"') == len(images)
+    for img in images:
+        assert img in content
+        assert 'puts "image ' in content
+    
+
