@@ -197,6 +197,26 @@ Standalone integration modules (coming soon):
 MIT License — permissive and open.  
 You are free to use, modify, extend, and build commercial or personal tools on top of InkLink. We may provide a hosted version in the future, but the core will always remain open and community-driven.
 
+## 🐞 Troubleshooting
+
+If you encounter an error pulling images such as:
+
+```
+failed to solve: python:3.10-slim: error getting credentials - err: exec: "docker-credential-desktop.exe": executable file not found in $PATH, out: ``
+```
+
+open your Docker client configuration file (`~/.docker/config.json`) and remove or disable any `credsStore` or `credHelpers` entries referencing Windows credential helpers. For example:
+
+```json
+{
+  // …
+  // "credsStore": "desktop.exe",
+  // "credHelpers": { … }
+}
+```
+
+Save the file and rerun `docker compose build`.
+
 ---
 
 ## 🧠 Created by
