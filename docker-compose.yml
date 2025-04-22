@@ -1,11 +1,15 @@
+
 version: "3.9"
 services:
   inklink:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - .:/app
+
+    # Map HTTP server port for external access
+    ports:
+      - "9999:9999"
+
     # Run the InkLink HTTP server by default
     command: ["poetry", "run", "inklink", "server", "--host", "0.0.0.0", "--port", "9999"]
     environment:

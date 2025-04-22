@@ -1,3 +1,4 @@
+
 """Document creation service for Pi Share Receiver.
 
 This service converts web content to reMarkable-compatible documents
@@ -19,6 +20,9 @@ from inklink.config import CONFIG
 # Import utility functions for error handling
 from inklink.utils import retry_operation, format_error
 
+# Import Image for reading PNG dimensions
+from PIL import Image
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -37,10 +41,11 @@ class DocumentService:
         self.drawj2d_path = drawj2d_path
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Font configuration from central config - use Lines font for Remarkable
-        self.heading_font = "Lines-Bold"
-        self.body_font = "Lines"
-        self.code_font = "Lines"
+        # Font configuration from central config
+        # Use configured fonts (defaults: Liberation Sans, DejaVu Sans Mono)
+        self.heading_font = CONFIG.get("HEADING_FONT")
+        self.body_font = CONFIG.get("BODY_FONT")
+        self.code_font = CONFIG.get("CODE_FONT")
 
         # Remarkable Pro page size (portrait mode)
         self.page_width = 2160  # Updated for Remarkable Pro
@@ -251,7 +256,7 @@ class DocumentService:
             return None
 
     def create_pdf_hcl(
-        self, pdf_path: str, title: str, qr_path: str = None
+        self, pdf_path: str, title: str, qr_path: str = None, images: List[str] = None
     ) -> Optional[str]:
         """Create HCL script for PDF file."""
         try:
@@ -302,6 +307,27 @@ class DocumentService:
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
                     )
                     y_pos += qr_size + self.line_height
+
+                # Embed raster images if provided
+                if images:
+                    for img_path in images:
+                        f.write('puts "newpage"\n')
+                        with Image.open(img_path) as img:
+                            orig_w, orig_h = img.size
+                        max_w = self.page_width - 2 * self.margin
+                        scale = max_w / orig_w
+                        width = int(orig_w * scale)
+                        height = int(orig_h * scale)
+                        x = self.margin
+                        y = self.margin
+                        f.write(
+                            f'puts "image {x} {y} {width} {height} \\"{img_path}\\""\n'
+                        )
+                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                    f.write(
+                        f'puts "text {self.margin} {self.page_height - self.margin} \\"Generated: {timestamp}\\""\n'
+                    )
+                    return hcl_path
 
                 # Add instructions for viewing the PDF
                 f.write(
@@ -417,7 +443,6 @@ class DocumentService:
                 operation_name="Document conversion",
                 max_retries=2,  # Only retry a couple of times for conversion
             )
-
         except Exception as e:
             logger.error(
                 format_error(

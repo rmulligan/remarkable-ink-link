@@ -25,9 +25,11 @@ def test_init(document_service, tmp_path):
     assert os.path.exists(document_service.temp_dir)
     # Verify properties are set correctly
     assert document_service.drawj2d_path == str(tmp_path / "bin" / "drawj2d")
-    assert document_service.heading_font == "Lines-Bold"
-    assert document_service.body_font == "Lines"
-    assert document_service.code_font == "Lines"
+    # Default fonts should come from CONFIG (Liberation Sans, DejaVu Sans Mono)
+    from inklink.config import CONFIG
+    assert document_service.heading_font == CONFIG.get("HEADING_FONT")
+    assert document_service.body_font == CONFIG.get("BODY_FONT")
+    assert document_service.code_font == CONFIG.get("CODE_FONT")
     assert document_service.page_width == 2160
     assert document_service.page_height == 1620
     assert document_service.margin == 120
@@ -89,11 +91,13 @@ def test_create_hcl(document_service):
         f'puts "size {document_service.page_width} {document_service.page_height}"'
         in hcl_content
     )
-    assert 'puts "set_font Lines-Bold 36"' in hcl_content
+    # Heading font should use configured heading font
+    assert f'puts "set_font {document_service.heading_font} 36"' in hcl_content
     assert 'puts "pen black"' in hcl_content
     assert 'puts "text 120 120 \\"Test Page\\""' in hcl_content
     assert f'puts "text 120 160 \\"Source: {url}\\""' in hcl_content
-    assert 'puts "set_font Lines-Bold 32"' in hcl_content
+    # Secondary heading should use configured heading font
+    assert f'puts "set_font {document_service.heading_font} 32"' in hcl_content
     assert 'puts "text 120' in hcl_content
     assert "Heading 1" in hcl_content
     assert "This is a paragraph" in hcl_content
@@ -148,6 +152,7 @@ def test_convert_to_remarkable(mock_run, document_service):
     assert result is None
 
 
+
 def test_create_rmdoc(document_service, monkeypatch):
     """Test creation of RM document."""
 
@@ -173,3 +178,29 @@ def test_create_rmdoc(document_service, monkeypatch):
     assert os.path.exists(result)
     assert os.path.basename(result).startswith("rm_")
     assert os.path.basename(result).endswith(".rm")
+
+def test_create_pdf_hcl_with_images(document_service, tmp_path):
+    """Test creation of PDF HCL embedding raster images."""
+    from PIL import Image
+
+    # Create dummy images
+    img1 = tmp_path / "img1.png"
+    img2 = tmp_path / "img2.png"
+    for path, size in [(img1, (50, 100)), (img2, (200, 100))]:
+        Image.new("RGB", size).save(str(path))
+
+    images = [str(img1), str(img2)]
+    # Generate HCL script with images
+    hcl_path = document_service.create_pdf_hcl(
+        pdf_path="dummy.pdf", title="Test Page", images=images
+    )
+    assert hcl_path and os.path.exists(hcl_path)
+    content = open(hcl_path, "r", encoding="utf-8").read()
+
+    # Check for newpage and image commands
+    assert content.count('puts "newpage"') == len(images)
+    for img in images:
+        assert img in content
+        assert 'puts "image ' in content
+    
+
