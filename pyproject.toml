@@ -5,6 +5,11 @@ version = "0.1.0"
 description = "Bring AI to your reMarkable tablet"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+
+packages = [
+  { include = "inklink", from = "src" }
+]
+
 packages = [{ include = "inklink", from = "src" }]
 
 [tool.poetry.dependencies]
