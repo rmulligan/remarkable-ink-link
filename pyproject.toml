@@ -41,11 +41,5 @@ pre-commit = "^3.4.0"
 inklink = "inklink.main:main"
 
 [build-system]
-readability-lxml = "^0.8.1"
-PyPDF2 = "^3.0.0"
-# For PDF rasterization: requires `poppler-utils` on host
-pdf2image = "^1.16.0"
-markdown = "^3.4.1"
-[build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
