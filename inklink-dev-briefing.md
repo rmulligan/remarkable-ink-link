@@ -80,7 +80,7 @@ Handwritten Content → MyScript OCR → Ollama Vision Model Verification → Fi
 For your RTX 4090 setup with 64GB RAM, we recommend:
 
 #### Primary Models for Tool Calling
-- **Llama 3.1 (8B)** - Officially supported by Ollama's tool calling API
+- **Llama 3.1 (8B)** - Officially supported by Ollama's tool-calling API
 - **Dolphin 3.0 Llama 3.1 (8B)** - Specifically designed for function calling capabilities 
 - **DeepSeek-R1 Models** - Excellent for reasoning tasks
 
