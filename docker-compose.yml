@@ -1,11 +1,11 @@
+
 version: "3.9"
 services:
   inklink:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - .:/app
+
     # Run the InkLink HTTP server by default
     command: ["poetry", "run", "inklink", "server", "--host", "0.0.0.0", "--port", "9999"]
     environment:
