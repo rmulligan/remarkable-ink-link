@@ -13,6 +13,7 @@
     "auth": "poetry run inklink auth",
     "test": "poetry run pytest",
     "lint": "poetry run flake8 src tests",
-    "format": "poetry run black src tests"
+    "format": "poetry run black src tests",
+    "prepare": "pre-commit install"
   }
 }
