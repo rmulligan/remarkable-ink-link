@@ -25,9 +25,11 @@ def test_init(document_service, tmp_path):
     assert os.path.exists(document_service.temp_dir)
     # Verify properties are set correctly
     assert document_service.drawj2d_path == str(tmp_path / "bin" / "drawj2d")
-    assert document_service.heading_font == "Lines-Bold"
-    assert document_service.body_font == "Lines"
-    assert document_service.code_font == "Lines"
+    # Default fonts should come from CONFIG (Liberation Sans, DejaVu Sans Mono)
+    from inklink.config import CONFIG
+    assert document_service.heading_font == CONFIG.get("HEADING_FONT")
+    assert document_service.body_font == CONFIG.get("BODY_FONT")
+    assert document_service.code_font == CONFIG.get("CODE_FONT")
     assert document_service.page_width == 2160
     assert document_service.page_height == 1620
     assert document_service.margin == 120
@@ -89,11 +91,13 @@ def test_create_hcl(document_service):
         f'puts "size {document_service.page_width} {document_service.page_height}"'
         in hcl_content
     )
-    assert 'puts "set_font Lines-Bold 36"' in hcl_content
+    # Heading font should use configured heading font
+    assert f'puts "set_font {document_service.heading_font} 36"' in hcl_content
     assert 'puts "pen black"' in hcl_content
     assert 'puts "text 120 120 \\"Test Page\\""' in hcl_content
     assert f'puts "text 120 160 \\"Source: {url}\\""' in hcl_content
-    assert 'puts "set_font Lines-Bold 32"' in hcl_content
+    # Secondary heading should use configured heading font
+    assert f'puts "set_font {document_service.heading_font} 32"' in hcl_content
     assert 'puts "text 120' in hcl_content
     assert "Heading 1" in hcl_content
     assert "This is a paragraph" in hcl_content

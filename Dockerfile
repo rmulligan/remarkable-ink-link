@@ -22,6 +22,14 @@ RUN wget -qO /tmp/drawj2d.deb \
     # Ensure drawj2d is executable
     && chmod +x /usr/bin/drawj2d || true
 
+# Install fonts for document conversion (provide Liberation Sans and DejaVu Sans Mono)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       fonts-liberation \
+       fonts-dejavu-core \
+       poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
 # Build and install ddvk rmapi (reMarkable cloud client)
 RUN git clone https://github.com/ddvk/rmapi.git /tmp/rmapi \
     && cd /tmp/rmapi \

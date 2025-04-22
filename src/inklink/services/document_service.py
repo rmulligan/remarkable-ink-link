@@ -41,10 +41,11 @@ class DocumentService:
         self.drawj2d_path = drawj2d_path
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Font configuration from central config - use Lines font for Remarkable
-        self.heading_font = "Lines-Bold"
-        self.body_font = "Lines"
-        self.code_font = "Lines"
+        # Font configuration from central config
+        # Use configured fonts (defaults: Liberation Sans, DejaVu Sans Mono)
+        self.heading_font = CONFIG.get("HEADING_FONT")
+        self.body_font = CONFIG.get("BODY_FONT")
+        self.code_font = CONFIG.get("CODE_FONT")
 
         # Remarkable Pro page size (portrait mode)
         self.page_width = 2160  # Updated for Remarkable Pro

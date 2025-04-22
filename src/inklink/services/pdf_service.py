@@ -92,7 +92,8 @@ class PDFService:
                     img_path = os.path.join(self.temp_dir, img_name)
                     img.save(img_path, "PNG")
                     image_paths.append(img_path)
-                return {"title": title, "images": image_paths}
+                # Include original PDF path in result for consistency
+                return {"title": title, "images": image_paths, "pdf_path": pdf_path}
 
             return {"title": title, "pdf_path": pdf_path}
 
