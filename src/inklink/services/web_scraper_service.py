@@ -109,7 +109,9 @@ class WebScraperService:
         if not structured:
             text = soup.get_text(separator=" ", strip=True)
             structured.append({"type": "paragraph", "content": text})
-
+        # Debug: log structured content information
+        logger.info(f"Extracted content structure: {len(structured)} items")
+        logger.info(f"First content item type: {structured[0]['type'] if structured else 'None'}")
         return {"title": title, "structured_content": structured, "images": images}
 
     def _extract_title_directly(self, url: str) -> str:

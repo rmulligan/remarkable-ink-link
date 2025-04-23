@@ -90,9 +90,9 @@ class RemarkableService(IRemarkableService):
                 using_temp_file = True
                 logger.info(f"Created temporary file for upload: {safe_path}")
 
-            # Upload with correct filename (no -j flag, no ID/rename logic)
-            cmd = [self.rmapi_path, "put", safe_path, self.upload_folder]
-            logger.info(f"Running upload command: {' '.join(cmd)}")
+            # Upload with custom filename using -n flag
+            cmd = [self.rmapi_path, "put", "-n", title, safe_path, self.upload_folder]
+            logger.info(f"Running upload command with title '{title}': {' '.join(cmd)}")
 
             try:
                 result = subprocess.run(

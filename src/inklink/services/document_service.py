@@ -387,6 +387,13 @@ class DocumentService:
         """Convert HCL file to Remarkable format using drawj2d."""
         try:
             logger.info(f"Starting conversion from {hcl_path} to {rm_path}")
+            # Log drawj2d version for compatibility checking
+            try:
+                version_cmd = [self.drawj2d_path, "--version"]
+                version_result = subprocess.run(version_cmd, capture_output=True, text=True, check=False)
+                logger.info(f"drawj2d version: {version_result.stdout.strip()}")
+            except Exception as e:
+                logger.warning(f"Could not determine drawj2d version: {e}")
 
             # Input validation
             if not os.path.exists(hcl_path):
@@ -419,10 +426,12 @@ class DocumentService:
             # -o: Specify output file
             # Use drawj2d to generate raw reMarkable page format
             # Explicitly specify frontend as HCL and output type RM
+            # Use parameters for raw reMarkable page format, including version flag
             cmd = [
                 self.drawj2d_path,
                 "-F", "hcl",
                 "-T", "rm",
+                "-rmv6",
                 "-o", rm_path,
                 hcl_path,
             ]
