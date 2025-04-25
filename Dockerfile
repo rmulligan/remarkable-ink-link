@@ -45,7 +45,6 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root
 
 COPY . /app
-RUN poetry install --no-interaction --no-ansi
 
 ## Expose default InkLink server port
 EXPOSE 9999
