@@ -173,6 +173,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 return prefix
 
         # If there is a '^' suffix, strip it and validate the prefix
+
         if raw.endswith("^"):
             prefix = raw[:-1]  # Remove the trailing '^'
             parsed_pref = urlparse(prefix)
@@ -183,11 +184,7 @@ class URLHandler(BaseHTTPRequestHandler):
             ):
                 return prefix
 
-# Removed redundant block checking for '^' anywhere in the string.
-
         # Not a valid URL
-        return None
-
         return None
 
     def _handle_pdf_url(self, url, qr_path):
