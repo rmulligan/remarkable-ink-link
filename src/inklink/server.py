@@ -59,7 +59,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
         # Only allow http or https and a limited set of URL-safe chars
         SAFE_URL_REGEX = re.compile(
-            r'^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$'
+            r"^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$"
         )
         # Use fullmatch to ensure the entire URL string matches allowed pattern
         return bool(SAFE_URL_REGEX.fullmatch(url))
@@ -118,7 +118,11 @@ class URLHandler(BaseHTTPRequestHandler):
 
                 parsed = urlparse(url)
                 # Validate scheme, netloc, and allowed characters
-                if parsed.scheme in ("http", "https") and parsed.netloc and self._is_safe_url(url):
+                if (
+                    parsed.scheme in ("http", "https")
+                    and parsed.netloc
+                    and self._is_safe_url(url)
+                ):
                     return url
 
         except json.JSONDecodeError:
@@ -137,6 +141,7 @@ class URLHandler(BaseHTTPRequestHandler):
         raw = raw.strip()
 
         from urllib.parse import urlparse
+
         parsed = urlparse(raw)
         # Validate scheme and netloc
         if parsed.scheme not in ("http", "https") or not parsed.netloc:
@@ -147,8 +152,8 @@ class URLHandler(BaseHTTPRequestHandler):
             return raw
 
         # If there is a '<' suffix, strip it and validate the prefix
-        if '<' in raw:
-            prefix = raw.split('<', 1)[0]
+        if "<" in raw:
+            prefix = raw.split("<", 1)[0]
             parsed_pref = urlparse(prefix)
             if (
                 parsed_pref.scheme in ("http", "https")
@@ -157,8 +162,8 @@ class URLHandler(BaseHTTPRequestHandler):
             ):
                 return prefix
         # If there is a '^' suffix, strip it and validate the prefix
-        if '^' in raw:
-            prefix = raw.split('^', 1)[0]
+        if "^" in raw:
+            prefix = raw.split("^", 1)[0]
             parsed_pref = urlparse(prefix)
             if (
                 parsed_pref.scheme in ("http", "https")
@@ -168,7 +173,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 return prefix
 
         # If there is a '^' suffix, strip it and validate the prefix
-        if raw.endswith('^'):
+
+        if raw.endswith("^"):
             prefix = raw[:-1]  # Remove the trailing '^'
             parsed_pref = urlparse(prefix)
             if (
@@ -179,8 +185,6 @@ class URLHandler(BaseHTTPRequestHandler):
                 return prefix
 
         # Not a valid URL
-        return None
-
         return None
 
     def _handle_pdf_url(self, url, qr_path):
