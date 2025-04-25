@@ -183,6 +183,8 @@ class URLHandler(BaseHTTPRequestHandler):
             ):
                 return prefix
 
+# Removed redundant block checking for '^' anywhere in the string.
+
         # Not a valid URL
         return None
 
