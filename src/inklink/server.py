@@ -178,16 +178,7 @@ class URLHandler(BaseHTTPRequestHandler):
             ):
                 return prefix
 
-        # If there is a '^' suffix, strip it and validate the prefix
-        if '^' in raw:
-            prefix = raw.split('^', 1)[0]
-            parsed_pref = urlparse(prefix)
-            if (
-                parsed_pref.scheme in ("http", "https")
-                and parsed_pref.netloc
-                and self._is_safe_url(prefix)
-            ):
-                return prefix
+# Removed redundant block checking for '^' anywhere in the string.
 
         # Not a valid URL
         return None
