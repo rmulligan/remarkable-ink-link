@@ -136,12 +136,21 @@ def test_convert_to_remarkable(mock_run, document_service):
     # Verify the command was called correctly
     mock_run.assert_called_once()
     args = mock_run.call_args[0][0]
+    # First element is the drawj2d executable
     assert args[0] == document_service.drawj2d_path
-    assert "-Trm" in args
-    assert "-rmv6" in args
+    # Must include output flag and paths
     assert "-o" in args
     assert rm_path in args
     assert hcl_path in args
+    # Check format flags based on model
+    if getattr(document_service, 'is_remarkable_pro', False):
+        # Pro model should use rmdoc format
+        assert "-Trmdoc" in args
+        assert "-rmv6" not in args
+    else:
+        # rm2 model should use rm + rmv6
+        assert "-Trm" in args
+        assert "-rmv6" in args
 
     # Verify result
     assert result == rm_path

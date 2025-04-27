@@ -286,6 +286,40 @@ def run_server(host: str = None, port: int = None):
     httpd = HTTPServer(server_address, URLHandler)
     logger = setup_logging()
     logger.info(f"InkLink server listening on {host}:{port}")
+    # Pre-flight check: ensure rmapi is authenticated
+    try:
+        test_service = RemarkableService(CONFIG["RMAPI_PATH"], CONFIG.get("RM_FOLDER", "/"))
+        ok, msg = test_service.test_connection()
+        if not ok:
+            # Handle binary exec-format errors by falling back to PATH
+            if "Exec format error" in msg:
+                from shutil import which
+                alt = which("rmapi")
+                if alt:
+                    logger.warning("Exec format error with %s, falling back to PATH rmapi: %s", CONFIG["RMAPI_PATH"], alt)
+                    test_service.rmapi_path = alt
+                    CONFIG["RMAPI_PATH"] = alt
+                    ok2, msg2 = test_service.test_connection()
+                    if ok2:
+                        logger.info("Authentication check succeeded with PATH rmapi")
+                    else:
+                        logger.error(f"Authentication check failed with PATH rmapi: {msg2}")
+                        logger.error("Please run `inklink auth` to authenticate before sharing content.")
+                        import sys; sys.exit(1)
+                else:
+                    logger.error(f"Authentication check failed: {msg}")
+                    logger.error("No fallback rmapi found in PATH. Please install rmapi or run `inklink auth`.")
+                    import sys; sys.exit(1)
+            else:
+                logger.error(f"Authentication check failed: {msg}")
+                logger.error("Please run `inklink auth` to authenticate before sharing content.")
+                import sys; sys.exit(1)
+        else:
+            logger.debug("Authentication check succeeded")
+    except Exception as auth_err:
+        logger.error(f"Error during authentication check: {auth_err}")
+        logger.error("Please run `inklink auth` to authenticate before sharing content.")
+        import sys; sys.exit(1)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

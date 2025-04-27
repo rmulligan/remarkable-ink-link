@@ -47,9 +47,13 @@ class DocumentService:
         self.body_font = CONFIG.get("BODY_FONT")
         self.code_font = CONFIG.get("CODE_FONT")
 
-        # Remarkable Pro page size (portrait mode)
-        self.page_width = 2160  # Updated for Remarkable Pro
-        self.page_height = 1620  # Updated for Remarkable Pro
+        # Determine Remarkable model ("pro" or "rm2")
+        rm_model = CONFIG.get("REMARKABLE_MODEL", "pro").lower()
+        self.is_remarkable_pro = (rm_model == "pro")
+        # Page dimensions (pixels) and layout defaults
+        # These defaults match the Pro configuration; adjust if rm2
+        self.page_width = 2160
+        self.page_height = 1620
         self.margin = 120
         self.line_height = 40
 
@@ -101,7 +105,7 @@ class DocumentService:
                 y_pos += self.line_height
 
                 # Add QR code if available
-                if os.path.exists(qr_path):
+                if qr_path and os.path.exists(qr_path):
                     qr_size = 350
                     qr_x = self.page_width - self.margin - qr_size
                     f.write(
@@ -110,9 +114,10 @@ class DocumentService:
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
                     )
+                    # Move y_pos past the QR code
+                    y_pos += qr_size + self.line_height
 
                 # Process structured content
-                y_pos += qr_size + self.line_height
 
                 structured_content = content.get("structured_content", [])
 
@@ -363,7 +368,7 @@ class DocumentService:
             return None
 
     def _convert_to_remarkable(self, hcl_path: str, rm_path: str) -> Optional[str]:
-        """Convert HCL file to Remarkable format using drawj2d."""
+        """Convert HCL file to Remarkable format using drawj2d with verbose logging and fallback."""
         try:
             logger.info(f"Starting conversion from {hcl_path} to {rm_path}")
 
@@ -373,82 +378,75 @@ class DocumentService:
                 logger.error(error_msg)
                 return None
 
-            # Always attempt real conversion via drawj2d
-            # (Stub branch removed to ensure conversion is attempted in tests)
-
-            # Double check file contents
+            # Read and log HCL content for debugging
             try:
-                with open(hcl_path, "r") as f:
-                    hcl_content = f.read(500)
-                    logger.info(
-                        f"HCL file content (first 500 chars): {hcl_content[:500]}"
-                    )
+                with open(hcl_path, "r", encoding="utf-8") as f:
+                    hcl_content = f.read()
+                    logger.debug(f"HCL file full content: {hcl_content}")
+                    # Basic syntax check
+                    if 'puts \"size' not in hcl_content or 'puts \"text' not in hcl_content:
+                        logger.error("HCL file missing required content elements")
+                        return None
             except Exception as e:
                 logger.error(f"Failed to read HCL file: {e}")
+                return None
 
-            # Check output path
+            # Ensure output directory exists
             output_dir = os.path.dirname(rm_path)
             if not os.path.exists(output_dir):
                 logger.info(f"Creating output directory: {output_dir}")
                 os.makedirs(output_dir, exist_ok=True)
 
-            # Use parameters for Remarkable format - fixed to not use `-r229` flag
-            # -Trm: Target is Remarkable
-            # -o: Specify output file
-            # -rmv6: Use rmv6 format introduced in Remarkable firmware 3.0
-            cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
-            logger.info(f"Conversion command: {' '.join(cmd)}")
+            # Prepare conversion commands based on device model
+            if getattr(self, 'is_remarkable_pro', False):
+                # Use rmdoc format for reMarkable Pro
+                primary_cmd = [self.drawj2d_path, "-Trmdoc", "-o", rm_path, hcl_path]
+                # Fallback to legacy rm format
+                fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
+            else:
+                # Use rm format with rmv6 for reMarkable 2
+                primary_cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
+                # Fallback to plain rm format
+                fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
+            logger.info(f"Conversion command: {' '.join(primary_cmd)}")
 
-            # Define the conversion function that will be retried if it fails
-            def run_conversion(cmd_args):
-                logger.info(f"Running drawj2d conversion: {' '.join(cmd_args)}")
-
-                # Running the conversion using subprocess.run for better error handling
-                result = subprocess.run(cmd_args, capture_output=True, text=True)
-                logger.info(f"Command stdout: {result.stdout}")
-                logger.info(f"Command stderr: {result.stderr}")
-
+            # Try primary command
+            try:
+                result = subprocess.run(primary_cmd, capture_output=True, text=True)
+                logger.debug(f"Command stdout: {result.stdout}")
+                logger.debug(f"Command stderr: {result.stderr}")
                 if result.returncode != 0:
-                    raise RuntimeError(
-                        f"drawj2d conversion failed: Exit code {result.returncode}, stderr: {result.stderr}"
-                    )
+                    logger.warning("rmv6 format failed, trying older format")
+                    result = subprocess.run(fallback_cmd, capture_output=True, text=True)
+                    logger.debug(f"Fallback stdout: {result.stdout}")
+                    logger.debug(f"Fallback stderr: {result.stderr}")
+                    if result.returncode != 0:
+                        raise RuntimeError(f"All conversion attempts failed: {result.stderr}")
+            except Exception as conv_error:
+                logger.error(f"Conversion error: {conv_error}")
+                return None
 
-                if not os.path.exists(rm_path):
-                    logger.error(
-                        f"Output file missing: {rm_path}, even though command reported success"
-                    )
-                    raise FileNotFoundError(
-                        f"Expected output file not created: {rm_path}"
-                    )
-                else:
-                    file_size = os.path.getsize(rm_path)
-                    logger.info(
-                        f"Output file successfully created: {rm_path} ({file_size} bytes)"
-                    )
-                    if file_size < 50:
-                        logger.error(
-                            f"Output file size is suspiciously small: {file_size} bytes. Possible conversion error."
-                        )
-                        raise ValueError(f"Output file too small: {file_size} bytes")
-                    with open(rm_path, "rb") as rf:
-                        preview = rf.read(100)
-                    logger.info(f"Output file preview (first 100 bytes): {preview}")
+            # Verify output file
+            if not os.path.exists(rm_path):
+                logger.error(f"Output file missing: {rm_path}")
+                return None
+            file_size = os.path.getsize(rm_path)
+            logger.info(f"Output file created: {rm_path} ({file_size} bytes)")
+            if file_size < 50:
+                logger.error(f"Output file too small: {file_size} bytes")
+                return None
 
-                return rm_path
+            # Read and log binary header for debugging
+            try:
+                with open(rm_path, "rb") as rf:
+                    header = rf.read(100)
+                    logger.debug(f"RM file header (hex): {header.hex()}")
+            except Exception as e:
+                logger.warning(f"Could not read RM file header: {e}")
 
-            # Use retry operation for running the conversion
-            return retry_operation(
-                run_conversion,
-                cmd,
-                operation_name="Document conversion",
-                max_retries=2,  # Only retry a couple of times for conversion
-            )
+            return rm_path
         except Exception as e:
-            logger.error(
-                format_error(
-                    "conversion", "Failed to convert document to Remarkable format", e
-                )
-            )
+            logger.error(format_error("conversion", "Failed to convert document", e))
             return None
 
     def _escape_hcl(self, text: str) -> str:
