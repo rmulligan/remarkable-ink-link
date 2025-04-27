@@ -58,11 +58,19 @@ try:
 except ImportError:
     which = None
 ddvk_rmapi = os.path.expanduser("~/Projects/rmapi/rmapi")
-# Auto-detect local ddvk rmapi fork if present (skip inside Docker container)
-if not os.path.exists("/.dockerenv"):
-    ddvk_rmapi = os.path.expanduser("~/Projects/rmapi/rmapi")
-    if os.path.exists(ddvk_rmapi):
-        CONFIG["RMAPI_PATH"] = ddvk_rmapi
+# Auto-detect local ddvk rmapi fork if present
+ddvk_candidate = os.path.expanduser("~/Projects/rmapi/rmapi")
+if os.path.exists(ddvk_candidate) and os.access(ddvk_candidate, os.X_OK):
+    CONFIG["RMAPI_PATH"] = ddvk_candidate
+# Fallback: detect rmapi in PATH if default path not found or not executable
+try:
+    from shutil import which
+    if not os.path.exists(CONFIG.get("RMAPI_PATH", "")) or not os.access(CONFIG.get("RMAPI_PATH", ""), os.X_OK):
+        path_rmapi = which("rmapi")
+        if path_rmapi:
+            CONFIG["RMAPI_PATH"] = path_rmapi
+except ImportError:
+    pass
 # Detect drawj2d in PATH
 if which:
     drawj2d_path = which("drawj2d")

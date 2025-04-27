@@ -60,11 +60,9 @@ def ask(prompt, model):
         return
     # Upload to reMarkable
     rs = RemarkableService(CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"])
-    success = rs.upload(rm_path)
-    if success:
-        click.echo(f"AI response uploaded to reMarkable: {rm_path}")
-    else:
-        click.echo("Upload failed.")
+    success, message = rs.upload(rm_path, content.get("title", "AI Response"))
+    # Report result
+    click.echo(message)
 
 
 def main():

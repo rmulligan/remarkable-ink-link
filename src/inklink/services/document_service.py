@@ -397,18 +397,15 @@ class DocumentService:
                 logger.info(f"Creating output directory: {output_dir}")
                 os.makedirs(output_dir, exist_ok=True)
 
-            # Prepare conversion commands based on device model
-            if getattr(self, 'is_remarkable_pro', False):
-                # Use rmdoc format for reMarkable Pro
-                primary_cmd = [self.drawj2d_path, "-Trmdoc", "-o", rm_path, hcl_path]
-                # Fallback to legacy rm format
-                fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
-            else:
-                # Use rm format with rmv6 for reMarkable 2
-                primary_cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
-                # Fallback to plain rm format
-                fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
-            logger.info(f"Conversion command: {' '.join(primary_cmd)}")
+            # Prepare conversion commands: use rm v6 format by default
+            if not os.path.isfile(self.drawj2d_path) or not os.access(self.drawj2d_path, os.X_OK):
+                logger.error(f"drawj2d executable not found or not executable at: {self.drawj2d_path}")
+                return None
+            # Primary: reMarkable v6 (rm) format; Fallback: standard rm format
+            primary_cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
+            fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
+            logger.info(f"Primary conversion command: {' '.join(primary_cmd)}")
+            logger.info(f"Fallback conversion command: {' '.join(fallback_cmd)}")
 
             # Try primary command
             try:
