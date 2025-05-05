@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Pi Share Receiver Server
+InkLink Server
 
-Receives URLs via HTTP POST, processes them, and uploads to Remarkable Pro.
+Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
 
 import json
@@ -196,20 +196,32 @@ class URLHandler(BaseHTTPRequestHandler):
                 self._send_error("Failed to process PDF")
                 return
 
-            # Create HCL for the PDF instead of uploading directly
-            hcl_path = self.document_service.create_pdf_hcl(
+            # Use new RCU-based conversion method
+            rm_path = self.document_service.create_pdf_rmdoc(
                 result["pdf_path"], result["title"], qr_path
             )
-
-            if not hcl_path:
-                self._send_error("Failed to create HCL script for PDF")
-                return
-
-            # Convert to Remarkable document
-            rm_path = self.document_service.create_rmdoc(hcl_path, url)
+            
+            # If RCU conversion failed, try legacy conversion
             if not rm_path:
-                self._send_error("Failed to convert PDF to Remarkable format")
-                return
+                # Create HCL for the PDF 
+                hcl_path = self.document_service.create_hcl(
+                    url,
+                    qr_path,
+                    {"title": result["title"], "structured_content": []}
+                )
+
+                if not hcl_path:
+                    self._send_error("Failed to create HCL script for PDF")
+                    return
+
+                # Convert to Remarkable document
+                rm_path = self.document_service.create_rmdoc_legacy(
+                    url, qr_path, {"title": result["title"]}
+                )
+                
+                if not rm_path:
+                    self._send_error("Failed to convert PDF to Remarkable format")
+                    return
 
             # Upload to Remarkable
             success, message = self.remarkable_service.upload(rm_path, result["title"])
@@ -232,14 +244,9 @@ class URLHandler(BaseHTTPRequestHandler):
             # Scrape content
             content = self.web_scraper.scrape(url)
 
-            # Create HCL script
-            hcl_path = self.document_service.create_hcl(url, qr_path, content)
-            if not hcl_path:
-                self._send_error("Failed to create HCL script")
-                return
-
-            # Convert to Remarkable document
-            rm_path = self.document_service.create_rmdoc(hcl_path, url)
+            # Use new RCU-based direct conversion
+            rm_path = self.document_service.create_rmdoc_from_content(url, qr_path, content)
+            
             if not rm_path:
                 self._send_error("Failed to convert to Remarkable format")
                 return
