@@ -52,6 +52,8 @@ button:hover {
   font-family: monospace;
   white-space: pre-wrap;
 }
+<<<<<<< HEAD
+=======
 #page-nav {
   display: flex;
   align-items: center;
@@ -105,6 +107,7 @@ button:hover {
 #add-link-panel button {
   margin-right: 0.5em;
 }
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 #error {
   margin-top: 1rem;
 }

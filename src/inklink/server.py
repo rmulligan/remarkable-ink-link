@@ -91,6 +91,8 @@ class URLHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
             return
+<<<<<<< HEAD
+=======
         if self.path == "/ingest":
             """
             Ingest content from browser extension, Siri shortcut, or web UI.
@@ -115,6 +117,7 @@ class URLHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
             return
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
         if self.path == "/upload":
             # Minimal multipart parser for .rm file

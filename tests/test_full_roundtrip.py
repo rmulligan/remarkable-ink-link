@@ -110,6 +110,8 @@ def test_webpage_ai_summary_integration(tmp_path):
         assert "**mock** AI summary" in md_content
         assert "```python" in md_content
         assert "- Supports *markdown* formatting" in md_content
+<<<<<<< HEAD
+=======
 def test_math_and_diagram_blocks_roundtrip(tmp_path):
     """Test that math (LaTeX) and diagram (mermaid) blocks are preserved in markdown export."""
     from inklink.services.document_service import DocumentService
@@ -140,6 +142,7 @@ def test_math_and_diagram_blocks_roundtrip(tmp_path):
         md = f.read()
         assert "$$\nE=mc^2\n$$" in md
         assert "```mermaid\ngraph TD; A-->B;\n```" in md
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 @pytest.mark.integration
 def test_full_roundtrip_real_services(tmp_path):

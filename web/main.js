@@ -1,10 +1,16 @@
+<<<<<<< HEAD
+// Minimal InkLink Web UI Logic
+=======
 /**
  * InkLink Web UI Logic with Multi-Page Navigation, Context Visualization, and Manual Linking
  */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 let fileId = null;
 let responseId = null;
 
+<<<<<<< HEAD
+=======
 // --- Multi-page and linking state ---
 let pageContents = [];      // Array of markdown for each page
 let currentPage = 1;        // 1-based index
@@ -35,6 +41,7 @@ function showPageUI(show) {
   contextPanel.style.display = show ? '' : 'none';
   linkControls.style.display = show ? '' : 'none';
 }
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 // Helper: Show/hide sections
 function showSection(id) {
   document.getElementById('auth-section').style.display = 'none';
@@ -126,9 +133,13 @@ document.getElementById('process-btn').onclick = async () => {
   }
 };
 
+<<<<<<< HEAD
+// Poll for AI response
+=======
 /**
  * Poll for AI response and initialize multi-page UI if markdown is received.
  */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 async function pollResponse() {
   let tries = 0;
   while (tries < 20) {
@@ -137,6 +148,10 @@ async function pollResponse() {
       const data = await res.json();
       if (data.markdown) {
         showSection('response-section');
+<<<<<<< HEAD
+        renderMarkdown(data.markdown);
+        setupDownload(data.raw);
+=======
         // --- Split markdown into pages (delimiter: '\n---PAGE---\n' or fallback to single page) ---
         pageContents = data.markdown.split(/\n-{3,}PAGE-{3,}\n/);
         totalPages = pageContents.length;
@@ -146,6 +161,7 @@ async function pollResponse() {
         setupDownload(data.raw);
         // Show navigation/context/linking UI if multi-page
         showPageUI(totalPages > 1);
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         return;
       }
     }
@@ -156,6 +172,51 @@ async function pollResponse() {
   showError('Timed out waiting for AI response');
 }
 
+<<<<<<< HEAD
+// Render markdown (basic)
+function renderMarkdown(md) {
+  // Simple markdown to HTML (replace with a library for full support)
+  let html = md
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
+    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
+    .replace(/\n$/gim, '<br>');
+  document.getElementById('markdown-viewer').innerHTML = html;
+
+  // Trigger MathJax rendering for LaTeX blocks
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise();
+  }
+
+  // Render mermaid diagrams
+  if (window.mermaid) {
+    // Find all mermaid code blocks
+    const viewer = document.getElementById('markdown-viewer');
+    const mermaidBlocks = viewer.querySelectorAll('pre code.language-mermaid, code.language-mermaid, pre code, code');
+    mermaidBlocks.forEach((block, i) => {
+      if (block.textContent.trim().startsWith('graph') || block.textContent.trim().startsWith('sequenceDiagram')) {
+        const parent = block.parentElement;
+        const id = 'mermaid-' + i + '-' + Date.now();
+        const code = block.textContent;
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.id = id;
+        div.textContent = code;
+        parent.replaceWith(div);
+        try {
+          window.mermaid.init(undefined, '#' + id);
+        } catch (e) {
+          div.textContent = 'Mermaid render error: ' + e;
+        }
+      }
+    });
+  }
+}
+
+// Setup download link for raw response
+=======
 /**
  * Render the current page's markdown and update navigation/context/linking UI.
  */
@@ -256,12 +317,15 @@ function renderLinks() {
 /**
  * Setup download link for raw response
  */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 function setupDownload(raw) {
   const blob = new Blob([raw], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const link = document.getElementById('download-raw');
   link.href = url;
   link.style.display = '';
+<<<<<<< HEAD
+=======
 }
 
 // --- Navigation event handlers ---
@@ -316,4 +380,5 @@ if (linkControls) {
     showError('');
     renderCurrentPage();
   };
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 }

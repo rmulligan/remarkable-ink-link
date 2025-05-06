@@ -131,6 +131,12 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
+<<<<<<< HEAD
+            return self.myscript.recognize(iink_data, content_type, language)
+        except Exception as e:
+            logging.error(f"Handwriting recognition pipeline failed: {e}")
+            return {"error": str(e)}
+=======
             result = self.myscript.recognize(iink_data, content_type, language)
             return result
         except Exception as e:
@@ -213,3 +219,4 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             "pages": structured_pages,
             "cross_page_links": unique_links
         }
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48

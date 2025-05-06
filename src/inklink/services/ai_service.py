@@ -11,6 +11,11 @@ class AIService:
         if not self.api_key:
             raise ValueError("OpenAI API key must be set via OPENAI_API_KEY or AI_API_KEY environment variable.")
 
+<<<<<<< HEAD
+    def process_query(self, query_text, context=None):
+        """Process a text query and return an AI response using OpenAI Chat API.
+        Optionally include structured document context to improve relevance."""
+=======
     def process_query(
         self,
         query_text,
@@ -32,11 +37,17 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         url = f"{self.api_base}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+<<<<<<< HEAD
+        # Structure context as a system prompt if provided
+        messages = []
+        if context:
+=======
 
         messages = []
 
@@ -78,13 +89,18 @@ class AIService:
             })
         elif context:
             # Fallback to flat context string
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
             messages.append({
                 "role": "system",
                 "content": f"Document context: {context}"
             })
+<<<<<<< HEAD
+        messages.append({"role": "user", "content": query_text})
+=======
 
         messages.append({"role": "user", "content": query_text})
 
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         data = {
             "model": self.model,
             "messages": messages,
