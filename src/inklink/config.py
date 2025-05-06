@@ -57,7 +57,6 @@ try:
     from shutil import which
 except ImportError:
     which = None
-ddvk_rmapi = os.path.expanduser("~/Projects/rmapi/rmapi")
 # Auto-detect local ddvk rmapi fork if present
 ddvk_candidate = os.path.expanduser("~/Projects/rmapi/rmapi")
 if os.path.exists(ddvk_candidate) and os.access(ddvk_candidate, os.X_OK):
