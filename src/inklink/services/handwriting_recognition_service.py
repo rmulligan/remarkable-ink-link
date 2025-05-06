@@ -250,8 +250,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         Returns:
             Headers dictionary with authentication
         """
-        # Convert data to JSON string
-        data_json = json.dumps(data)
+        # Convert data to JSON string with deterministic key order
+        data_json = json.dumps(data, sort_keys=True)
         
         # Generate timestamp in milliseconds
         timestamp = str(int(time.time() * 1000))
