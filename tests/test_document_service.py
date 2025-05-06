@@ -178,6 +178,40 @@ def test_create_rmdoc(document_service, monkeypatch):
     assert os.path.exists(result)
     assert os.path.basename(result).startswith("rm_")
     assert os.path.basename(result).endswith(".rm")
+def test_create_rmdoc_multi_page(document_service, tmp_path):
+    """Test creation of markdown from multi-page structured content."""
+    content = {
+        "title": "Multi-Page Test",
+        "structured_content": [
+            {
+                "page_number": 1,
+                "items": [
+                    {"type": "heading", "content": "Page 1 Heading"},
+                    {"type": "paragraph", "content": "Content on page 1."}
+                ],
+                "metadata": {}
+            },
+            {
+                "page_number": 2,
+                "items": [
+                    {"type": "heading", "content": "Page 2 Heading"},
+                    {"type": "paragraph", "content": "Content on page 2."}
+                ],
+                "metadata": {}
+            }
+        ]
+    }
+    url = "https://example.com"
+    qr_path = ""
+    md_path = document_service.create_rmdoc_from_content(url, qr_path, content)
+    assert md_path and os.path.exists(md_path)
+    with open(md_path, "r", encoding="utf-8") as f:
+        md = f.read()
+        assert "# Page 1 Heading" in md
+        assert "# Page 2 Heading" in md
+        assert "Content on page 1." in md
+        assert "Content on page 2." in md
+        assert md.count("---") >= 1  # page break
 
 def test_create_pdf_hcl_with_images(document_service, tmp_path):
     """Test creation of PDF HCL embedding raster images."""
