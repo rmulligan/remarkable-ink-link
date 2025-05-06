@@ -24,8 +24,16 @@ class ServiceManager:
             self.remarkable_service = RemarkableService(
                 CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"]
             )
-        except Exception as e:
-            logger.error(f"Error initializing services: {str(e)}")
+        except KeyError as e:
+            logger.error(f"Configuration key error during service initialization: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
+        except FileNotFoundError as e:
+            logger.error(f"File not found during service initialization: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
+        except RuntimeError as e:
+            logger.error(f"Runtime error during service initialization: {str(e)}")
             logger.error(traceback.format_exc())
             raise
 
