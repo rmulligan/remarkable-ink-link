@@ -1,8 +1,47 @@
+<<<<<<< HEAD
 // Minimal InkLink Web UI Logic
+=======
+/**
+ * InkLink Web UI Logic with Multi-Page Navigation, Context Visualization, and Manual Linking
+ */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 let fileId = null;
 let responseId = null;
 
+<<<<<<< HEAD
+=======
+// --- Multi-page and linking state ---
+let pageContents = [];      // Array of markdown for each page
+let currentPage = 1;        // 1-based index
+let totalPages = 1;
+let links = [];             // Array of {from, to, desc}
+
+// --- DOM Elements ---
+const pageNav = document.getElementById('page-nav');
+const prevPageBtn = document.getElementById('prev-page-btn');
+const nextPageBtn = document.getElementById('next-page-btn');
+const pageNumInput = document.getElementById('page-num-input');
+const totalPagesSpan = document.getElementById('total-pages');
+const contextPanel = document.getElementById('context-visualization');
+const contextContent = document.getElementById('context-content');
+const linkControls = document.getElementById('link-controls');
+const linkList = document.getElementById('link-list');
+const addLinkBtn = document.getElementById('add-link-btn');
+const addLinkPanel = document.getElementById('add-link-panel');
+const linkFromInput = document.getElementById('link-from');
+const linkToInput = document.getElementById('link-to');
+const linkDescInput = document.getElementById('link-desc');
+const saveLinkBtn = document.getElementById('save-link-btn');
+const cancelLinkBtn = document.getElementById('cancel-link-btn');
+
+// --- Helper: Show/hide navigation, context, and linking controls ---
+function showPageUI(show) {
+  pageNav.style.display = show ? '' : 'none';
+  contextPanel.style.display = show ? '' : 'none';
+  linkControls.style.display = show ? '' : 'none';
+}
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 // Helper: Show/hide sections
 function showSection(id) {
   document.getElementById('auth-section').style.display = 'none';
@@ -94,7 +133,13 @@ document.getElementById('process-btn').onclick = async () => {
   }
 };
 
+<<<<<<< HEAD
 // Poll for AI response
+=======
+/**
+ * Poll for AI response and initialize multi-page UI if markdown is received.
+ */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 async function pollResponse() {
   let tries = 0;
   while (tries < 20) {
@@ -103,8 +148,20 @@ async function pollResponse() {
       const data = await res.json();
       if (data.markdown) {
         showSection('response-section');
+<<<<<<< HEAD
         renderMarkdown(data.markdown);
         setupDownload(data.raw);
+=======
+        // --- Split markdown into pages (delimiter: '\n---PAGE---\n' or fallback to single page) ---
+        pageContents = data.markdown.split(/\n-{3,}PAGE-{3,}\n/);
+        totalPages = pageContents.length;
+        currentPage = 1;
+        links = []; // Reset links for new doc
+        renderCurrentPage();
+        setupDownload(data.raw);
+        // Show navigation/context/linking UI if multi-page
+        showPageUI(totalPages > 1);
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         return;
       }
     }
@@ -115,6 +172,7 @@ async function pollResponse() {
   showError('Timed out waiting for AI response');
 }
 
+<<<<<<< HEAD
 // Render markdown (basic)
 function renderMarkdown(md) {
   // Simple markdown to HTML (replace with a library for full support)
@@ -158,10 +216,169 @@ function renderMarkdown(md) {
 }
 
 // Setup download link for raw response
+=======
+/**
+ * Render the current page's markdown and update navigation/context/linking UI.
+ */
+function renderCurrentPage() {
+  // Clamp currentPage
+  if (currentPage < 1) currentPage = 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  // Update nav UI
+  pageNumInput.value = currentPage;
+  totalPagesSpan.textContent = totalPages;
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = currentPage === totalPages;
+
+  // Render markdown for current page
+  renderMarkdown(pageContents[currentPage - 1] || '');
+
+  // Render context for current page
+  renderContext();
+
+  // Render links for current page
+  renderLinks();
+}
+
+/**
+ * Render markdown (basic or using marked.js if available)
+ */
+function renderMarkdown(md) {
+  let html = "";
+  if (window.marked) {
+    html = window.marked.parse(md);
+  } else {
+    html = md
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
+      .replace(/\*(.*?)\*/gim, '<i>$1</i>')
+      .replace(/\n$/gim, '<br>');
+  }
+
+  // Mermaid block handling
+  html = html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, function(_, code) {
+    return `<div class="mermaid">${code.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&")}</div>`;
+  });
+  html = html.replace(/```mermaid\s*([\s\S]*?)```/g, function(_, code) {
+    return `<div class="mermaid">${code}</div>`;
+  });
+
+  document.getElementById('markdown-viewer').innerHTML = html;
+
+  // MathJax and Mermaid rendering
+  if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise();
+  if (window.mermaid) window.mermaid.init(undefined, ".mermaid");
+}
+
+/**
+ * Render context visualization for the current page.
+ * Shows links from/to this page.
+ */
+function renderContext() {
+  const fromLinks = links.filter(l => l.from === currentPage);
+  const toLinks = links.filter(l => l.to === currentPage);
+  let html = '';
+  if (fromLinks.length) {
+    html += `<div><b>Links from this page:</b><ul>` +
+      fromLinks.map(l => `<li>To page ${l.to}: ${l.desc || ''}</li>`).join('') +
+      `</ul></div>`;
+  }
+  if (toLinks.length) {
+    html += `<div><b>Links to this page:</b><ul>` +
+      toLinks.map(l => `<li>From page ${l.from}: ${l.desc || ''}</li>`).join('') +
+      `</ul></div>`;
+  }
+  if (!html) html = '<i>No links for this page.</i>';
+  contextContent.innerHTML = html;
+}
+
+/**
+ * Render the list of all cross-page links and add remove buttons.
+ */
+function renderLinks() {
+  linkList.innerHTML = '';
+  links.forEach((l, idx) => {
+    const li = document.createElement('li');
+    li.textContent = `Page ${l.from} → Page ${l.to}: ${l.desc || ''}`;
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Remove';
+    delBtn.style.marginLeft = '1em';
+    delBtn.onclick = () => {
+      links.splice(idx, 1);
+      renderCurrentPage();
+    };
+    li.appendChild(delBtn);
+    linkList.appendChild(li);
+  });
+}
+
+/**
+ * Setup download link for raw response
+ */
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 function setupDownload(raw) {
   const blob = new Blob([raw], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const link = document.getElementById('download-raw');
   link.href = url;
   link.style.display = '';
+<<<<<<< HEAD
+=======
+}
+
+// --- Navigation event handlers ---
+if (pageNav) {
+  prevPageBtn.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderCurrentPage();
+    }
+  };
+  nextPageBtn.onclick = () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderCurrentPage();
+    }
+  };
+  pageNumInput.onchange = () => {
+    let val = parseInt(pageNumInput.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > totalPages) val = totalPages;
+    currentPage = val;
+    renderCurrentPage();
+  };
+}
+
+// --- Manual linking controls ---
+if (linkControls) {
+  addLinkBtn.onclick = () => {
+    addLinkPanel.style.display = '';
+    linkFromInput.value = currentPage;
+    linkToInput.value = '';
+    linkDescInput.value = '';
+  };
+  cancelLinkBtn.onclick = () => {
+    addLinkPanel.style.display = 'none';
+  };
+  saveLinkBtn.onclick = () => {
+    const from = parseInt(linkFromInput.value, 10);
+    const to = parseInt(linkToInput.value, 10);
+    const desc = linkDescInput.value.trim();
+    if (
+      isNaN(from) || isNaN(to) ||
+      from < 1 || from > totalPages ||
+      to < 1 || to > totalPages ||
+      from === to
+    ) {
+      showError('Invalid link: check page numbers.');
+      return;
+    }
+    links.push({ from, to, desc });
+    addLinkPanel.style.display = 'none';
+    showError('');
+    renderCurrentPage();
+  };
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 }

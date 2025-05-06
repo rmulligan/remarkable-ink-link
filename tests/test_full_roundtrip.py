@@ -110,6 +110,39 @@ def test_webpage_ai_summary_integration(tmp_path):
         assert "**mock** AI summary" in md_content
         assert "```python" in md_content
         assert "- Supports *markdown* formatting" in md_content
+<<<<<<< HEAD
+=======
+def test_math_and_diagram_blocks_roundtrip(tmp_path):
+    """Test that math (LaTeX) and diagram (mermaid) blocks are preserved in markdown export."""
+    from inklink.services.document_service import DocumentService
+
+    doc_tmp = tmp_path / "doc_tmp"
+    document_service = DocumentService(str(doc_tmp))
+
+    url = "https://example.com/"
+    qr_path = ""
+    structured_content = [
+        {
+            "page_number": 1,
+            "items": [
+                {"type": "paragraph", "content": "Normal text."},
+                {"type": "math", "content": "E=mc^2"},
+                {"type": "diagram", "content": "graph TD; A-->B;"}
+            ],
+            "metadata": {}
+        }
+    ]
+    content = {
+        "title": "Test Math and Diagram",
+        "structured_content": structured_content
+    }
+    md_path = document_service.create_rmdoc_from_content(url, qr_path, content)
+    assert md_path and md_path.endswith(".md")
+    with open(md_path, "r", encoding="utf-8") as f:
+        md = f.read()
+        assert "$$\nE=mc^2\n$$" in md
+        assert "```mermaid\ngraph TD; A-->B;\n```" in md
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 @pytest.mark.integration
 def test_full_roundtrip_real_services(tmp_path):

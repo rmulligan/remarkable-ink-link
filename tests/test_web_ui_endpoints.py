@@ -60,7 +60,11 @@ def test_upload_and_process(monkeypatch, handler):
     handler.rfile = io.BytesIO(json.dumps({"file_id": file_id}).encode())
     handler.wfile = io.BytesIO()
     handler.do_POST()
+<<<<<<< HEAD
     assert any(handler.server.responses)
+=======
+    assert any(rid for rid in handler.server.responses)
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 def test_response(handler):
     rid = "resp1"

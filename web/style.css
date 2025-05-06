@@ -52,6 +52,62 @@ button:hover {
   font-family: monospace;
   white-space: pre-wrap;
 }
+<<<<<<< HEAD
+=======
+#page-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+#page-nav input[type="number"] {
+  width: 3em;
+  text-align: center;
+  margin: 0 0.2em;
+}
+#context-visualization {
+  background: #eef3fa;
+  border: 1px solid #bcd;
+  border-radius: 4px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-size: 0.97em;
+}
+#link-controls {
+  background: #f9f6e7;
+  border: 1px solid #e3dca6;
+  border-radius: 4px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-size: 0.97em;
+}
+#link-list {
+  list-style: disc inside;
+  margin-bottom: 0.7em;
+  padding-left: 1em;
+}
+#link-list li {
+  margin-bottom: 0.3em;
+}
+#add-link-panel {
+  margin-top: 0.7em;
+  background: #fffbe7;
+  border: 1px solid #e3dca6;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+}
+#add-link-panel label {
+  display: block;
+  margin-bottom: 0.4em;
+}
+#add-link-panel input[type="number"], #add-link-panel input[type="text"] {
+  width: 7em;
+  margin-left: 0.5em;
+}
+#add-link-panel button {
+  margin-right: 0.5em;
+}
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 #error {
   margin-top: 1rem;
 }

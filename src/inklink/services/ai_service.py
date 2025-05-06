@@ -11,22 +11,96 @@ class AIService:
         if not self.api_key:
             raise ValueError("OpenAI API key must be set via OPENAI_API_KEY or AI_API_KEY environment variable.")
 
+<<<<<<< HEAD
     def process_query(self, query_text, context=None):
         """Process a text query and return an AI response using OpenAI Chat API.
         Optionally include structured document context to improve relevance."""
+=======
+    def process_query(
+        self,
+        query_text,
+        context=None,
+        structured_content=None,
+        context_window=None,
+        selected_pages=None,
+    ):
+        """
+        Process a text query and return an AI response using OpenAI Chat API.
+
+        Parameters:
+            query_text (str): The user's query.
+            context (str, optional): Flat context string for backward compatibility.
+            structured_content (list[dict] or dict, optional): Structured document content, e.g., list of pages with links.
+            context_window (int, optional): Number of most recent pages to include as context.
+            selected_pages (list[int] or list[str], optional): Specific pages to include as context.
+
+        Returns:
+            str: AI-generated response.
+        """
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         url = f"{self.api_base}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+<<<<<<< HEAD
         # Structure context as a system prompt if provided
         messages = []
         if context:
+=======
+
+        messages = []
+
+        # Build system prompt from structured_content if provided
+        if structured_content:
+            context_snippets = []
+            pages = []
+            # Determine which pages to include
+            if isinstance(structured_content, dict):
+                pages = structured_content.get("pages", [])
+            elif isinstance(structured_content, list):
+                pages = structured_content
+            else:
+                pages = []
+
+            # Select pages based on context_window or selected_pages
+            if selected_pages:
+                filtered = [p for p in pages if (p.get("id") in selected_pages or p.get("number") in selected_pages)]
+            elif context_window:
+                filtered = pages[-context_window:]
+            else:
+                filtered = pages
+
+            for page in filtered:
+                title = page.get("title", f"Page {page.get('number', '')}")
+                content = page.get("content", "")
+                links = page.get("links", [])
+                link_str = ""
+                if links:
+                    link_str = "Links: " + ", ".join(
+                        [f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})" for l in links]
+                    )
+                context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
+
+            system_prompt = "Relevant document context:\n" + "\n\n".join(context_snippets)
+            messages.append({
+                "role": "system",
+                "content": system_prompt
+            })
+        elif context:
+            # Fallback to flat context string
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
             messages.append({
                 "role": "system",
                 "content": f"Document context: {context}"
             })
+<<<<<<< HEAD
         messages.append({"role": "user", "content": query_text})
+=======
+
+        messages.append({"role": "user", "content": query_text})
+
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         data = {
             "model": self.model,
             "messages": messages,

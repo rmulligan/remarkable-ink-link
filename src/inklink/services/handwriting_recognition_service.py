@@ -131,7 +131,92 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
+<<<<<<< HEAD
             return self.myscript.recognize(iink_data, content_type, language)
         except Exception as e:
             logging.error(f"Handwriting recognition pipeline failed: {e}")
             return {"error": str(e)}
+=======
+            result = self.myscript.recognize(iink_data, content_type, language)
+            return result
+        except Exception as e:
+            logging.error(f"Handwriting recognition pipeline failed: {e}")
+    def recognize_multi_page_ink(
+        self,
+        page_files: List[str],
+        language: str = "en_US",
+        user_links: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Recognize handwriting from multiple page files, maintaining per-page and cross-page context.
+
+        Args:
+            page_files (List[str]): List of file paths, each representing a handwritten page.
+            language (str): Language code for recognition.
+            user_links (Optional[List[Dict[str, Any]]]): Optional user-defined cross-page links, e.g.,
+                [{"from_page": 1, "to_page": 2, "type": "reference", "label": "See Figure 1"}]
+
+        Returns:
+            Dict[str, Any]: Structured content with per-page items and cross-page links.
+                {
+                    "pages": [...],
+                    "cross_page_links": [...]
+                }
+        """
+        structured_pages = []
+        cross_page_links = user_links[:] if user_links else []
+
+        # Temporary storage for automatic cross-page references
+        reference_map = {}
+
+        for i, file_path in enumerate(page_files):
+            strokes = self.rmscene.extract_strokes(file_path=file_path)
+            content_type = self.classify_region(strokes)
+            iink_data = self.convert_to_iink_format(strokes)
+            result = self.myscript.recognize(iink_data, content_type, language)
+
+            items = []
+            page_references = []
+
+            # Example: extract recognized items and look for references
+            if "text" in result:
+                text = result["text"]
+                items.append({"type": content_type.lower(), "content": text})
+
+                # Simple automatic cross-page reference extraction (e.g., "see page X")
+                import re
+                ref_matches = re.findall(r"(see|refer to) page (\d+)", text, re.IGNORECASE)
+                for _, ref_page in ref_matches:
+                    ref_page_num = int(ref_page)
+                    if 1 <= ref_page_num <= len(page_files) and ref_page_num != (i + 1):
+                        link = {
+                            "from_page": i + 1,
+                            "to_page": ref_page_num,
+                            "type": "auto_reference",
+                            "label": f"Reference to page {ref_page_num}",
+                        }
+                        cross_page_links.append(link)
+                        page_references.append(link)
+
+            structured_pages.append({
+                "page_number": i + 1,
+                "items": items,
+                "metadata": {
+                    "references": page_references
+                }
+            })
+
+        # Remove duplicate links (by from_page, to_page, type, label)
+        seen = set()
+        unique_links = []
+        for link in cross_page_links:
+            key = (link["from_page"], link["to_page"], link.get("type"), link.get("label"))
+            if key not in seen:
+                unique_links.append(link)
+                seen.add(key)
+
+        return {
+            "pages": structured_pages,
+            "cross_page_links": unique_links
+        }
+>>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
