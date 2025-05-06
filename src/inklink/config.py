@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 import os
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class HCLResourceConfig(BaseModel):
@@ -20,11 +19,11 @@ CONFIG = {
     "RMAPI_PATH": os.environ.get("INKLINK_RMAPI", "/usr/local/bin/rmapi"),
     "DRAWJ2D_PATH": os.environ.get("INKLINK_DRAWJ2D", "/usr/local/bin/drawj2d"),
     # Remarkable settings
-    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "/"),
+    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "InkLink"),
     # Remarkable Pro page dimensions (portrait mode)
-    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 1872)),
-    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 2404)),
-    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 100)),
+    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 2160)),
+    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 1620)),
+    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 120)),
     # Font configuration
     "HEADING_FONT": os.environ.get("INKLINK_HEADING_FONT", "Liberation Sans"),
     "BODY_FONT": os.environ.get("INKLINK_BODY_FONT", "Liberation Sans"),
