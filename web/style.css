@@ -1,0 +1,116 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+#app {
+  max-width: 420px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+section {
+  margin-bottom: 1.5rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+input[type="text"], input[type="password"], input[type="file"] {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+button:hover {
+  background: #0056b3;
+}
+#markdown-viewer {
+  background: #f4f4f4;
+  border-radius: 4px;
+  padding: 1rem;
+  min-height: 80px;
+  margin-bottom: 1rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+#page-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+#page-nav input[type="number"] {
+  width: 3em;
+  text-align: center;
+  margin: 0 0.2em;
+}
+#context-visualization {
+  background: #eef3fa;
+  border: 1px solid #bcd;
+  border-radius: 4px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-size: 0.97em;
+}
+#link-controls {
+  background: #f9f6e7;
+  border: 1px solid #e3dca6;
+  border-radius: 4px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-size: 0.97em;
+}
+#link-list {
+  list-style: disc inside;
+  margin-bottom: 0.7em;
+  padding-left: 1em;
+}
+#link-list li {
+  margin-bottom: 0.3em;
+}
+#add-link-panel {
+  margin-top: 0.7em;
+  background: #fffbe7;
+  border: 1px solid #e3dca6;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+}
+#add-link-panel label {
+  display: block;
+  margin-bottom: 0.4em;
+}
+#add-link-panel input[type="number"], #add-link-panel input[type="text"] {
+  width: 7em;
+  margin-left: 0.5em;
+}
+#add-link-panel button {
+  margin-right: 0.5em;
+}
+#error {
+  margin-top: 1rem;
+}
+@media (max-width: 600px) {
+  #app {
+    padding: 1rem;
+    max-width: 98vw;
+  }
+}

@@ -2,7 +2,7 @@
 
 import os
 import logging
-from typing import Dict, Any, Tuple, List, Optional
+from typing import Dict, Any, Optional
 
 from bs4 import BeautifulSoup
 
@@ -17,7 +17,12 @@ except ImportError:
     InstalledAppFlow = None
     build = None
 
-from inklink.utils import retry_operation, format_error, parse_html_container
+from inklink.utils import (
+    retry_operation, 
+    format_error, 
+    extract_structured_content,
+    validate_and_fix_content
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,35 +80,42 @@ class GoogleDocsService:
     def fetch(self, url_or_id: str) -> Dict[str, Any]:
         """
         Fetch a Google Docs document by URL or ID.
+        
+        Exports the document as HTML and processes it into a structured format
+        suitable for document generation.
 
-        Returns a dict with keys: title, structured_content, images.
+        Args:
+            url_or_id: Google Docs URL or document ID
+            
+        Returns:
+            Dict with keys: title, structured_content, images
         """
         doc_id = self._extract_doc_id(url_or_id)
         try:
-
+            # Define HTML export function for retry operation
             def export_html():
+                if not self.drive_service:
+                    raise ValueError("Google Drive service not initialized")
                 return (
                     self.drive_service.files()
                     .export(fileId=doc_id, mimeType="text/html")
                     .execute()
                 )
 
+            # Fetch HTML with retry handling
             html_content = retry_operation(
                 export_html, operation_name="Google Docs export"
             )
-            soup = BeautifulSoup(html_content, "html.parser")
-            title = (
-                soup.title.string.strip()
-                if soup.title and soup.title.string
-                else url_or_id
-            )
-            container = soup.body or soup
-            structured, images = self._process_container(container, url_or_id)
-            return {"title": title, "structured_content": structured, "images": images}
+            
+            # Process HTML into structured content
+            content = extract_structured_content(html_content, url_or_id)
+            
+            # Validate and ensure content structure is complete
+            return validate_and_fix_content(content, url_or_id)
+            
         except Exception as e:
-            logger.error(
-                format_error("googledocs", "Failed to fetch Google Docs document", e)
-            )
+            error_msg = format_error("googledocs", "Failed to fetch Google Docs document", e)
+            logger.error(error_msg)
             return {
                 "title": url_or_id,
                 "structured_content": [
@@ -118,6 +130,12 @@ class GoogleDocsService:
     def _extract_doc_id(self, url_or_id: str) -> str:
         """
         Extract document ID from Google Docs URL, or return as-is.
+        
+        Args:
+            url_or_id: Google Docs URL or document ID
+            
+        Returns:
+            Extracted document ID
         """
         from urllib.parse import urlparse
 
@@ -135,12 +153,3 @@ class GoogleDocsService:
             # If parsing fails or unexpected format, return input as-is
             pass
         return url_or_id
-
-    def _process_container(
-        self, container: BeautifulSoup, base_url: str
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
-        """
-        Process a BeautifulSoup container to extract structured tags and images.
-        """
-        # Delegate to shared parsing utility
-        return parse_html_container(container, base_url)
