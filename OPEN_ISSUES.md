@@ -11,8 +11,9 @@
  - **#47** – suggestion (testing): Consider expanding parametrized test cases
 
  ## 2. Code-Quality
-
+ 
  ### 2.1 Medium Priority
+ - **#51** – Replace homegrown markdown parsing with RCU tool for .rm conversion (priority: medium)
  - **#31** – issue (code-quality): We’ve found these issues which require attention
  - **#27** – issue (code-quality): We’ve found these issues which require attention
 
