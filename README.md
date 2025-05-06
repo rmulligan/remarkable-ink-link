@@ -228,3 +228,33 @@ Save the file and rerun `docker compose build`.
 Ryan Mulligan – [@rmulligan](https://github.com/rmulligan)  
 Senior Software Engineer • Musician • Workflow Optimizer  
 Proudly crafting the Zettelkasten of the Future™.
+## API: /ingest Endpoint
+
+**POST /ingest**
+
+Ingest content from browser extension, Siri shortcut, or web UI.
+
+**Request Body (application/json):**
+- `type`: `"web"`, `"note"`, `"shortcut"`, etc. (string, required)
+- `title`: Title of the content (string, required)
+- `content`: Main content (text, HTML, markdown, etc., required)
+- `metadata`: Optional dictionary (e.g., `source_url`, `tags`, etc.)
+
+**Example:**
+```json
+{
+  "type": "web",
+  "title": "Interesting Article",
+  "content": "<h1>Example</h1><p>Some content...</p>",
+  "metadata": {
+    "source_url": "https://example.com",
+    "tags": ["reading", "reference"]
+  }
+}
+```
+
+**Response:**
+- `{"status": "accepted"}` on success
+- `{"error": "...error message..."}` on failure
+
+See API_DOCS.md for full details.
