@@ -1,4 +1,3 @@
-
 """Document conversion service for InkLink.
 
 This service handles conversion of web content to reMarkable-compatible documents

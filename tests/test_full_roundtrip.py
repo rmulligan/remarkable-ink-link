@@ -32,6 +32,7 @@ class TestHandler(URLHandler):
 
     def _send_error(self, message):
         self._output["error"] = message
+
 def test_webpage_ai_summary_integration(tmp_path):
     """Unit test: injects a mock AIService and checks AI summary in content and context passing."""
     from inklink.server import URLHandler
@@ -110,6 +111,7 @@ def test_webpage_ai_summary_integration(tmp_path):
         assert "**mock** AI summary" in md_content
         assert "```python" in md_content
         assert "- Supports *markdown* formatting" in md_content
+
 def test_math_and_diagram_blocks_roundtrip(tmp_path):
     """Test that math (LaTeX) and diagram (mermaid) blocks are preserved in markdown export."""
     from inklink.services.document_service import DocumentService

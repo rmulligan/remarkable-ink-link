@@ -12,11 +12,14 @@ def setup_logging():
 
 import json
 import traceback
+import uuid
+import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Dict, Optional, Tuple
 import time
 
 # Import configuration module
+from inklink.config import CONFIG
 from inklink.utils import is_safe_url
 
 # Import service implementations
@@ -91,6 +94,7 @@ class URLHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
             return
+
         if self.path == "/ingest":
             """
             Ingest content from browser extension, Siri shortcut, or web UI.

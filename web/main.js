@@ -35,6 +35,7 @@ function showPageUI(show) {
   contextPanel.style.display = show ? '' : 'none';
   linkControls.style.display = show ? '' : 'none';
 }
+
 // Helper: Show/hide sections
 function showSection(id) {
   document.getElementById('auth-section').style.display = 'none';
