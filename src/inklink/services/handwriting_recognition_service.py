@@ -242,8 +242,10 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             return {"success": False, "error": str(e)}
     
     def _generate_headers(self, data: Dict[str, Any]) -> Dict[str, str]:
-        """Generate headers with HMAC authentication for MyScript API.
-        
+        """Generate headers with HMAC authentication for MyScript API."""
+        if not self.hmac_key:
+            raise ValueError("HMAC key is missing or empty, cannot generate headers")
+
         Args:
             data: Request payload
             
