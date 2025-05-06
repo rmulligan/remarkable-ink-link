@@ -9,6 +9,8 @@ from src.inklink.services.remarkable_service import RemarkableService
 from src.inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
+
+
 class ServiceManager:
     """Handles instantiation of all service dependencies with support for dependency injection."""
 
@@ -33,7 +35,9 @@ class ServiceManager:
                 CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"]
             )
         except KeyError as e:
-            logger.error(f"Configuration key error during service initialization: {str(e)}")
+            logger.error(
+                f"Configuration key error during service initialization: {str(e)}"
+            )
             logger.error(traceback.format_exc())
             raise
         except FileNotFoundError as e:
