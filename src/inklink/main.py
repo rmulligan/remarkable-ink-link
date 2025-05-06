@@ -48,10 +48,13 @@ def roundtrip(input_file, output):
         
         # Save to output file if specified
         if output:
-            with open(output, "w") as f:
-                f.write(f"Query: {result['recognized_text']}\n\n")
-                f.write(f"Response: {result['response_text']}")
-            click.echo(f"Response saved to {output}")
+            try:
+                with open(output, "w") as f:
+                    f.write(f"Query: {result['recognized_text']}\n\n")
+                    f.write(f"Response: {result['response_text']}")
+                click.echo(f"Response saved to {output}")
+            except (IOError, OSError) as e:
+                click.echo(f"Error: Failed to write to {output}. {e}")
     else:
         click.echo(f"Error: {result['error']}")
 
