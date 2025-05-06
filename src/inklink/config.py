@@ -39,6 +39,9 @@ CONFIG = {
     "LOG_FILE": os.environ.get("INKLINK_LOG_FILE", "inklink.log"),
     # PDF rendering mode: "outline" for vector outlines via drawj2d or "raster" for PNG rasterization
     "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "outline"),
+    # MyScript iink SDK configuration
+    "MYSCRIPT_APP_KEY": os.environ.get("MYSCRIPT_APP_KEY", ""),
+    "MYSCRIPT_HMAC_KEY": os.environ.get("MYSCRIPT_HMAC_KEY", ""),
 }
 
 # Ensure required directories exist
