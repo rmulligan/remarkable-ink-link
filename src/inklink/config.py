@@ -1,10 +1,13 @@
 from pydantic import BaseModel, Field
 import os
 
+
 class HCLResourceConfig(BaseModel):
     resource_type: str = Field(..., description="Type of the HCL resource")
     resource_name: str = Field(..., description="Name of the HCL resource")
     attributes: dict = Field(default_factory=dict, description="Resource attributes")
+
+
 # Default configuration dictionary for InkLink
 CONFIG = {
     # Server settings
@@ -43,7 +46,9 @@ CONFIG = {
     "MYSCRIPT_HMAC_KEY": os.environ.get("MYSCRIPT_HMAC_KEY", ""),
     # OpenAI settings
     "OPENAI_MODEL": os.environ.get("INKLINK_OPENAI_MODEL", "gpt-3.5-turbo"),
-    "OPENAI_SYSTEM_PROMPT": os.environ.get("INKLINK_OPENAI_SYSTEM_PROMPT", "You are a helpful assistant."),
+    "OPENAI_SYSTEM_PROMPT": os.environ.get(
+        "INKLINK_OPENAI_SYSTEM_PROMPT", "You are a helpful assistant."
+    ),
 }
 
 # Ensure required directories exist
@@ -62,7 +67,10 @@ if os.path.exists(ddvk_candidate) and os.access(ddvk_candidate, os.X_OK):
 # Fallback: detect rmapi in PATH if default path not found or not executable
 try:
     from shutil import which
-    if not os.path.exists(CONFIG.get("RMAPI_PATH", "")) or not os.access(CONFIG.get("RMAPI_PATH", ""), os.X_OK):
+
+    if not os.path.exists(CONFIG.get("RMAPI_PATH", "")) or not os.access(
+        CONFIG.get("RMAPI_PATH", ""), os.X_OK
+    ):
         path_rmapi = which("rmapi")
         if path_rmapi:
             CONFIG["RMAPI_PATH"] = path_rmapi

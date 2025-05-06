@@ -26,11 +26,15 @@ class AIService:
             api_key: OpenAI API key; falls back to OPENAI_API_KEY env var.
             model: OpenAI model name (e.g., 'gpt-3.5-turbo').
         """
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
+        self.api_key = (
+            api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
+        )
         if not self.api_key:
             logger.warning("OPENAI_API_KEY not set; AIService may not work.")
         self.model = model or CONFIG.get("OPENAI_MODEL", "gpt-3.5-turbo")
-        self.system_prompt = CONFIG.get("OPENAI_SYSTEM_PROMPT", "You are a helpful assistant.")
+        self.system_prompt = CONFIG.get(
+            "OPENAI_SYSTEM_PROMPT", "You are a helpful assistant."
+        )
         self.api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
 
     def ask(self, prompt: str) -> str:
@@ -50,7 +54,9 @@ class AIService:
         self,
         query_text: str,
         context: Optional[str] = None,
-        structured_content: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+        structured_content: Optional[
+            Union[List[Dict[str, Any]], Dict[str, Any]]
+        ] = None,
         context_window: Optional[int] = None,
         selected_pages: Optional[List[Union[int, str]]] = None,
     ) -> str:
@@ -67,11 +73,12 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
+
         def call_api():
             url = f"{self.api_base}/chat/completions"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             }
 
             messages = []
@@ -90,7 +97,14 @@ class AIService:
 
                 # Select pages based on context_window or selected_pages
                 if selected_pages:
-                    filtered = [p for p in pages if (p.get("id") in selected_pages or p.get("number") in selected_pages)]
+                    filtered = [
+                        p
+                        for p in pages
+                        if (
+                            p.get("id") in selected_pages
+                            or p.get("number") in selected_pages
+                        )
+                    ]
                 elif context_window:
                     filtered = pages[-context_window:]
                 else:
@@ -103,27 +117,25 @@ class AIService:
                     link_str = ""
                     if links:
                         link_str = "Links: " + ", ".join(
-                            [f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})" for l in links]
+                            [
+                                f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
+                                for l in links
+                            ]
                         )
                     context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
 
-                system_prompt = "Relevant document context:\n" + "\n\n".join(context_snippets)
-                messages.append({
-                    "role": "system",
-                    "content": system_prompt
-                })
+                system_prompt = "Relevant document context:\n" + "\n\n".join(
+                    context_snippets
+                )
+                messages.append({"role": "system", "content": system_prompt})
             elif context:
                 # Fallback to flat context string
-                messages.append({
-                    "role": "system",
-                    "content": f"Document context: {context}"
-                })
+                messages.append(
+                    {"role": "system", "content": f"Document context: {context}"}
+                )
             else:
                 # Use default system prompt if no context provided
-                messages.append({
-                    "role": "system",
-                    "content": self.system_prompt
-                })
+                messages.append({"role": "system", "content": self.system_prompt})
 
             messages.append({"role": "user", "content": query_text})
 
@@ -131,9 +143,9 @@ class AIService:
                 "model": self.model,
                 "messages": messages,
                 "max_tokens": 1000,
-                "temperature": 0.7
+                "temperature": 0.7,
             }
-            
+
             response = requests.post(url, headers=headers, json=data, timeout=30)
             response.raise_for_status()
             result = response.json()
