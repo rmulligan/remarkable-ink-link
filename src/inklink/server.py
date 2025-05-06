@@ -13,6 +13,7 @@ import time
 
 # Import configuration module
 from inklink.config import CONFIG, setup_logging
+from inklink.utils import is_safe_url
 
 # Import service implementations
 from inklink.services.qr_service import QRCodeService
@@ -53,16 +54,7 @@ class URLHandler(BaseHTTPRequestHandler):
             logger.error(f"Error initializing services: {str(e)}")
             logger.error(traceback.format_exc())
 
-    def _is_safe_url(self, url: str) -> bool:
-        """Validate URL starts with http(s) and contains only safe characters."""
-        import re
-
-        # Only allow http or https and a limited set of URL-safe chars
-        SAFE_URL_REGEX = re.compile(
-            r"^(https?://)[A-Za-z0-9\-\._~:/\?#\[\]@!\$&\(\)\*\+,;=%]+$"
-        )
-        # Use fullmatch to ensure the entire URL string matches allowed pattern
-        return bool(SAFE_URL_REGEX.fullmatch(url))
+    # _is_safe_url removed; use is_safe_url from utils instead
 
     def do_POST(self):
         """Handle POST request with URL to process."""
@@ -121,7 +113,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 if (
                     parsed.scheme in ("http", "https")
                     and parsed.netloc
-                    and self._is_safe_url(url)
+                    and is_safe_url(url)
                 ):
                     return url
 
@@ -148,7 +140,7 @@ class URLHandler(BaseHTTPRequestHandler):
             return None
 
         # If the entire URL is safe, return it
-        if self._is_safe_url(raw):
+        if is_safe_url(raw):
             return raw
 
         # If there is a '<' suffix, strip it and validate the prefix
@@ -158,7 +150,7 @@ class URLHandler(BaseHTTPRequestHandler):
             if (
                 parsed_pref.scheme in ("http", "https")
                 and parsed_pref.netloc
-                and self._is_safe_url(prefix)
+                and is_safe_url(prefix)
             ):
                 return prefix
         # If there is a '^' suffix, strip it and validate the prefix
@@ -168,7 +160,7 @@ class URLHandler(BaseHTTPRequestHandler):
             if (
                 parsed_pref.scheme in ("http", "https")
                 and parsed_pref.netloc
-                and self._is_safe_url(prefix)
+                and is_safe_url(prefix)
             ):
                 return prefix
 
@@ -179,7 +171,7 @@ class URLHandler(BaseHTTPRequestHandler):
             if (
                 parsed_pref.scheme in ("http", "https")
                 and parsed_pref.netloc
-                and self._is_safe_url(prefix)
+                and is_safe_url(prefix)
             ):
                 return prefix
 

@@ -20,6 +20,16 @@ except ImportError:
 # Set up logger
 logger = logging.getLogger(__name__)
 
+import re
+
+# Reusable, configurable regex for safe URLs
+SAFE_URL_REGEX = re.compile(
+    r"^(https?://)[A-Za-z0-9\\-\\._~:/\\?#\\[\\]@!\\$&\\(\\)\\*\\+,;=%]+$"
+)
+
+def is_safe_url(url: str) -> bool:
+    """Validate URL starts with http(s) and contains only safe characters."""
+    return bool(SAFE_URL_REGEX.fullmatch(url))
 # Generic type for function return
 T = TypeVar("T")
 
