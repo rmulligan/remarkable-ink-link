@@ -71,15 +71,15 @@ def ask(prompt, model):
 def roundtrip(input_file, output):
     """Process a handwritten query and generate a response."""
     from inklink.services.round_trip_service import RoundTripService
-    
+
     service = RoundTripService()
     success, result = service.process_handwritten_query(input_file)
-    
+
     if success:
         click.echo(f"Round-trip processing successful!")
         click.echo(f"Recognized text: {result['recognized_text']}")
         click.echo(f"Response uploaded to reMarkable: {result['upload_message']}")
-        
+
         # Save to output file if specified
         if output:
             try:
