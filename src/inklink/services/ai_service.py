@@ -1,21 +1,21 @@
 import os
 import requests
 
+
 class AIService:
     """Service for AI text processing using OpenAI."""
 
     def __init__(self, api_key=None, model=None):
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
+        self.api_key = (
+            api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
+        )
         self.model = model or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
         self.api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
         if not self.api_key:
-            raise ValueError("OpenAI API key must be set via OPENAI_API_KEY or AI_API_KEY environment variable.")
+            raise ValueError(
+                "OpenAI API key must be set via OPENAI_API_KEY or AI_API_KEY environment variable."
+            )
 
-<<<<<<< HEAD
-    def process_query(self, query_text, context=None):
-        """Process a text query and return an AI response using OpenAI Chat API.
-        Optionally include structured document context to improve relevance."""
-=======
     def process_query(
         self,
         query_text,
@@ -37,17 +37,11 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         url = f"{self.api_base}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-<<<<<<< HEAD
-        # Structure context as a system prompt if provided
-        messages = []
-        if context:
-=======
 
         messages = []
 
@@ -65,7 +59,14 @@ class AIService:
 
             # Select pages based on context_window or selected_pages
             if selected_pages:
-                filtered = [p for p in pages if (p.get("id") in selected_pages or p.get("number") in selected_pages)]
+                filtered = [
+                    p
+                    for p in pages
+                    if (
+                        p.get("id") in selected_pages
+                        or p.get("number") in selected_pages
+                    )
+                ]
             elif context_window:
                 filtered = pages[-context_window:]
             else:
@@ -78,34 +79,29 @@ class AIService:
                 link_str = ""
                 if links:
                     link_str = "Links: " + ", ".join(
-                        [f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})" for l in links]
+                        [
+                            f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
+                            for l in links
+                        ]
                     )
                 context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
 
-            system_prompt = "Relevant document context:\n" + "\n\n".join(context_snippets)
-            messages.append({
-                "role": "system",
-                "content": system_prompt
-            })
+            system_prompt = "Relevant document context:\n" + "\n\n".join(
+                context_snippets
+            )
+            messages.append({"role": "system", "content": system_prompt})
         elif context:
             # Fallback to flat context string
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
-            messages.append({
-                "role": "system",
-                "content": f"Document context: {context}"
-            })
-<<<<<<< HEAD
-        messages.append({"role": "user", "content": query_text})
-=======
+            messages.append(
+                {"role": "system", "content": f"Document context: {context}"}
+            )
 
         messages.append({"role": "user", "content": query_text})
-
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         data = {
             "model": self.model,
             "messages": messages,
             "max_tokens": 1000,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
