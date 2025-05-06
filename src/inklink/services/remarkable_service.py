@@ -18,6 +18,23 @@ class RemarkableService(IRemarkableService):
     def __init__(self, rmapi_path: str, upload_folder: str = "/"):
         self.rmapi_path = rmapi_path
         self.upload_folder = upload_folder
+        
+    def test_connection(self) -> Tuple[bool, str]:  # noqa: D102
+        """
+        Test connectivity and authentication to reMarkable cloud via rmapi.
+        Returns (True, message) if authenticated, (False, error_message) otherwise.
+        """
+        try:
+            # Attempt to list files in the target folder as an auth test
+            cmd = [self.rmapi_path, "ls", self.upload_folder]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                # Authentication or connectivity failed
+                err = (result.stderr or result.stdout or f"Exit code {result.returncode}").strip()
+                return False, err
+            return True, "OK"
+        except Exception as e:
+            return False, str(e)
 
     # First implementation removed - keeping only the version with retry functionality
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:

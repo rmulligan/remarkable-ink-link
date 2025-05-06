@@ -1,29 +1,65 @@
+"""AI Service for interacting with OpenAI models."""
+
 import os
+import logging
 import requests
+from typing import Optional, Dict, Any, List, Union
+
+from inklink.utils import retry_operation, format_error
+from inklink.config import CONFIG
+
+logger = logging.getLogger(__name__)
+
 
 class AIService:
     """Service for AI text processing using OpenAI."""
 
-    def __init__(self, api_key=None, model=None):
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
-        self.model = model or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
-        self.api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
-        if not self.api_key:
-            raise ValueError("OpenAI API key must be set via OPENAI_API_KEY or AI_API_KEY environment variable.")
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        """
+        Initialize AIService with model and API key.
 
-<<<<<<< HEAD
-    def process_query(self, query_text, context=None):
-        """Process a text query and return an AI response using OpenAI Chat API.
-        Optionally include structured document context to improve relevance."""
-=======
+        Args:
+            api_key: OpenAI API key; falls back to OPENAI_API_KEY env var.
+            model: OpenAI model name (e.g., 'gpt-3.5-turbo').
+        """
+        self.api_key = (
+            api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_API_KEY")
+        )
+        if not self.api_key:
+            logger.warning("OPENAI_API_KEY not set; AIService may not work.")
+        self.model = model or CONFIG.get("OPENAI_MODEL", "gpt-3.5-turbo")
+        self.system_prompt = CONFIG.get(
+            "OPENAI_SYSTEM_PROMPT", "You are a helpful assistant."
+        )
+        self.api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
+
+    def ask(self, prompt: str) -> str:
+        """
+        Ask a prompt to the AI model and return the response text.
+        Simplified interface for quick queries.
+
+        Args:
+            prompt: The user prompt to send to the model.
+
+        Returns:
+            The AI-generated response string.
+        """
+        return self.process_query(prompt)
+
     def process_query(
         self,
-        query_text,
-        context=None,
-        structured_content=None,
-        context_window=None,
-        selected_pages=None,
-    ):
+        query_text: str,
+        context: Optional[str] = None,
+        structured_content: Optional[
+            Union[List[Dict[str, Any]], Dict[str, Any]]
+        ] = None,
+        context_window: Optional[int] = None,
+        selected_pages: Optional[List[Union[int, str]]] = None,
+    ) -> str:
         """
         Process a text query and return an AI response using OpenAI Chat API.
 
@@ -37,78 +73,87 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
-        url = f"{self.api_base}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-<<<<<<< HEAD
-        # Structure context as a system prompt if provided
-        messages = []
-        if context:
-=======
 
-        messages = []
+        def call_api():
+            url = f"{self.api_base}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
 
-        # Build system prompt from structured_content if provided
-        if structured_content:
-            context_snippets = []
-            pages = []
-            # Determine which pages to include
-            if isinstance(structured_content, dict):
-                pages = structured_content.get("pages", [])
-            elif isinstance(structured_content, list):
-                pages = structured_content
-            else:
+            messages = []
+
+            # Build system prompt from structured_content if provided
+            if structured_content:
+                context_snippets = []
                 pages = []
+                # Determine which pages to include
+                if isinstance(structured_content, dict):
+                    pages = structured_content.get("pages", [])
+                elif isinstance(structured_content, list):
+                    pages = structured_content
+                else:
+                    pages = []
 
-            # Select pages based on context_window or selected_pages
-            if selected_pages:
-                filtered = [p for p in pages if (p.get("id") in selected_pages or p.get("number") in selected_pages)]
-            elif context_window:
-                filtered = pages[-context_window:]
+                # Select pages based on context_window or selected_pages
+                if selected_pages:
+                    filtered = [
+                        p
+                        for p in pages
+                        if (
+                            p.get("id") in selected_pages
+                            or p.get("number") in selected_pages
+                        )
+                    ]
+                elif context_window:
+                    filtered = pages[-context_window:]
+                else:
+                    filtered = pages
+
+                for page in filtered:
+                    title = page.get("title", f"Page {page.get('number', '')}")
+                    content = page.get("content", "")
+                    links = page.get("links", [])
+                    link_str = ""
+                    if links:
+                        link_str = "Links: " + ", ".join(
+                            [
+                                f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
+                                for l in links
+                            ]
+                        )
+                    context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
+
+                system_prompt = "Relevant document context:\n" + "\n\n".join(
+                    context_snippets
+                )
+                messages.append({"role": "system", "content": system_prompt})
+            elif context:
+                # Fallback to flat context string
+                messages.append(
+                    {"role": "system", "content": f"Document context: {context}"}
+                )
             else:
-                filtered = pages
+                # Use default system prompt if no context provided
+                messages.append({"role": "system", "content": self.system_prompt})
 
-            for page in filtered:
-                title = page.get("title", f"Page {page.get('number', '')}")
-                content = page.get("content", "")
-                links = page.get("links", [])
-                link_str = ""
-                if links:
-                    link_str = "Links: " + ", ".join(
-                        [f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})" for l in links]
-                    )
-                context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
+            messages.append({"role": "user", "content": query_text})
 
-            system_prompt = "Relevant document context:\n" + "\n\n".join(context_snippets)
-            messages.append({
-                "role": "system",
-                "content": system_prompt
-            })
-        elif context:
-            # Fallback to flat context string
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
-            messages.append({
-                "role": "system",
-                "content": f"Document context: {context}"
-            })
-<<<<<<< HEAD
-        messages.append({"role": "user", "content": query_text})
-=======
+            data = {
+                "model": self.model,
+                "messages": messages,
+                "max_tokens": 1000,
+                "temperature": 0.7,
+            }
 
-        messages.append({"role": "user", "content": query_text})
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+            # OpenAI returns choices[0].message.content
+            return result["choices"][0]["message"]["content"].strip()
 
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
-        data = {
-            "model": self.model,
-            "messages": messages,
-            "max_tokens": 1000,
-            "temperature": 0.7
-        }
-        response = requests.post(url, headers=headers, json=data, timeout=30)
-        response.raise_for_status()
-        result = response.json()
-        # OpenAI returns choices[0].message.content
-        return result["choices"][0]["message"]["content"].strip()
+        try:
+            return retry_operation(call_api, operation_name="AIService.process_query")
+        except Exception as e:
+            logger.error(format_error("ai", "Failed to get AI response", e))
+            return ""
