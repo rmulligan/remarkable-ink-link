@@ -31,6 +31,31 @@ def auth(host, port):
     uvicorn.run(app, host=host, port=port)
 
 
+@cli.command()
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", help="Output file name (optional)")
+def roundtrip(input_file, output):
+    """Process a handwritten query and generate a response."""
+    from inklink.services.round_trip_service import RoundTripService
+    
+    service = RoundTripService()
+    success, result = service.process_handwritten_query(input_file)
+    
+    if success:
+        click.echo(f"Round-trip processing successful!")
+        click.echo(f"Recognized text: {result['recognized_text']}")
+        click.echo(f"Response uploaded to reMarkable: {result['upload_message']}")
+        
+        # Save to output file if specified
+        if output:
+            with open(output, "w") as f:
+                f.write(f"Query: {result['recognized_text']}\n\n")
+                f.write(f"Response: {result['response_text']}")
+            click.echo(f"Response saved to {output}")
+    else:
+        click.echo(f"Error: {result['error']}")
+
+
 def main():
     """Entry point for the application."""
     cli()
