@@ -131,8 +131,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
-            result = self.myscript.recognize(iink_data, content_type, language)
-            return result
+            return self.myscript.recognize(iink_data, content_type, language)
         except Exception as e:
             logging.error(f"Handwriting recognition pipeline failed: {e}")
     def recognize_multi_page_ink(
