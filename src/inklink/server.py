@@ -29,30 +29,26 @@ logger = setup_logging()
 class URLHandler(BaseHTTPRequestHandler):
     """Handler for URL sharing requests."""
 
-    def setup(self):
-        """Set up the handler after the parent is initialized."""
-        # First initialize the parent
-        super().setup()
-
-        # Then initialize services safely
-        self._initialize_services()
-
-    def _initialize_services(self):
-        """Initialize service instances safely."""
-        try:
-            self.qr_service = QRCodeService(CONFIG["TEMP_DIR"])
-            self.pdf_service = PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
-            # Initialize web scraper (no args)
-            self.web_scraper = WebScraperService()
-            self.document_service = DocumentService(
-                CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"]
-            )
-            self.remarkable_service = RemarkableService(
-                CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"]
-            )
-        except Exception as e:
-            logger.error(f"Error initializing services: {str(e)}")
-            logger.error(traceback.format_exc())
+    def __init__(
+        self,
+        *args,
+        qr_service=None,
+        pdf_service=None,
+        web_scraper=None,
+        document_service=None,
+        remarkable_service=None,
+        **kwargs
+    ):
+        self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
+        self.pdf_service = pdf_service or PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
+        self.web_scraper = web_scraper or WebScraperService()
+        self.document_service = document_service or DocumentService(
+            CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"]
+        )
+        self.remarkable_service = remarkable_service or RemarkableService(
+            CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"]
+        )
+        super().__init__(*args, **kwargs)
 
     # _is_safe_url removed; use is_safe_url from utils instead
 
@@ -277,11 +273,30 @@ class URLHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = None, port: int = None):
-    """Start the HTTP server."""
+    """Start the HTTP server with dependency injection support."""
     host = host or CONFIG.get("HOST", "0.0.0.0")
     port = port or CONFIG.get("PORT", 9999)
     server_address = (host, port)
-    httpd = HTTPServer(server_address, URLHandler)
+
+    # Dependency injection: create service instances here
+    qr_service = QRCodeService(CONFIG["TEMP_DIR"])
+    pdf_service = PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
+    web_scraper = WebScraperService()
+    document_service = DocumentService(CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"])
+    remarkable_service = RemarkableService(CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"])
+
+    def handler_factory(*args, **kwargs):
+        return URLHandler(
+            *args,
+            qr_service=qr_service,
+            pdf_service=pdf_service,
+            web_scraper=web_scraper,
+            document_service=document_service,
+            remarkable_service=remarkable_service,
+            **kwargs
+        )
+
+    httpd = HTTPServer(server_address, handler_factory)
     logger = setup_logging()
     logger.info(f"InkLink server listening on {host}:{port}")
     try:
