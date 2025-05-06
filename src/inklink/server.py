@@ -41,8 +41,10 @@ class URLHandler(BaseHTTPRequestHandler):
         web_scraper=None,
         document_service=None,
         remarkable_service=None,
+        ai_service=None,
         **kwargs
     ):
+        from src.inklink.services.ai_service import AIService
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
         self.pdf_service = pdf_service or PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
         self.web_scraper = web_scraper or WebScraperService()
@@ -52,47 +54,107 @@ class URLHandler(BaseHTTPRequestHandler):
         self.remarkable_service = remarkable_service or RemarkableService(
             CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"]
         )
+        self.ai_service = ai_service or AIService()
         super().__init__(*args, **kwargs)
 
     # _is_safe_url removed; use is_safe_url from utils instead
 
     def do_POST(self):
-        """Handle POST request with URL to process."""
-        if self.path != "/share":
-            self._send_error("Invalid endpoint. Use /share")
+        """Handle POST requests for multiple endpoints."""
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length) if content_length > 0 else b""
+
+        if self.path == "/auth/remarkable":
+            try:
+                data = json.loads(post_data.decode("utf-8"))
+                token = data.get("token")
+                if not token:
+                    self._send_json({"error": "Missing token"}, status=400)
+                    return
+                # Store token in memory (replace with secure storage in production)
+                self.server.tokens["remarkable"] = token
+                self._send_json({"status": "ok"})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
             return
 
-        try:
-            # Get content length
-            content_length = int(self.headers.get("Content-Length", 0))
-            if content_length == 0:
-                self._send_error("Empty request")
+        if self.path == "/auth/myscript":
+            try:
+                data = json.loads(post_data.decode("utf-8"))
+                app_key = data.get("application_key")
+                hmac_key = data.get("hmac_key")
+                if not app_key or not hmac_key:
+                    self._send_json({"error": "Missing keys"}, status=400)
+                    return
+                self.server.tokens["myscript"] = {"app_key": app_key, "hmac_key": hmac_key}
+                self._send_json({"status": "ok"})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if self.path == "/upload":
+            # Minimal multipart parser for .rm file
+            import cgi, uuid, os
+            env = {'REQUEST_METHOD': 'POST'}
+            headers = {k: v for k, v in self.headers.items()}
+            fs = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ=env,
+                keep_blank_values=True
+            )
+            fileitem = fs['file'] if 'file' in fs else None
+            if not fileitem or not fileitem.file:
+                self._send_json({"error": "No file uploaded"}, status=400)
                 return
+            file_id = str(uuid.uuid4())
+            upload_dir = "/tmp/inklink_uploads"
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, f"{file_id}.rm")
+            with open(file_path, "wb") as f:
+                f.write(fileitem.file.read())
+            self.server.files[file_id] = file_path
+            self._send_json({"file_id": file_id})
+            return
 
-            # Read request body
-            post_data = self.rfile.read(content_length)
-            url = self._extract_url(post_data)
+        if self.path == "/process":
+            try:
+                data = json.loads(post_data.decode("utf-8"))
+                file_id = data.get("file_id")
+                if not file_id or file_id not in self.server.files:
+                    self._send_json({"error": "Invalid file_id"}, status=400)
+                    return
+                # Simulate processing and AI response
+                response_id = str(uuid.uuid4())
+                # For demo: just echo file_id as markdown and raw
+                md = f"# Processed file {file_id}\n\nAI response here."
+                raw = f"RAW_RESPONSE_FOR_{file_id}"
+                self.server.responses[response_id] = {"markdown": md, "raw": raw}
+                self._send_json({"status": "done", "response_id": response_id})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
 
-            if not url:
-                self._send_error("No valid URL found")
-                return
-
-            logger.info(f"Processing URL: {url}")
-
-            # Generate QR code
-            qr_path, qr_filename = self.qr_service.generate_qr(url)
-            logger.info(f"Generated QR code: {qr_filename}")
-
-            # Process URL based on type
-            if self.pdf_service.is_pdf_url(url):
-                self._handle_pdf_url(url, qr_path)
-            else:
-                self._handle_webpage_url(url, qr_path)
-
-        except Exception as e:
-            logger.error(f"Error processing request: {str(e)}")
-            logger.error(traceback.format_exc())
-            self._send_error(f"Error processing request: {str(e)}")
+        # Default: legacy /share endpoint
+        if self.path == "/share":
+            try:
+                url = self._extract_url(post_data)
+                if not url:
+                    self._send_error("No valid URL found")
+                    return
+                logger.info(f"Processing URL: {url}")
+                qr_path, qr_filename = self.qr_service.generate_qr(url)
+                logger.info(f"Generated QR code: {qr_filename}")
+                if self.pdf_service.is_pdf_url(url):
+                    self._handle_pdf_url(url, qr_path)
+                else:
+                    self._handle_webpage_url(url, qr_path)
+            except Exception as e:
+                logger.error(f"Error processing request: {str(e)}")
+                logger.error(traceback.format_exc())
+                self._send_error(f"Error processing request: {str(e)}")
+        else:
+            self._send_json({"error": "Invalid endpoint"}, status=404)
 
     def _extract_url(self, post_data):
         """Extract URL from request data (JSON or plain text)."""
@@ -241,6 +303,29 @@ class URLHandler(BaseHTTPRequestHandler):
             content = self.web_scraper.scrape(url)
             logger.debug("web_scraper.scrape completed")
 
+            # AI processing of main content
+            logger.debug("Calling ai_service.process_query on scraped content")
+            main_text = ""
+            if isinstance(content.get("content"), str):
+                main_text = content["content"]
+            elif isinstance(content.get("content"), list):
+                # Join all text fields if structured as a list of dicts
+                main_text = " ".join(
+                    item.get("text", "") if isinstance(item, dict) else str(item)
+                    for item in content["content"]
+                )
+            else:
+                main_text = str(content)
+            try:
+                # Extract context: all content fields except the main text
+                context = {k: v for k, v in content.items() if k != "content"}
+                ai_response = self.ai_service.process_query(main_text, context=context)
+                logger.debug(f"AI response: {ai_response}")
+                content["ai_summary"] = ai_response
+            except Exception as e:
+                logger.error(f"AI service failed: {e}")
+                content["ai_summary"] = "AI processing failed."
+
             # Use new RCU-based direct conversion
             logger.debug("Calling document_service.create_rmdoc_from_content")
             rm_path = self.document_service.create_rmdoc_from_content(url, qr_path, content)
@@ -291,6 +376,27 @@ class URLHandler(BaseHTTPRequestHandler):
         self.wfile.write(response.encode("utf-8"))
 
 
+    def do_GET(self):
+        """Handle GET requests for /response."""
+        from urllib.parse import urlparse, parse_qs
+        if self.path.startswith("/response"):
+            query = urlparse(self.path).query
+            params = parse_qs(query)
+            response_id = params.get("response_id", [None])[0]
+            if not response_id or response_id not in self.server.responses:
+                self._send_json({"error": "Invalid response_id"}, status=400)
+                return
+            resp = self.server.responses[response_id]
+            self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
+        else:
+            self._send_json({"error": "Invalid endpoint"}, status=404)
+
+    def _send_json(self, obj, status=200):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(obj).encode("utf-8"))
+
 def run_server(host: str = None, port: int = None):
     """Start the HTTP server with dependency injection support."""
     host = host or CONFIG.get("HOST", "0.0.0.0")
@@ -316,6 +422,10 @@ def run_server(host: str = None, port: int = None):
         )
 
     httpd = HTTPServer(server_address, handler_factory)
+    # In-memory stores for tokens, files, responses
+    httpd.tokens = {}
+    httpd.files = {}
+    httpd.responses = {}
     logger = setup_logging()
     logger.info(f"InkLink server listening on {host}:{port}")
     try:

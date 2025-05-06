@@ -1,0 +1,63 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+#app {
+  max-width: 420px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+section {
+  margin-bottom: 1.5rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+input[type="text"], input[type="password"], input[type="file"] {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+button:hover {
+  background: #0056b3;
+}
+#markdown-viewer {
+  background: #f4f4f4;
+  border-radius: 4px;
+  padding: 1rem;
+  min-height: 80px;
+  margin-bottom: 1rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+#error {
+  margin-top: 1rem;
+}
+@media (max-width: 600px) {
+  #app {
+    padding: 1rem;
+    max-width: 98vw;
+  }
+}

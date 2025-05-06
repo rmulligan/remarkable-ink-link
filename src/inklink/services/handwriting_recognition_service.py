@@ -58,6 +58,21 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         self.rmscene = rmscene_adapter or RmsceneAdapter()
         self.myscript = myscript_adapter or MyScriptAdapter()
 
+    def classify_region(self, strokes: List[Dict[str, Any]]) -> str:
+        """
+        Classify a region as 'text', 'math', or 'diagram' based on stroke features.
+        Placeholder: Uses simple heuristics (to be replaced with ML or SDK logic).
+        """
+        # Example heuristic: very basic, for demonstration
+        if len(strokes) > 0:
+            # If many strokes and some are long, guess diagram
+            if any(len(s["x"]) > 10 for s in strokes):
+                return "Diagram"
+            # If strokes are dense and short, guess math
+            if len(strokes) > 5:
+                return "Math"
+        return "Text"
+
     def initialize_iink_sdk(self, application_key: str, hmac_key: str) -> bool:
         try:
             return self.myscript.initialize(application_key, hmac_key)
@@ -104,14 +119,17 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         self,
         ink_data: bytes = None,
         file_path: str = None,
-        content_type: str = "Text",
+        content_type: str = None,
         language: str = "en_US"
     ) -> Dict[str, Any]:
         """
-        High-level method: Accepts ink data or file path, extracts strokes, recognizes handwriting, and returns result.
+        High-level method: Accepts ink data or file path, extracts strokes, classifies region, recognizes handwriting, and returns result.
+        If content_type is None or 'auto', classify region automatically.
         """
         try:
             strokes = self.rmscene.extract_strokes(ink_data=ink_data, file_path=file_path)
+            if content_type is None or content_type.lower() == "auto":
+                content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
             result = self.myscript.recognize(iink_data, content_type, language)
             return result

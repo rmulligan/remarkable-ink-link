@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>InkLink Minimal Web UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <h1>InkLink</h1>
+    <section id="auth-section">
+      <h2>Authenticate</h2>
+      <form id="remarkable-auth-form">
+        <label>reMarkable Token:
+          <input type="password" id="remarkable-token" required>
+        </label>
+        <button type="submit">Login reMarkable</button>
+      </form>
+      <form id="myscript-auth-form">
+        <label>MyScript App Key:
+          <input type="text" id="myscript-app-key" required>
+        </label>
+        <label>MyScript HMAC Key:
+          <input type="password" id="myscript-hmac-key" required>
+        </label>
+        <button type="submit">Login MyScript</button>
+      </form>
+    </section>
+    <section id="upload-section" style="display:none;">
+      <h2>Upload .rm File</h2>
+      <input type="file" id="rm-file" accept=".rm">
+      <button id="upload-btn">Upload</button>
+    </section>
+    <section id="process-section" style="display:none;">
+      <h2>Process File</h2>
+      <button id="process-btn">Process</button>
+      <div id="status"></div>
+    </section>
+    <section id="response-section" style="display:none;">
+      <h2>AI Response</h2>
+      <div id="markdown-viewer"></div>
+      <a id="download-raw" href="#" download="response.txt">Download Raw</a>
+    </section>
+    <div id="error" style="color:red;"></div>
+  </div>
+  <!-- MathJax for LaTeX math rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Mermaid.js for diagram rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
