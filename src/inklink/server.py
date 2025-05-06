@@ -91,6 +91,30 @@ class URLHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
             return
+        if self.path == "/ingest":
+            """
+            Ingest content from browser extension, Siri shortcut, or web UI.
+            Accepts JSON with fields:
+              - type: "web", "note", "shortcut", etc.
+              - title: Title of the content
+              - content: Main content (text, HTML, markdown, etc.)
+              - metadata: Optional dict (source_url, tags, etc.)
+            """
+            try:
+                data = json.loads(post_data.decode("utf-8"))
+                content_type = data.get("type")
+                title = data.get("title")
+                content = data.get("content")
+                metadata = data.get("metadata", {})
+                if not content_type or not title or not content:
+                    self._send_json({"error": "Missing required fields"}, status=400)
+                    return
+                # TODO: Queue for processing, store in DB or temp, trigger pipeline
+                logger.info(f"Ingested content: type={content_type}, title={title}")
+                self._send_json({"status": "accepted"})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
 
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
