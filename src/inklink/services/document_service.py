@@ -28,6 +28,26 @@ from inklink.config import CONFIG
 logger = logging.getLogger(__name__)
 
 
+# Structured content schema (multi-page support):
+# structured_content = [
+#     {
+#         "page_number": 1,
+#         "items": [
+#             {"type": "heading", "content": "Section 1"},
+#             {"type": "paragraph", "content": "Text..."},
+#             ...
+#         ],
+#         "metadata": {...}
+#     },
+#     {
+#         "page_number": 2,
+#         "items": [
+#             ...
+#         ],
+#         "metadata": {...}
+#     },
+#     ...
+# ]
 class DocumentService:
     """Creates reMarkable documents from web content."""
 
@@ -109,44 +129,52 @@ class DocumentService:
                     if not raw_markdown.endswith("\n"):
                         f.write("\n")
                 else:
-                    # Process structured content
+                    # Process structured content (multi-page aware)
                     structured_content = content.get("structured_content", [])
-                    for item in structured_content:
-                        item_type = item.get("type", "paragraph")
-                        item_content = item.get("content", "")
-                        
-                        if not item_content:
-                            continue
+                    for page in structured_content:
+                        page_number = page.get("page_number")
+                        items = page.get("items", [])
+                        metadata = page.get("metadata", {})
+                        # Write page break except for first page
+                        if page_number and page_number > 1:
+                            f.write("\n---\n\n")
+                        # Optionally, write page header/footer using metadata
+                        for item in items:
+                            item_type = item.get("type", "paragraph")
+                            item_content = item.get("content", "")
                             
-                        if item_type == "h1" or item_type == "heading":
-                            f.write(f"# {item_content}\n\n")
-                        elif item_type == "h2":
-                            f.write(f"## {item_content}\n\n")
-                        elif item_type == "h3":
-                            f.write(f"### {item_content}\n\n")
-                        elif item_type in ["h4", "h5", "h6"]:
-                            f.write(f"#### {item_content}\n\n")
-                        elif item_type == "code":
-                            f.write(f"```\n{item_content}\n```\n\n")
-                        elif item_type == "math":
-                            f.write(f"$$\n{item_content}\n$$\n\n")
-                        elif item_type == "diagram":
-                            f.write(f"```mermaid\n{item_content}\n```\n\n")
-                        elif item_type == "list" and "items" in item:
-                            for list_item in item["items"]:
-                                f.write(f"* {list_item}\n")
-                            f.write("\n")
-                        elif item_type == "bullet":
-                            f.write(f"* {item_content}\n\n")
-                        elif item_type == "image" and "url" in item:
-                            caption = item.get("caption", "")
-                            if caption:
-                                f.write(f"![{caption}]({item['url']})\n\n")
+                            if not item_content:
+                                continue
+                                
+                            if item_type == "h1" or item_type == "heading":
+                                f.write(f"# {item_content}\n\n")
+                            elif item_type == "h2":
+                                f.write(f"## {item_content}\n\n")
+                            elif item_type == "h3":
+                                f.write(f"### {item_content}\n\n")
+                            elif item_type in ["h4", "h5", "h6"]:
+                                f.write(f"#### {item_content}\n\n")
+                            elif item_type == "code":
+                                f.write(f"```\n{item_content}\n```\n\n")
+                            elif item_type == "math":
+                                f.write(f"$$\n{item_content}\n$$\n\n")
+                            elif item_type == "diagram":
+                                f.write(f"```mermaid\n{item_content}\n```\n\n")
+                            elif item_type == "list" and "items" in item:
+                                for list_item in item["items"]:
+                                    f.write(f"* {list_item}\n")
+                                f.write("\n")
+                            elif item_type == "bullet":
+                                f.write(f"* {item_content}\n\n")
+                            elif item_type == "image" and "url" in item:
+                                caption = item.get("caption", "")
+                                if caption:
+                                    f.write(f"![{caption}]({item['url']})\n\n")
+                                else:
+                                    f.write(f"![]({item['url']})\n\n")
                             else:
-                                f.write(f"![]({item['url']})\n\n")
-                        else:
-                            # Default to paragraph
-                            f.write(f"{item_content}\n\n")
+                                # Default to paragraph
+                                f.write(f"{item_content}\n\n")
                 
                 # Add timestamp
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")

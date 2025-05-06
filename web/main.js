@@ -117,14 +117,31 @@ async function pollResponse() {
 
 // Render markdown (basic)
 function renderMarkdown(md) {
-  // Simple markdown to HTML (replace with a library for full support)
-  let html = md
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
-    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
-    .replace(/\n$/gim, '<br>');
+  // Use a markdown parser for better block support
+  // Use marked.js if available, otherwise fallback to basic
+  let html = "";
+  if (window.marked) {
+    html = window.marked.parse(md);
+  } else {
+    html = md
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
+      .replace(/\*(.*?)\*/gim, '<i>$1</i>')
+      .replace(/\n$/gim, '<br>');
+  }
+
+  // Post-process for mermaid blocks: replace ```mermaid ... ``` with <div class="mermaid">...</div>
+  html = html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, function(_, code) {
+    return `<div class="mermaid">${code.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&")}</div>`;
+  });
+  // Also handle raw ```mermaid ... ``` if not parsed by markdown
+  html = html.replace(/```mermaid\s*([\s\S]*?)```/g, function(_, code) {
+    return `<div class="mermaid">${code}</div>`;
+  });
+
+  // Insert HTML
   document.getElementById('markdown-viewer').innerHTML = html;
 
   // Trigger MathJax rendering for LaTeX blocks
@@ -132,28 +149,9 @@ function renderMarkdown(md) {
     MathJax.typesetPromise();
   }
 
-  // Render mermaid diagrams
+  // Render all mermaid diagrams
   if (window.mermaid) {
-    // Find all mermaid code blocks
-    const viewer = document.getElementById('markdown-viewer');
-    const mermaidBlocks = viewer.querySelectorAll('pre code.language-mermaid, code.language-mermaid, pre code, code');
-    mermaidBlocks.forEach((block, i) => {
-      if (block.textContent.trim().startsWith('graph') || block.textContent.trim().startsWith('sequenceDiagram')) {
-        const parent = block.parentElement;
-        const id = 'mermaid-' + i + '-' + Date.now();
-        const code = block.textContent;
-        const div = document.createElement('div');
-        div.className = 'mermaid';
-        div.id = id;
-        div.textContent = code;
-        parent.replaceWith(div);
-        try {
-          window.mermaid.init(undefined, '#' + id);
-        } catch (e) {
-          div.textContent = 'Mermaid render error: ' + e;
-        }
-      }
-    });
+    window.mermaid.init(undefined, ".mermaid");
   }
 }
 

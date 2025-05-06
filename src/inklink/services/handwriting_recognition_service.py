@@ -135,4 +135,28 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             return result
         except Exception as e:
             logging.error(f"Handwriting recognition pipeline failed: {e}")
-            return {"error": str(e)}
+def recognize_multi_page_ink(
+        self,
+        page_files: List[str],
+        language: str = "en_US"
+    ) -> List[Dict[str, Any]]:
+        """
+        Recognize handwriting from multiple page files and return structured_content in multi-page format.
+        Each page file is processed as a separate page.
+        """
+        structured_content = []
+        for i, file_path in enumerate(page_files):
+            strokes = self.rmscene.extract_strokes(file_path=file_path)
+            content_type = self.classify_region(strokes)
+            iink_data = self.convert_to_iink_format(strokes)
+            result = self.myscript.recognize(iink_data, content_type, language)
+            # Example: extract recognized items (to be adapted to actual output structure)
+            items = []
+            if "text" in result:
+                items.append({"type": content_type.lower(), "content": result["text"]})
+            structured_content.append({
+                "page_number": i + 1,
+                "items": items,
+                "metadata": {}
+            })
+        return structured_content
