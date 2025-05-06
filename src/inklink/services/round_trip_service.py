@@ -74,7 +74,7 @@ class RoundTripService:
                 return False, {"error": f"Export failed: {export_result.get('error')}"}
             
             # Extract the recognized text
-            recognized_text = export_result.get("content", {}).get("text", "")
+            recognized_text = export_result.get("content", {}).get("text", "").strip()
             if not recognized_text:
                 return False, {"error": "No text recognized"}
             
