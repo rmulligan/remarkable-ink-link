@@ -38,6 +38,17 @@ class ServiceManager:
             raise
 
     def get_services(self):
+        """
+        Retrieves all instantiated service objects.
+
+        Returns:
+            dict: A dictionary containing the following key-value pairs:
+                - "qr_service" (QRCodeService): The QR code service instance.
+                - "pdf_service" (PDFService): The PDF service instance.
+                - "web_scraper" (WebScraperService): The web scraper service instance.
+                - "document_service" (DocumentService): The document service instance.
+                - "remarkable_service" (RemarkableService): The Remarkable service instance.
+        """
         return {
             "qr_service": self.qr_service,
             "pdf_service": self.pdf_service,
