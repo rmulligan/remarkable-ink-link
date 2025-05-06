@@ -42,11 +42,15 @@ class WebScraperService:
         Returns:
             Dict with title, structured_content, and images
         """
+        import logging
+        logger = logging.getLogger("inklink.web_scraper_service")
         logger.info(f"Scraping URL: {url}")
         
         # Fetch the URL content
+        logger.debug("Calling _fetch_url")
         try:
             html_content = self._fetch_url(url)
+            logger.debug("_fetch_url completed")
         except Exception as e:
             error_msg = format_error("network", f"Failed to fetch URL {url}", e)
             logger.error(error_msg)
@@ -64,9 +68,11 @@ class WebScraperService:
         # Try different extraction methods
         if Document:
             try:
+                logger.debug("Using Mozilla Readability for extraction")
                 # Use Mozilla Readability to get clean article content
                 doc = Document(html_content)
                 content_html = doc.summary()
+                logger.debug("Mozilla Readability extraction completed")
                 
                 # Extract structured content from the cleaned HTML
                 content = extract_structured_content(content_html, url)

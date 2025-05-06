@@ -6,7 +6,7 @@ import PyPDF2
 from urllib.parse import urlparse
 from typing import Dict, Optional, Any
 import logging
-from inklink.config import CONFIG
+# CONFIG import removed (no longer used)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class PDFService:
             # Extract title from PDF metadata or filename
             title = self._extract_pdf_title(pdf_path, url)
 
-            mode = CONFIG.get("PDF_RENDER_MODE", "outline")
+            mode = "outline"
             if mode == "raster":
                 from pdf2image import convert_from_path
                 images = convert_from_path(pdf_path)

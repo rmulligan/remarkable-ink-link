@@ -70,6 +70,8 @@ class DocumentService:
         Returns:
             Path to generated .rm file or None if failed
         """
+        import logging
+        logger = logging.getLogger("inklink.document_service")
         try:
             # Ensure we have valid content
             if not content:
@@ -80,6 +82,7 @@ class DocumentService:
             # Generate markdown file
             md_filename = f"doc_{hash(url)}_{int(time.time())}.md"
             md_path = os.path.join(self.temp_dir, md_filename)
+            logger.debug(f"Writing markdown file to {md_path}")
             
             with open(md_path, "w", encoding="utf-8") as f:
                 # Add title
@@ -94,7 +97,10 @@ class DocumentService:
                 
                 # Add QR code if available
                 if os.path.exists(qr_path):
+                    logger.debug(f"QR code found at {qr_path}, adding to markdown")
                     f.write(f"![QR Code for original content]({qr_path})\n\n")
+                else:
+                    logger.debug(f"No QR code found at {qr_path}")
                 
                 # Process structured content
                 structured_content = content.get("structured_content", [])

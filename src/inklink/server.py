@@ -4,6 +4,11 @@ InkLink Server
 
 Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
+import logging
+
+def setup_logging():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    return logging.getLogger("inklink.server")
 
 import json
 import traceback
@@ -12,7 +17,6 @@ from typing import Dict, Optional, Tuple
 import time
 
 # Import configuration module
-from inklink.config import CONFIG, setup_logging
 from inklink.utils import is_safe_url
 
 # Import service implementations
@@ -227,25 +231,40 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
+        import logging
+        logger = logging.getLogger("inklink.server")
         try:
+            logger.debug(f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}")
+
             # Scrape content
+            logger.debug("Calling web_scraper.scrape")
             content = self.web_scraper.scrape(url)
+            logger.debug("web_scraper.scrape completed")
 
             # Use new RCU-based direct conversion
+            logger.debug("Calling document_service.create_rmdoc_from_content")
             rm_path = self.document_service.create_rmdoc_from_content(url, qr_path, content)
+            logger.debug(f"document_service.create_rmdoc_from_content returned: {rm_path}")
             
             if not rm_path:
+                logger.error("Failed to convert to Remarkable format")
                 self._send_error("Failed to convert to Remarkable format")
                 return
 
             # Upload to Remarkable
+            logger.debug("Calling remarkable_service.upload")
             success, message = self.remarkable_service.upload(rm_path, content["title"])
+            logger.debug(f"remarkable_service.upload returned: success={success}, message={message}")
 
             if success:
+                logger.info(
+                    f"Webpage uploaded to Remarkable: {content['title']}"
+                )
                 self._send_success(
                     f"Webpage uploaded to Remarkable: {content['title']}"
                 )
             else:
+                logger.error(f"Failed to upload document: {message}")
                 self._send_error(f"Failed to upload document: {message}")
 
         except Exception as e:
