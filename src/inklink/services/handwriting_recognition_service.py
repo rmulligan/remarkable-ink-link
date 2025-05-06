@@ -2,12 +2,16 @@ from typing import Any, Dict, List, Optional
 from .interfaces import IHandwritingRecognitionService
 import logging
 
+
 class RmsceneAdapter:
     """
     Adapter for rmscene tool to extract stroke data from ink files.
     This class should be replaced or mocked in tests.
     """
-    def extract_strokes(self, ink_data: bytes = None, file_path: str = None) -> List[Dict[str, Any]]:
+
+    def extract_strokes(
+        self, ink_data: bytes = None, file_path: str = None
+    ) -> List[Dict[str, Any]]:
         try:
             # Placeholder: Replace with actual rmscene invocation logic
             # For example, call a subprocess or library to parse the file or bytes
@@ -18,16 +22,20 @@ class RmsceneAdapter:
                 # Simulate reading and extracting strokes from bytes
                 return [{"x": [0, 1], "y": [0, 1]}]
             else:
-                raise ValueError("No ink data or file path provided to rmscene adapter.")
+                raise ValueError(
+                    "No ink data or file path provided to rmscene adapter."
+                )
         except Exception as e:
             logging.error(f"Rmscene extraction failed: {e}")
             raise
+
 
 class MyScriptAdapter:
     """
     Adapter for MyScript SDK/API to perform handwriting recognition.
     This class should be replaced or mocked in tests.
     """
+
     def __init__(self):
         self.initialized = False
 
@@ -36,7 +44,12 @@ class MyScriptAdapter:
         self.initialized = True
         return True
 
-    def recognize(self, iink_data: Dict[str, Any], content_type: str = "Text", language: str = "en_US") -> Dict[str, Any]:
+    def recognize(
+        self,
+        iink_data: Dict[str, Any],
+        content_type: str = "Text",
+        language: str = "en_US",
+    ) -> Dict[str, Any]:
         if not self.initialized:
             raise RuntimeError("MyScript SDK not initialized.")
         # Placeholder: Replace with actual MyScript recognition logic
@@ -44,16 +57,22 @@ class MyScriptAdapter:
 
     def export(self, content_id: str, format_type: str = "text") -> Dict[str, Any]:
         # Placeholder: Replace with actual export logic
-        return {"content_id": content_id, "format": format_type, "data": "exported content"}
+        return {
+            "content_id": content_id,
+            "format": format_type,
+            "data": "exported content",
+        }
+
 
 class HandwritingRecognitionService(IHandwritingRecognitionService):
     """
     Service that wraps rmscene and MyScript for handwriting recognition.
     """
+
     def __init__(
         self,
         rmscene_adapter: Optional[RmsceneAdapter] = None,
-        myscript_adapter: Optional[MyScriptAdapter] = None
+        myscript_adapter: Optional[MyScriptAdapter] = None,
     ):
         self.rmscene = rmscene_adapter or RmsceneAdapter()
         self.myscript = myscript_adapter or MyScriptAdapter()
@@ -100,7 +119,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         self,
         iink_data: Dict[str, Any],
         content_type: str = "Text",
-        language: str = "en_US"
+        language: str = "en_US",
     ) -> Dict[str, Any]:
         try:
             return self.myscript.recognize(iink_data, content_type, language)
@@ -108,7 +127,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             logging.error(f"Handwriting recognition failed: {e}")
             return {"error": str(e)}
 
-    def export_content(self, content_id: str, format_type: str = "text") -> Dict[str, Any]:
+    def export_content(
+        self, content_id: str, format_type: str = "text"
+    ) -> Dict[str, Any]:
         try:
             return self.myscript.export(content_id, format_type)
         except Exception as e:
@@ -120,14 +141,16 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         ink_data: bytes = None,
         file_path: str = None,
         content_type: str = None,
-        language: str = "en_US"
+        language: str = "en_US",
     ) -> Dict[str, Any]:
         """
         High-level method: Accepts ink data or file path, extracts strokes, classifies region, recognizes handwriting, and returns result.
         If content_type is None or 'auto', classify region automatically.
         """
         try:
-            strokes = self.rmscene.extract_strokes(ink_data=ink_data, file_path=file_path)
+            strokes = self.rmscene.extract_strokes(
+                ink_data=ink_data, file_path=file_path
+            )
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
@@ -181,7 +204,10 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
                 # Simple automatic cross-page reference extraction (e.g., "see page X")
                 import re
-                ref_matches = re.findall(r"(see|refer to) page (\d+)", text, re.IGNORECASE)
+
+                ref_matches = re.findall(
+                    r"(see|refer to) page (\d+)", text, re.IGNORECASE
+                )
                 for _, ref_page in ref_matches:
                     ref_page_num = int(ref_page)
                     if 1 <= ref_page_num <= len(page_files) and ref_page_num != (i + 1):
@@ -194,19 +220,24 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                         cross_page_links.append(link)
                         page_references.append(link)
 
-            structured_pages.append({
-                "page_number": i + 1,
-                "items": items,
-                "metadata": {
-                    "references": page_references
+            structured_pages.append(
+                {
+                    "page_number": i + 1,
+                    "items": items,
+                    "metadata": {"references": page_references},
                 }
-            })
+            )
 
         # Remove duplicate links (by from_page, to_page, type, label)
         seen = set()
         unique_links = []
         for link in cross_page_links:
-            key = (link["from_page"], link["to_page"], link.get("type"), link.get("label"))
+            key = (
+                link["from_page"],
+                link["to_page"],
+                link.get("type"),
+                link.get("label"),
+            )
             if key not in seen:
                 unique_links.append(link)
                 seen.add(key)

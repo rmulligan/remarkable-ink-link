@@ -10,6 +10,7 @@ from src.inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
+
 class ServiceManager:
     """Handles instantiation of all service dependencies with support for dependency injection."""
 
@@ -23,7 +24,9 @@ class ServiceManager:
     ):
         try:
             self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
-            self.pdf_service = pdf_service or PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
+            self.pdf_service = pdf_service or PDFService(
+                CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"]
+            )
             self.web_scraper = web_scraper or WebScraperService()
             self.document_service = document_service or DocumentService(
                 CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"]

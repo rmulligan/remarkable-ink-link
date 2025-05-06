@@ -26,11 +26,14 @@ SAFE_URL_REGEX = re.compile(
     r"^(https?://)[A-Za-z0-9\\-\\._~:/\\?#\\[\\]@!\\$&\\(\\)\\*\\+,;=%]+$"
 )
 
+
 def is_safe_url(url: str) -> bool:
     """Validate URL starts with http(s) and contains only safe characters."""
     return bool(SAFE_URL_REGEX.fullmatch(url))
 
+
 T = TypeVar("T")
+
 
 def retry_operation(
     operation: Callable[..., T],
@@ -84,6 +87,7 @@ def retry_operation(
                 )
                 raise last_error
 
+
 def format_error(error_type: str, message: str, details: Any = None) -> str:
     """Format error messages consistently.
 
@@ -105,7 +109,9 @@ def format_error(error_type: str, message: str, details: Any = None) -> str:
 
     return error_msg
 
+
 # Enhanced HTML parsing utilities
+
 
 def extract_title_from_html(
     soup: BeautifulSoup, url: Optional[str] = None, max_length: int = 100
@@ -114,7 +120,7 @@ def extract_title_from_html(
 
     Tries multiple sources in priority order:
     1. OpenGraph meta title
-    2. Twitter card meta title 
+    2. Twitter card meta title
     3. Standard title tag
     4. First h1 element
     5. If nothing found, generate from URL or use fallback
@@ -158,13 +164,14 @@ def extract_title_from_html(
 
         # Truncate if too long
         if len(title) > max_length:
-            title = title[:max_length-3] + "..."
+            title = title[: max_length - 3] + "..."
 
     # Generate from URL if still empty and URL provided
     if (not title or len(title) < 2) and url:
         title = generate_title_from_url(url)
 
     return title or "Untitled Document"
+
 
 def find_main_content_container(soup: BeautifulSoup) -> Tag:
     """Find the main content container in an HTML document.
@@ -180,12 +187,12 @@ def find_main_content_container(soup: BeautifulSoup) -> Tag:
     """
     # Try common content containers in order of specificity
     container_selectors = [
-        "main", 
+        "main",
         "article",
         "#content",
         ".content",
         "#main",
-        ".main", 
+        ".main",
         "section",
         ".post-content",
         ".entry-content",
@@ -202,6 +209,7 @@ def find_main_content_container(soup: BeautifulSoup) -> Tag:
 
     # Fallback to body or entire document
     return soup.body or soup
+
 
 def parse_html_container(
     container: BeautifulSoup, base_url: Optional[str] = None
@@ -272,6 +280,7 @@ def parse_html_container(
 
     return structured, images
 
+
 def extract_structured_content(
     html_content: str, base_url: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -310,7 +319,7 @@ def extract_structured_content(
         return {
             "title": title,
             "structured_content": structured_content,
-            "images": images
+            "images": images,
         }
     except Exception as e:
         logger.error(f"Error extracting structured content: {e}")
@@ -325,6 +334,8 @@ def extract_structured_content(
             ],
             "images": [],
         }
+
+
 def validate_and_fix_content(content: Dict[str, Any], url: str) -> Dict[str, Any]:
     """Validate and fix content structure.
 
@@ -368,7 +379,9 @@ def validate_and_fix_content(content: Dict[str, Any], url: str) -> Dict[str, Any
                 items = item.pop("items")
                 content["structured_content"].pop(i)
                 for entry in reversed(items):
-                    content["structured_content"].insert(i, {"type": "bullet", "content": entry})
+                    content["structured_content"].insert(
+                        i, {"type": "bullet", "content": entry}
+                    )
                 # continue at next index
             else:
                 i += 1
@@ -378,6 +391,8 @@ def validate_and_fix_content(content: Dict[str, Any], url: str) -> Dict[str, Any
         content["images"] = []
 
     return content
+
+
 def generate_title_from_url(url: str) -> str:
     """Generate a title from URL if no title can be extracted.
 

@@ -46,17 +46,20 @@ def test_extract_doc_id():
     assert service._extract_doc_id(url_simple) == "DEF67890"
 
 
-@pytest.mark.parametrize("url_or_id", [
-    # Hostname not exactly docs.google.com
-    "https://evil.docs.google.com/document/d/ABC12345/edit",
-    "https://docs.google.com.evil.com/document/d/ABC12345/edit",
-    # Missing 'document' segment
-    "https://docs.google.com/d/ABC12345/edit",
-    # Different Google service path
-    "https://docs.google.com/spreadsheets/d/ABC12345/edit",
-    # No scheme
-    "docs.google.com/document/d/ABC12345/edit",
-])
+@pytest.mark.parametrize(
+    "url_or_id",
+    [
+        # Hostname not exactly docs.google.com
+        "https://evil.docs.google.com/document/d/ABC12345/edit",
+        "https://docs.google.com.evil.com/document/d/ABC12345/edit",
+        # Missing 'document' segment
+        "https://docs.google.com/d/ABC12345/edit",
+        # Different Google service path
+        "https://docs.google.com/spreadsheets/d/ABC12345/edit",
+        # No scheme
+        "docs.google.com/document/d/ABC12345/edit",
+    ],
+)
 def test_extract_doc_id_unsafe_hosts_or_paths(url_or_id):
     service = GoogleDocsService()
     # Should return the original input when not a canonical Docs URL
