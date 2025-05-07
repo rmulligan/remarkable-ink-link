@@ -45,11 +45,16 @@ def test_webpage_ai_summary_integration(tmp_path):
     from inklink.services.remarkable_service import RemarkableService
 
     class MockAIService:
-        def __init__(self):
-            self.last_query_text = None
-            self.last_context = None
+        """Mock AI Service implementation for testing."""
 
-        def process_query(self, query_text, context=None):
+        def __init__(self):
+            """Initialize with explicit attributes."""
+            self.last_query_text = None
+            self.last_context = None  # Explicitly declare this attribute
+
+        def process_query(self, query_text, context=None, structured_content=None,
+                          context_window=None, selected_pages=None):
+            """Process query with the same signature as AIService."""
             self.last_query_text = query_text
             self.last_context = context
             # Return markdown-formatted AI summary for testing

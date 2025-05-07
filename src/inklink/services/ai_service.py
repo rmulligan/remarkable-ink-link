@@ -10,6 +10,7 @@ from inklink.config import CONFIG
 logger = logging.getLogger(__name__)
 
 
+
 class AIService:
     """Service for AI text processing using OpenAI."""
 
@@ -52,7 +53,7 @@ class AIService:
     def process_query(
         self,
         query_text: str,
-        context: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
         structured_content: Optional[
             Union[List[Dict[str, Any]], Dict[str, Any]]
         ] = None,
@@ -64,7 +65,7 @@ class AIService:
 
         Parameters:
             query_text (str): The user's query.
-            context (str, optional): Flat context string for backward compatibility.
+            context (dict, optional): Additional context as a dictionary.
             structured_content (list[dict] or dict, optional): Structured document content, e.g., list of pages with links.
             context_window (int, optional): Number of most recent pages to include as context.
             selected_pages (list[int] or list[str], optional): Specific pages to include as context.
@@ -72,7 +73,6 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
-
         def call_api():
             url = f"{self.api_base}/chat/completions"
             headers = {
@@ -128,9 +128,10 @@ class AIService:
                 )
                 messages.append({"role": "system", "content": system_prompt})
             elif context:
-                # Fallback to flat context string
+                # Fallback to context object
+                context_str = ", ".join([f"{k}: {v}" for k, v in context.items() if v])
                 messages.append(
-                    {"role": "system", "content": f"Document context: {context}"}
+                    {"role": "system", "content": f"Document context: {context_str}"}
                 )
             else:
                 # Use default system prompt if no context provided
