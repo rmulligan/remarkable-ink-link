@@ -33,7 +33,7 @@ const cancelLinkBtn = document.getElementById('cancel-link-btn');
 function showPageUI(show) {
   if (pageNav) {
   if (contextPanel) {
-  if (linkControls) linkControls.style.display = show ? '' : 'none';
+  if (linkControls) {
 }
 
 // Helper: Show/hide sections
