@@ -506,8 +506,7 @@ class DocumentService:
         s = s.replace("[", "\\[")
         s = s.replace("]", "\\]")
         s = s.replace("`", "'")
-        s = s.replace("\n", " ")
-        return s
+        return s.replace("\n", " ")
 
     def _process_content(self, content: Dict[str, Any]) -> str:
         """Process content dictionary into plain text.
