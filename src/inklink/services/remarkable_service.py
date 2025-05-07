@@ -1,7 +1,6 @@
 import os
 import subprocess
 import logging
-import shutil
 import uuid
 import tempfile
 from typing import Optional, Tuple, Any
