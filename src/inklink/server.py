@@ -12,19 +12,13 @@ import time
 import uuid
 import cgi
 import subprocess
-from typing import Dict, Optional, Tuple, Any, List, cast, IO, TypeVar
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import io
+from typing import Dict, Optional, Tuple, Any, List, cast, IO
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-
-
-# Define a TypeVar for our custom server type
-ServerType = TypeVar('ServerType', bound='CustomHTTPServer')
-
 
 from inklink.config import CONFIG
 from inklink.utils import is_safe_url
-
 
 from inklink.services.qr_service import QRCodeService
 from inklink.services.pdf_service import PDFService
@@ -90,7 +84,7 @@ class URLHandler(BaseHTTPRequestHandler):
                     self._send_json({"error": "Missing token"}, status=400)
                     return
                 # Store token in memory (replace with secure storage in production)
-                cast(ServerType, self.server).tokens["remarkable"] = token
+                cast(CustomHTTPServer, self.server).tokens["remarkable"] = token
                 self._send_json({"status": "ok"})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -104,7 +98,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not app_key or not hmac_key:
                     self._send_json({"error": "Missing keys"}, status=400)
                     return
-                cast(ServerType, self.server).tokens["myscript"] = {
+                cast(CustomHTTPServer, self.server).tokens["myscript"] = {
                     "app_key": app_key,
                     "hmac_key": hmac_key,
                 }
@@ -256,7 +250,7 @@ class URLHandler(BaseHTTPRequestHandler):
                         )
 
                 # Store response for later retrieval
-                cast(ServerType, self.server).responses[content_id] = {
+                cast(CustomHTTPServer, self.server).responses[content_id] = {
                     "content_id": content_id,
                     "title": title,
                     "structured_content": structured_content,
@@ -305,7 +299,7 @@ class URLHandler(BaseHTTPRequestHandler):
             file_path = os.path.join(upload_dir, f"{file_id}.rm")
             with open(file_path, "wb") as f:
                 f.write(fileitem.file.read())
-            cast(ServerType, self.server).files[file_id] = file_path
+            cast(CustomHTTPServer, self.server).files[file_id] = file_path
             self._send_json({"file_id": file_id})
             return
 
@@ -313,7 +307,7 @@ class URLHandler(BaseHTTPRequestHandler):
             try:
                 data = json.loads(post_data.decode("utf-8"))
                 file_id = data.get("file_id")
-                if not file_id or file_id not in cast(ServerType, self.server).files:
+                if not file_id or file_id not in cast(CustomHTTPServer, self.server).files:
                     self._send_json({"error": "Invalid file_id"}, status=400)
                     return
                 # Simulate processing and AI response
@@ -321,7 +315,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 # For demo: just echo file_id as markdown and raw
                 md = f"# Processed file {file_id}\n\nAI response here."
                 raw = f"RAW_RESPONSE_FOR_{file_id}"
-                cast(ServerType, self.server).responses[response_id] = {"markdown": md, "raw": raw}
+                cast(CustomHTTPServer, self.server).responses[response_id] = {"markdown": md, "raw": raw}
                 self._send_json({"status": "done", "response_id": response_id})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -576,10 +570,10 @@ class URLHandler(BaseHTTPRequestHandler):
             query = urlparse(self.path).query
             params = parse_qs(query)
             response_id = params.get("response_id", [None])[0]
-            if not response_id or response_id not in cast(ServerType, self.server).responses:
+            if not response_id or response_id not in cast(CustomHTTPServer, self.server).responses:
                 self._send_json({"error": "Invalid response_id"}, status=400)
                 return
-            resp = cast(ServerType, self.server).responses[response_id]
+            resp = cast(CustomHTTPServer, self.server).responses[response_id]
             self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
         else:
             self._send_json({"error": "Invalid endpoint"}, status=404)

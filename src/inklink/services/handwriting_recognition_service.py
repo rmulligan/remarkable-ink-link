@@ -109,7 +109,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             else:
                 # Use a direct call if module methods are not explicitly defined
                 scene = self.rmscene(rm_file_path)
-                
+            
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
@@ -226,7 +226,6 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """
         try:
             if ink_data is not None:
-                # Handle ink data extraction based on the available rmscene API
                 if hasattr(self.rmscene, 'extract_strokes'):
                     strokes = self.rmscene.extract_strokes(ink_data=ink_data)
                 else:
