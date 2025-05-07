@@ -117,7 +117,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                         if attr_name in ('Scene', 'RmScene'):
                             scene_class = getattr(self.rmscene, attr_name)
                             break
-                    
+
                     if scene_class:
                         scene = scene_class(rm_file_path)
                     else:

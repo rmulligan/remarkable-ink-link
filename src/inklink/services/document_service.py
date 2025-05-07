@@ -535,7 +535,6 @@ class DocumentService:
                     item_type = item.get("type", "paragraph")
                     item_content = item.get("content", "")  # Default to empty string
                     
-                    # Allow list items with 'items'
                     if item_type == "list" and "items" in item:
                         for sub_item in item["items"]:
                             # Support list items as dicts or plain strings
