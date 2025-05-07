@@ -246,7 +246,7 @@ function renderContext() {
  * Render the list of all cross-page links and add remove buttons.
  */
 function renderLinks() {
-  if (!linkList) return;
+  if (!linkList) {
   
   linkList.innerHTML = '';
   links.forEach((l, idx) => {
