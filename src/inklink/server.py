@@ -12,8 +12,9 @@ import time
 import uuid
 import cgi
 import subprocess
+from typing import Dict, Optional, Tuple, Any, List, cast, IO
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Dict, Optional, Tuple, Any, List
+import io
 from urllib.parse import urlparse, parse_qs
 
 
@@ -283,8 +284,12 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
+            # Cast the rfile to IO[Any] to work around the type issue
             fs = cgi.FieldStorage(
-                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
+                fp=cast(IO[Any], self.rfile), 
+                headers=self.headers, 
+                environ=env, 
+                keep_blank_values=True
             )
             fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:

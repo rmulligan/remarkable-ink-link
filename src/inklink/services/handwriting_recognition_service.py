@@ -101,12 +101,14 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """Extract strokes from a reMarkable file."""
         try:
             # Use rmscene to parse the .rm file
-            # Assuming rmscene.load is the correct method; if not available, use appropriate alternative
+            # Try different available methods for loading RM files
             if hasattr(self.rmscene, 'load'):
                 scene = self.rmscene.load(rm_file_path)
-            else:
-                # Alternative loading method if available
+            elif hasattr(self.rmscene, 'parse_rm_file'):
                 scene = self.rmscene.parse_rm_file(rm_file_path)
+            else:
+                # Use a direct call if module methods are not explicitly defined
+                scene = self.rmscene(rm_file_path)
                 
             strokes = []
             for layer in scene.layers:
@@ -229,9 +231,21 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                     strokes = self.rmscene.extract_strokes(ink_data=ink_data)
                 else:
                     # Alternative approach if extract_strokes isn't available
-                    import io
-                    temp_file = io.BytesIO(ink_data)
-                    strokes = self.extract_strokes(rm_file_path=temp_file)
+                    # Save to a temporary file instead of using BytesIO
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.rm') as temp_file:
+                        temp_file.write(ink_data)
+                        temp_path = temp_file.name
+                    
+                    try:
+                        strokes = self.extract_strokes(rm_file_path=temp_path)
+                    finally:
+                        # Clean up the temporary file
+                        try:
+                            import os
+                            os.unlink(temp_path)
+                        except:
+                            pass
             elif file_path is not None:
                 strokes = self.extract_strokes(rm_file_path=file_path)
             else:

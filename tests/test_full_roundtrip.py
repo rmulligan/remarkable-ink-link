@@ -22,6 +22,7 @@ from inklink.services.remarkable_service import RemarkableService
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("test_full_roundtrip")
 
+
 class TestHandler(URLHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,6 +34,7 @@ class TestHandler(URLHandler):
     def _send_error(self, message):
         self._output["error"] = message
 
+
 def test_webpage_ai_summary_integration(tmp_path):
     """Unit test: injects a mock AIService and checks AI summary in content and context passing."""
     from inklink.server import URLHandler
@@ -43,11 +45,16 @@ def test_webpage_ai_summary_integration(tmp_path):
     from inklink.services.remarkable_service import RemarkableService
 
     class MockAIService:
+        """Mock AI Service implementation for testing."""
+        
         def __init__(self):
+            """Initialize with explicit attributes."""
             self.last_query_text = None
-            self.last_context = None
+            self.last_context = None  # Explicitly declare this attribute
 
-        def process_query(self, query_text, context=None):
+        def process_query(self, query_text, context=None, structured_content=None, 
+                          context_window=None, selected_pages=None):
+            """Process query with the same signature as AIService."""
             self.last_query_text = query_text
             self.last_context = context
             # Return markdown-formatted AI summary for testing
@@ -76,7 +83,9 @@ def test_webpage_ai_summary_integration(tmp_path):
     qr_path, _ = qr_service.generate_qr(url)
 
     handler = TestHandler(
-        None, None, None,
+        None,
+        None,
+        None,
         qr_service=qr_service,
         pdf_service=pdf_service,
         web_scraper=web_scraper,
@@ -112,6 +121,7 @@ def test_webpage_ai_summary_integration(tmp_path):
         assert "```python" in md_content
         assert "- Supports *markdown* formatting" in md_content
 
+
 def test_math_and_diagram_blocks_roundtrip(tmp_path):
     """Test that math (LaTeX) and diagram (mermaid) blocks are preserved in markdown export."""
     from inklink.services.document_service import DocumentService
@@ -127,14 +137,14 @@ def test_math_and_diagram_blocks_roundtrip(tmp_path):
             "items": [
                 {"type": "paragraph", "content": "Normal text."},
                 {"type": "math", "content": "E=mc^2"},
-                {"type": "diagram", "content": "graph TD; A-->B;"}
+                {"type": "diagram", "content": "graph TD; A-->B;"},
             ],
-            "metadata": {}
+            "metadata": {},
         }
     ]
     content = {
         "title": "Test Math and Diagram",
-        "structured_content": structured_content
+        "structured_content": structured_content,
     }
     md_path = document_service.create_rmdoc_from_content(url, qr_path, content)
     assert md_path and md_path.endswith(".md")
@@ -142,6 +152,7 @@ def test_math_and_diagram_blocks_roundtrip(tmp_path):
         md = f.read()
         assert "$$\nE=mc^2\n$$" in md
         assert "```mermaid\ngraph TD; A-->B;\n```" in md
+
 
 @pytest.mark.integration
 def test_full_roundtrip_real_services(tmp_path):
@@ -153,7 +164,9 @@ def test_full_roundtrip_real_services(tmp_path):
     pdf_extract = tmp_path / "pdf_extract"
     doc_tmp = tmp_path / "doc_tmp"
 
-    logger.debug(f"Temporary directories: qr={qr_dir}, pdf_tmp={pdf_tmp}, pdf_extract={pdf_extract}, doc_tmp={doc_tmp}")
+    logger.debug(
+        f"Temporary directories: qr={qr_dir}, pdf_tmp={pdf_tmp}, pdf_extract={pdf_extract}, doc_tmp={doc_tmp}"
+    )
 
     qr_service = QRCodeService(str(qr_dir))
     logger.debug("QRCodeService instantiated")

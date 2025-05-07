@@ -278,10 +278,10 @@ class DocumentService:
                     output_path = os.path.join(self.temp_dir, "index_notebook.pdf")
                     if self.pdf_service:
                         self.pdf_service.generate_index_notebook(
-                        pages=pages,
-                        output_path=output_path,
-                        graph_title="Index Node Graph",
-                    )
+                            pages=pages,
+                            output_path=output_path,
+                            graph_title="Index Node Graph",
+                        )
                     logger.info(f"Index notebook PDF updated at {output_path}")
                 except Exception as e:
                     logger.error(f"Failed to update index notebook: {e}")
