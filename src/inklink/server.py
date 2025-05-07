@@ -4,21 +4,15 @@ InkLink Server
 
 Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
-import logging
-
-
-def setup_logging():
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
-    return logging.getLogger("inklink.server")
-
-
 import json
+import logging
+import os
+import time
 import traceback
+import uuid
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Dict, Optional, Tuple
-import time
+from urllib.parse import urlparse, parse_qs
 
 # Import configuration module
 from inklink.utils import is_safe_url
@@ -29,6 +23,14 @@ from inklink.services.pdf_service import PDFService
 from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.document_service import DocumentService
 from inklink.services.remarkable_service import RemarkableService
+
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
+    return logging.getLogger("inklink.server")
+
 
 # Set up logging
 logger = setup_logging()
@@ -116,7 +118,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 content_type = data.get("type")
                 title = data.get("title")
                 content = data.get("content")
-                metadata = data.get("metadata", {})
+                # Get metadata but we're not using it yet - will be implemented in future
+                _ = data.get("metadata", {})  # Explicitly ignored for now
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return
@@ -129,10 +132,12 @@ class URLHandler(BaseHTTPRequestHandler):
 
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
-            import cgi, uuid, os
+            import cgi
 
             env = {"REQUEST_METHOD": "POST"}
-            headers = {k: v for k, v in self.headers.items()}
+            # Headers are created but not used; comment to explain purpose
+            # Headers could be used for additional validation or processing if needed
+            # headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
                 fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
@@ -201,8 +206,6 @@ class URLHandler(BaseHTTPRequestHandler):
                     return None
                 # Trim and parse
                 url = url.strip()
-                from urllib.parse import urlparse
-
                 parsed = urlparse(url)
                 # Validate scheme, netloc, and allowed characters
                 if (
@@ -226,8 +229,6 @@ class URLHandler(BaseHTTPRequestHandler):
             return None
         # Trim extraneous whitespace at ends
         raw = raw.strip()
-
-        from urllib.parse import urlparse
 
         parsed = urlparse(raw)
         # Validate scheme and netloc
@@ -324,9 +325,6 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
-        import logging
-
-        logger = logging.getLogger("inklink.server")
         try:
             logger.debug(
                 f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}"
@@ -415,8 +413,6 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle GET requests for /response."""
-        from urllib.parse import urlparse, parse_qs
-
         if self.path.startswith("/response"):
             query = urlparse(self.path).query
             params = parse_qs(query)
