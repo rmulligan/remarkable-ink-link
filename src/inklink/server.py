@@ -19,7 +19,7 @@ from urllib.parse import urlparse, parse_qs
 
 
 # Define a TypeVar for our custom server type
-ServerType = TypeVar('ServerType', bound='CustomHTTPServer')
+ServerType = TypeVar("ServerType", bound="CustomHTTPServer")
 
 
 from inklink.config import CONFIG
@@ -273,7 +273,9 @@ class URLHandler(BaseHTTPRequestHandler):
                         "title": title,
                         "uploaded": upload_success,
                         "upload_message": (
-                            f"Uploaded to reMarkable: {title}" if upload_success else upload_message
+                            f"Uploaded to reMarkable: {title}"
+                            if upload_success
+                            else upload_message
                         ),
                     }
                 )
@@ -316,7 +318,10 @@ class URLHandler(BaseHTTPRequestHandler):
                 # For demo: just echo file_id as markdown and raw
                 md = f"# Processed file {file_id}\n\nAI response here."
                 raw = f"RAW_RESPONSE_FOR_{file_id}"
-                cast(ServerType, self.server).responses[response_id] = {"markdown": md, "raw": raw}
+                cast(ServerType, self.server).responses[response_id] = {
+                    "markdown": md,
+                    "raw": raw,
+                }
                 self._send_json({"status": "done", "response_id": response_id})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -550,7 +555,10 @@ class URLHandler(BaseHTTPRequestHandler):
             query = urlparse(self.path).query
             params = parse_qs(query)
             response_id = params.get("response_id", [None])[0]
-            if not response_id or response_id not in cast(ServerType, self.server).responses:
+            if (
+                not response_id
+                or response_id not in cast(ServerType, self.server).responses
+            ):
                 self._send_json({"error": "Invalid response_id"}, status=400)
                 return
             resp = cast(ServerType, self.server).responses[response_id]
@@ -567,12 +575,12 @@ class URLHandler(BaseHTTPRequestHandler):
 
 class CustomHTTPServer(HTTPServer):
     """Custom HTTP Server with additional attributes for tokens, files, and responses."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Initialize attributes needed by URLHandler
         self.tokens = {}  # Store authentication tokens
-        self.files = {}   # Store uploaded files
+        self.files = {}  # Store uploaded files
         self.responses = {}  # Store responses
 
 

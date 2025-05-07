@@ -10,7 +10,6 @@ from inklink.config import CONFIG
 logger = logging.getLogger(__name__)
 
 
-
 class AIService:
     """Service for AI text processing using OpenAI."""
 
@@ -73,6 +72,7 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
+
         def call_api():
             url = f"{self.api_base}/chat/completions"
             headers = {

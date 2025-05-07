@@ -159,14 +159,14 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         try:
             # Use rmscene to parse the .rm file
             # Try different available methods for loading RM files
-            if hasattr(self.rmscene, 'load'):
+            if hasattr(self.rmscene, "load"):
                 scene = self.rmscene.load(rm_file_path)
-            elif hasattr(self.rmscene, 'parse_rm_file'):
+            elif hasattr(self.rmscene, "parse_rm_file"):
                 scene = self.rmscene.parse_rm_file(rm_file_path)
             else:
                 # Use a direct call if module methods are not explicitly defined
                 scene = self.rmscene(rm_file_path)
-                
+
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
@@ -283,25 +283,31 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """
         try:
             # Extract strokes using direct rmscene or adapter pattern
-            if hasattr(self.rmscene, 'extract_strokes'):
+            if hasattr(self.rmscene, "extract_strokes"):
                 # Use adapter pattern if available
-                strokes = self.rmscene.extract_strokes(ink_data=ink_data, file_path=file_path)
+                strokes = self.rmscene.extract_strokes(
+                    ink_data=ink_data, file_path=file_path
+                )
             else:
                 # Use direct implementation
                 if ink_data is not None:
                     # Alternative approach if extract_strokes isn't available
                     # Save to a temporary file instead of using BytesIO
                     import tempfile
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.rm') as temp_file:
+
+                    with tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".rm"
+                    ) as temp_file:
                         temp_file.write(ink_data)
                         temp_path = temp_file.name
-                    
+
                     try:
                         strokes = self.extract_strokes(rm_file_path=temp_path)
                     finally:
                         # Clean up the temporary file
                         try:
                             import os
+
                             os.unlink(temp_path)
                         except Exception:
                             pass
@@ -309,12 +315,12 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                     strokes = self.extract_strokes(rm_file_path=file_path)
                 else:
                     raise ValueError("Either ink_data or file_path must be provided")
-                
+
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
-                
+
             iink_data = self.convert_to_iink_format(strokes)
-            
+
             # Support both direct API call and adapter patterns
             if self.myscript is not None and hasattr(self.myscript, "recognize"):
                 # Use adapter if provided
@@ -356,15 +362,15 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             strokes = self.extract_strokes(rm_file_path=file_path)
             content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
-            
+
             # Support both direct API call and adapter patterns
-            if hasattr(self.myscript, 'recognize'):
+            if hasattr(self.myscript, "recognize"):
                 result = self.myscript.recognize(iink_data, content_type, language)
             else:
                 result = self.recognize_handwriting(iink_data, content_type, language)
-                if result.get('success'):
+                if result.get("success"):
                     # Extract from API format
-                    result = result.get('raw_result', {})
+                    result = result.get("raw_result", {})
 
             items = []
             page_references = []
