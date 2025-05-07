@@ -273,9 +273,7 @@ class URLHandler(BaseHTTPRequestHandler):
                         "title": title,
                         "uploaded": upload_success,
                         "upload_message": (
-                            upload_message
-                            if not upload_success
-                            else f"Uploaded to reMarkable: {title}"
+                            f"Uploaded to reMarkable: {title}" if upload_success else upload_message
                         ),
                     }
                 )
