@@ -77,7 +77,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             response = requests.post(
                 urljoin(self.IINK_BASE_URL, "iink/configuration"),
                 json=test_data,
-                headers=headers
+                headers=headers,
+                timeout=10
             )
             if response.status_code == 200:
                 logger.info("MyScript iink SDK initialized successfully")
