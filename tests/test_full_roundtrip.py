@@ -109,7 +109,7 @@ def test_webpage_ai_summary_integration(tmp_path):
     # The MockAIService has explicit last_context attribute, but we need to verify it exists
     assert hasattr(ai_service, "last_context")
     # Accept either a non-empty dict or None if no context was available
-    assert ai_service.last_context is None or isinstance(ai_service.last_context, dict)
+    assert ai_service.last_context is None or isinstance(ai_service.last_context, dict)  # type: ignore
     # Check that the AI summary was added to the content passed to document_service
     # (This requires document_service.create_rmdoc_from_content to preserve content["ai_summary"])
 
