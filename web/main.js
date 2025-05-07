@@ -171,7 +171,7 @@ function renderCurrentPage() {
   pageNumInput.value = currentPage;
   totalPagesSpan.textContent = totalPages;
   if (prevPageBtn) {
-  if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+  if (nextPageBtn) {
 
   // Render markdown for current page
   renderMarkdown(pageContents[currentPage - 1] || '');
