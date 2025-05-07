@@ -129,7 +129,11 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """Process ink data through the iink SDK and return recognition results."""
         try:
             if not self.application_key or not self.hmac_key:
-                raise ValueError("MyScript keys not available; cannot recognize handwriting")
+                raise ValueError(
+                    "MyScript keys are missing. Please ensure that the environment variables "
+                    "'MYSCRIPT_APP_KEY' and 'MYSCRIPT_HMAC_KEY' are set, or that the keys are "
+                    "provided in the configuration file."
+                )
             request_data = {
                 "configuration": {
                     "lang": language,
