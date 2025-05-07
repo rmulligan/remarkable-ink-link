@@ -50,9 +50,9 @@ class DocumentService:
                 "Install RCU for better conversion quality."
             )
             if not drawj2d_path or not os.path.exists(drawj2d_path):
-                logger.error(
-                    "drawj2d fallback path not available. Document conversion will fail."
-                )
+                message = "drawj2d fallback path not available. Document conversion will fail."
+                logger.error(message)
+                raise RuntimeError(message)
 
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]
