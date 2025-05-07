@@ -53,7 +53,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         Placeholder: Uses simple heuristics (to be replaced with ML or SDK logic).
         """
         # Example heuristic: very basic, for demonstration
-        if len(strokes) > 0:
+        if strokes:
             # If many strokes and some are long, guess diagram
             if any(len(s.get("x", [])) > 10 for s in strokes):
                 return "Diagram"
@@ -77,7 +77,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             response = requests.post(
                 urljoin(self.IINK_BASE_URL, "iink/configuration"),
                 json=test_data,
-                headers=headers
+                headers=headers,
+                timeout=10
             )
             if response.status_code == 200:
                 logger.info("MyScript iink SDK initialized successfully")
@@ -129,7 +130,11 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """Process ink data through the iink SDK and return recognition results."""
         try:
             if not self.application_key or not self.hmac_key:
-                raise ValueError("MyScript keys not available; cannot recognize handwriting")
+                raise ValueError(
+                    "MyScript keys are missing. Please ensure that the environment variables "
+                    "'MYSCRIPT_APP_KEY' and 'MYSCRIPT_HMAC_KEY' are set, or that the keys are "
+                    "provided in the configuration file."
+                )
             request_data = {
                 "configuration": {
                     "lang": language,
