@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class HCLResourceConfig(BaseModel):
     resource_type: str = Field(..., description="Type of the HCL resource")
@@ -7,22 +9,24 @@ class HCLResourceConfig(BaseModel):
     attributes: dict = Field(default_factory=dict, description="Resource attributes")
 
 # Default configuration dictionary for InkLink
+
+
 CONFIG = {
     # Server settings
     "HOST": os.environ.get("INKLINK_HOST", "0.0.0.0"),
     "PORT": int(os.environ.get("INKLINK_PORT", 9999)),
     # File paths
-    "TEMP_DIR": os.environ.get("INKLINK_TEMP", "/tmp/inklink"),
-    "OUTPUT_DIR": os.environ.get("INKLINK_OUTPUT", "/tmp/inklink/output"),
+    "TEMP_DIR": os.environ.get("INKLINK_TEMP", os.path.join(BASE_DIR, "temp")),
+    "OUTPUT_DIR": os.environ.get("INKLINK_OUTPUT", os.path.join(BASE_DIR, "output")),
     # External tools
     "RMAPI_PATH": os.environ.get("INKLINK_RMAPI", "/usr/local/bin/rmapi"),
     "DRAWJ2D_PATH": os.environ.get("INKLINK_DRAWJ2D", "/usr/local/bin/drawj2d"),
     # Remarkable settings
-    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "InkLink"),
+    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "/"),
     # Remarkable Pro page dimensions (portrait mode)
-    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 2160)),
-    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 1620)),
-    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 120)),
+    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 1872)),
+    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 2404)),
+    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 100)),
     # Font configuration
     "HEADING_FONT": os.environ.get("INKLINK_HEADING_FONT", "Liberation Sans"),
     "BODY_FONT": os.environ.get("INKLINK_BODY_FONT", "Liberation Sans"),

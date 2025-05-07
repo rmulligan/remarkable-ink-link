@@ -113,10 +113,131 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return
-                # TODO: Queue for processing, store in DB or temp, trigger pipeline
-                logger.info(f"Ingested content: type={content_type}, title={title}")
-                self._send_json({"status": "accepted"})
+                
+                # Generate a unique ID for tracking
+                content_id = str(uuid.uuid4())
+                logger.info(f"Ingested content: type={content_type}, title={title}, id={content_id}")
+                
+                # Generate QR code if source_url is provided in metadata
+                qr_path = ""
+                source_url = metadata.get("source_url", "")
+                if source_url and is_safe_url(source_url):
+                    try:
+                        qr_path, qr_filename = self.qr_service.generate_qr(source_url)
+                        logger.info(f"Generated QR code for source URL: {qr_filename}")
+                    except Exception as e:
+                        logger.warning(f"Failed to generate QR code: {str(e)}")
+                
+                # Prepare structured content based on content type
+                structured_content = []
+                
+                # Process content based on type
+                if content_type == "web":
+                    # For web content, use as-is if already structured
+                    if isinstance(content, list):
+                        structured_content = content
+                    else:
+                        # Default to a single paragraph if content is a string
+                        structured_content = [{"type": "paragraph", "content": content}]
+                
+                elif content_type == "note":
+                    # For plain text notes, convert to paragraphs
+                    paragraphs = content.split("\n\n")
+                    structured_content = [{"type": "paragraph", "content": p.strip()} for p in paragraphs if p.strip()]
+                
+                elif content_type == "shortcut":
+                    # For Siri shortcuts, handle markdown conversion if needed
+                    if content.startswith("#"):
+                        # Simple markdown parsing
+                        lines = content.split("\n")
+                        current_item = None
+                        
+                        for line in lines:
+                            line = line.strip()
+                            if not line:
+                                continue
+                                
+                            if line.startswith("# "):
+                                structured_content.append({"type": "h1", "content": line[2:]})
+                            elif line.startswith("## "):
+                                structured_content.append({"type": "h2", "content": line[3:]})
+                            elif line.startswith("### "):
+                                structured_content.append({"type": "h3", "content": line[4:]})
+                            elif line.startswith("- ") or line.startswith("* "):
+                                if current_item and current_item["type"] == "list":
+                                    current_item["items"].append(line[2:])
+                                else:
+                                    current_item = {"type": "list", "items": [line[2:]]}
+                                    structured_content.append(current_item)
+                            else:
+                                structured_content.append({"type": "paragraph", "content": line})
+                    else:
+                        structured_content = [{"type": "paragraph", "content": content}]
+                else:
+                    # Default handling for unknown content types
+                    structured_content = [{"type": "paragraph", "content": content}]
+                
+                # Add any additional metadata as context
+                content_package = {
+                    "title": title,
+                    "structured_content": structured_content,
+                    "images": [],
+                }
+                
+                # Add any AI processing if needed
+                try:
+                    if metadata.get("process_with_ai", False):
+                        context = {k: v for k, v in metadata.items()}
+                        ai_response = self.ai_service.process_query(content, context=context)
+                        content_package["ai_summary"] = ai_response
+                        logger.info(f"Added AI processing for content: {content_id}")
+                except Exception as e:
+                    logger.warning(f"AI processing failed: {e}")
+                
+                # Convert to reMarkable document
+                rm_path = self.document_service.create_rmdoc_from_content(
+                    url=source_url or f"inklink:/{content_id}",
+                    qr_path=qr_path,
+                    content=content_package
+                )
+                
+                if not rm_path:
+                    self._send_json({"error": "Failed to create document"}, status=500)
+                    return
+                
+                # Upload to reMarkable if specified
+                upload_success = False
+                upload_message = ""
+                
+                if metadata.get("upload_to_remarkable", True):
+                    upload_success, upload_message = self.remarkable_service.upload(rm_path, title)
+                    
+                    if upload_success:
+                        logger.info(f"Uploaded to reMarkable: {title}")
+                    else:
+                        logger.error(f"Failed to upload to reMarkable: {upload_message}")
+                
+                # Store response for later retrieval
+                self.server.responses[content_id] = {
+                    "content_id": content_id,
+                    "title": title,
+                    "structured_content": structured_content,
+                    "uploaded": upload_success,
+                    "upload_message": upload_message,
+                    "rm_path": rm_path
+                }
+                
+                # Return success status with content ID
+                self._send_json({
+                    "status": "processed", 
+                    "content_id": content_id,
+                    "title": title,
+                    "uploaded": upload_success,
+                    "upload_message": upload_message if not upload_success else f"Uploaded to reMarkable: {title}"
+                })
             except Exception as e:
+                logger.error(f"Error processing content: {str(e)}")
+                logger.error(traceback.format_exc())
                 self._send_json({"error": str(e)}, status=400)
             return
 
