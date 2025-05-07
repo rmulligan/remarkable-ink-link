@@ -109,7 +109,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             else:
                 # Use a direct call if module methods are not explicitly defined
                 scene = self.rmscene(rm_file_path)
-            
+                
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
