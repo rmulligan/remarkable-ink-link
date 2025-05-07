@@ -59,7 +59,8 @@ def install_rcu() -> bool:
             # If pip fails, try cloning from GitHub
             logger.info("Pip installation failed, trying GitHub...")
             result = subprocess.run(
-                ["git", "clone", RCU_GITHUB_URL, "/tmp/rcu"],
+                f"git clone {RCU_GITHUB_URL} /tmp/rcu",
+                shell=True,
                 capture_output=True,
                 text=True,
                 check=False
