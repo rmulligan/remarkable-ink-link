@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reMarkable Ink Link</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Math and diagram rendering libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+</head>
+<body>
+    <header>
+        <h1>reMarkable Ink Link</h1>
+    </header>
+    
+    <main>
+        <div id="error" class="error"></div>
+        
+        <section id="auth-section">
+            <h2>Authentication</h2>
+            <div class="auth-container">
+                <div class="auth-box">
+                    <h3>reMarkable Token</h3>
+                    <form id="remarkable-auth-form">
+                        <label for="remarkable-token">Auth Token:</label>
+                        <input type="password" id="remarkable-token" required>
+                        <button type="submit">Authenticate</button>
+                    </form>
+                </div>
+                <div class="auth-box">
+                    <h3>MyScript API Keys</h3>
+                    <form id="myscript-auth-form">
+                        <label for="myscript-app-key">Application Key:</label>
+                        <input type="text" id="myscript-app-key" required>
+                        <label for="myscript-hmac-key">HMAC Key:</label>
+                        <input type="password" id="myscript-hmac-key" required>
+                        <button type="submit">Authenticate</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        
+        <section id="upload-section" style="display: none;">
+            <h2>Upload reMarkable File</h2>
+            <input type="file" id="rm-file" accept=".rm,.pdf">
+            <button id="upload-btn">Upload</button>
+        </section>
+        
+        <section id="process-section" style="display: none;">
+            <h2>Process Document</h2>
+            <div id="status">Ready to process</div>
+            <button id="process-btn">Start Processing</button>
+        </section>
+        
+        <section id="response-section" style="display: none;">
+            <h2>AI Response</h2>
+            
+            <!-- Multi-page navigation controls -->
+            <div id="page-nav" class="page-navigation">
+                <button id="prev-page-btn">← Previous</button>
+                <span>Page <input id="page-num-input" type="number" min="1" value="1"> of <span id="total-pages">1</span></span>
+                <button id="next-page-btn">Next →</button>
+            </div>
+            
+            <!-- Context visualization panel -->
+            <div id="context-visualization" class="context-panel">
+                <h3>Page Context</h3>
+                <div id="context-content"></div>
+            </div>
+            
+            <!-- Rendered markdown viewer -->
+            <div id="markdown-viewer" class="markdown-content"></div>
+            
+            <!-- Manual linking controls -->
+            <div id="link-controls" class="link-controls">
+                <h3>Cross-Page Links</h3>
+                <ul id="link-list"></ul>
+                <button id="add-link-btn">Add Link</button>
+                
+                <div id="add-link-panel" style="display: none;">
+                    <h4>Create Link</h4>
+                    <div>
+                        <label>From page: <input type="number" min="1" id="link-from"></label>
+                    </div>
+                    <div>
+                        <label>To page: <input type="number" min="1" id="link-to"></label>
+                    </div>
+                    <div>
+                        <label>Description: <input type="text" id="link-desc"></label>
+                    </div>
+                    <div>
+                        <button id="save-link-btn">Save</button>
+                        <button id="cancel-link-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="download-section">
+                <a id="download-raw" download="response.txt">Download Raw Response</a>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>© 2025 InkLink - Connect reMarkable with your digital world</p>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

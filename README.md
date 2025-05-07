@@ -18,7 +18,8 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 
 - **🧠 AI-Augmented Notes:** Ask questions directly from handwritten notes. Receive structured, editable responses in `.rm` format.
 - **🌐 Web-to-Ink Sharing:** Send web content to your tablet and convert it to editable *native ink*, not static text or PDFs. Move, resize, clip, and restructure AI-generated or imported text as if you'd written it by hand.
-- **✍️ Hybrid Handwriting Recognition:** Fast, accurate transcription powered by MyScript, with optional verification using local vision models for improved accuracy.
+- **✍️ Hybrid Handwriting Recognition:** Fast, accurate transcription powered by MyScript iink SDK, with optional verification using local vision models for improved accuracy.
+- **🏷️ UI-Based Tag Actions:** Tag content through the user interface and trigger workflows like summarization, calendar integration, and more.
 - **📅 Task & Calendar Integration:** Detect tasks in your notes and sync them with your calendar (e.g. Motion, org-agenda).
 - **🗂 Smart Indexing:** Generate and maintain table of contents, index pages, and note links using symbols or QR codes.
 - **🔌 Modular AI Workflows (MCP-ready):** Supports Multi-Connection Protocol (MCP) for real-time agent communication and toolchain integration.
@@ -65,6 +66,10 @@ To install dependencies and set up the local environment, run:
 ```bash
 yarn
 ```
+After installing, set up Git hooks to enforce formatting and dependency locks:
+```bash
+pre-commit install
+```
 
 This will install Python dependencies via Poetry.
 
@@ -87,6 +92,24 @@ yarn install:docker
 ```
 
 This will build the Docker image and start the container.
+
+### Deploying on a Raspberry Pi
+
+You can deploy InkLink to a remote Raspberry Pi (e.g., Pi 5 running Ubuntu 24) using the provided script:
+
+```bash
+chmod +x scripts/deploy_to_pi.sh
+scripts/deploy_to_pi.sh
+```
+
+This script will:
+- SSH into "ryan@100.110.75.57"
+- Install Docker and Docker Compose if missing
+- Clone or update the InkLink repository in `~/inklink`
+- Build the Docker image
+- Run the container mapped to port 9999
+
+Ensure your SSH keys are configured for passwordless access.
 
 Once installed, you can:
 - Run the app locally: `yarn start`
@@ -154,9 +177,10 @@ Standalone integration modules (coming soon):
 - [x] Web-to-ink conversion for articles and webpages  
 - [x] PDF-to-ink conversion with source linking
 - [x] reMarkable Cloud authentication UI
+- [x] Service-level Google Docs integration
 - [ ] AI Q&A roundtrip via `.rm` files
-- [ ] Handwriting recognition (MyScript Cloud integration)
-- [ ] Tag-based automation: `#summarize`, `#calendar`, `#index`, etc.
+- [ ] Handwriting recognition (MyScript iink SDK integration)
+- [ ] UI-based tag action system: `#summarize`, `#calendar`, `#index`, etc.
 - [ ] Calendar sync module
 - [ ] Visual knowledge graph builder
 - [ ] Hosted version with user-friendly flows
@@ -178,6 +202,26 @@ Standalone integration modules (coming soon):
 MIT License — permissive and open.  
 You are free to use, modify, extend, and build commercial or personal tools on top of InkLink. We may provide a hosted version in the future, but the core will always remain open and community-driven.
 
+## 🐞 Troubleshooting
+
+If you encounter an error pulling images such as:
+
+```
+failed to solve: python:3.10-slim: error getting credentials - err: exec: "docker-credential-desktop.exe": executable file not found in $PATH, out: ``
+```
+
+open your Docker client configuration file (`~/.docker/config.json`) and remove or disable any `credsStore` or `credHelpers` entries referencing Windows credential helpers. For example:
+
+```json
+{
+  // …
+  // "credsStore": "desktop.exe",
+  // "credHelpers": { … }
+}
+```
+
+Save the file and rerun `docker compose build`.
+
 ---
 
 ## 🧠 Created by
@@ -185,3 +229,33 @@ You are free to use, modify, extend, and build commercial or personal tools on t
 Ryan Mulligan – [@rmulligan](https://github.com/rmulligan)  
 Senior Software Engineer • Musician • Workflow Optimizer  
 Proudly crafting the Zettelkasten of the Future™.
+## API: /ingest Endpoint
+
+**POST /ingest**
+
+Ingest content from browser extension, Siri shortcut, or web UI.
+
+**Request Body (application/json):**
+- `type`: `"web"`, `"note"`, `"shortcut"`, etc. (string, required)
+- `title`: Title of the content (string, required)
+- `content`: Main content (text, HTML, markdown, etc., required)
+- `metadata`: Optional dictionary (e.g., `source_url`, `tags`, etc.)
+
+**Example:**
+```json
+{
+  "type": "web",
+  "title": "Interesting Article",
+  "content": "<h1>Example</h1><p>Some content...</p>",
+  "metadata": {
+    "source_url": "https://example.com",
+    "tags": ["reading", "reference"]
+  }
+}
+```
+
+**Response:**
+- `{"status": "accepted"}` on success
+- `{"error": "...error message..."}` on failure
+
+See API_DOCS.md for full details.

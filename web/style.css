@@ -1,0 +1,243 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+h1 {
+  color: #1a73e8;
+  margin-top: 0;
+}
+
+h2 {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+.auth-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.auth-box {
+  flex: 1;
+  min-width: 250px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+input[type="text"], input[type="password"], input[type="file"], input[type="number"] {
+  width: 100%;
+  padding: 0.7rem;
+  margin: 0.3rem 0 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+input[type="file"] {
+  padding: 0.5rem;
+  background: #f9f9f9;
+}
+
+button {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #0d5bdd;
+}
+
+.error {
+  color: #d32f2f;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+/* Markdown viewer */
+.markdown-content {
+  background: #f9f9f9;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.markdown-content pre {
+  background: #f0f0f0;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.markdown-content code {
+  background: #f0f0f0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Multi-page navigation */
+.page-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background: #f0f7ff;
+  padding: 0.8rem;
+  border-radius: 6px;
+}
+
+.page-navigation input[type="number"] {
+  width: 3rem;
+  text-align: center;
+  margin: 0;
+  padding: 0.4rem;
+}
+
+/* Context visualization */
+.context-panel {
+  background: #eef3fa;
+  border: 1px solid #bcd;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* Link controls */
+.link-controls {
+  background: #f9f6e7;
+  border: 1px solid #e3dca6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+#link-list {
+  list-style: disc inside;
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+}
+
+#link-list li {
+  margin-bottom: 0.5rem;
+}
+
+#add-link-panel {
+  margin-top: 1rem;
+  background: #fffbe7;
+  border: 1px solid #e3dca6;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+#add-link-panel label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+#add-link-panel input[type="number"],
+#add-link-panel input[type="text"] {
+  width: 100%;
+}
+
+#add-link-panel button {
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Download section */
+.download-section {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.download-section a {
+  display: inline-block;
+  background: #34a853;
+  color: white;
+  text-decoration: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.download-section a:hover {
+  background: #2a8a43;
+}
+
+footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+    margin: 0 10px;
+  }
+  
+  .auth-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .auth-box {
+    min-width: auto;
+  }
+  
+  .page-navigation {
+    flex-wrap: wrap;
+  }
+}

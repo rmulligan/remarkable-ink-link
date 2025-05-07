@@ -49,18 +49,35 @@ class IRemarkableService(ABC):
 
 class IHandwritingRecognitionService(ABC):
     @abstractmethod
+    def initialize_iink_sdk(self, application_key: str, hmac_key: str) -> bool:
+        """Initialize the MyScript iink SDK with authentication keys"""
+        pass
+
+    @abstractmethod
     def extract_strokes(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """Extract strokes from a reMarkable file"""
         pass
 
     @abstractmethod
-    def recognize_handwriting(self, strokes: List[Dict[str, Any]], language: str = "en_US") -> Dict[str, Any]:
-        """Send strokes to handwriting recognition service and return results"""
+    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Convert reMarkable strokes to iink SDK compatible format"""
         pass
 
     @abstractmethod
-    def extract_and_recognize(self, rm_file_path: str, language: str = "en_US") -> Dict[str, Any]:
-        """Extract strokes and perform handwriting recognition in one step"""
+    def recognize_handwriting(
+        self,
+        iink_data: Dict[str, Any],
+        content_type: str = "Text",
+        language: str = "en_US",
+    ) -> Dict[str, Any]:
+        """Process ink data through the iink SDK and return recognition results"""
+        pass
+
+    @abstractmethod
+    def export_content(
+        self, content_id: str, format_type: str = "text"
+    ) -> Dict[str, Any]:
+        """Export recognized content in the specified format (text, JIIX, etc.)"""
         pass
 
 
