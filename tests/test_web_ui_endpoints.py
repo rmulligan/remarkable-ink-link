@@ -6,11 +6,13 @@ from src.inklink.server import URLHandler, run_server
 
 import pytest
 
+
 class DummyServer:
     def __init__(self):
         self.tokens = {}
         self.files = {}
         self.responses = {}
+
 
 @pytest.fixture
 def handler():
@@ -20,13 +22,21 @@ def handler():
             self.headers = {}
             self.rfile = io.BytesIO()
             self.wfile = io.BytesIO()
-        def send_response(self, code): pass
-        def send_header(self, k, v): pass
-        def end_headers(self): pass
+
+        def send_response(self, code):
+            pass
+
+        def send_header(self, k, v):
+            pass
+
+        def end_headers(self):
+            pass
+
     req = DummyRequest()
     h = URLHandler(req, server=DummyServer())
     h.server = h.server  # ensure server attribute
     return h
+
 
 def test_auth_remarkable(handler):
     handler.path = "/auth/remarkable"
@@ -36,6 +46,7 @@ def test_auth_remarkable(handler):
     handler.do_POST()
     assert handler.server.tokens["remarkable"] == "abc123"
 
+
 def test_auth_myscript(handler):
     handler.path = "/auth/myscript"
     handler.headers = {"Content-Length": "54"}
@@ -44,6 +55,7 @@ def test_auth_myscript(handler):
     handler.do_POST()
     assert handler.server.tokens["myscript"]["app_key"] == "app"
     assert handler.server.tokens["myscript"]["hmac_key"] == "hmac"
+
 
 def test_upload_and_process(monkeypatch, handler):
     # Simulate file upload
@@ -61,6 +73,7 @@ def test_upload_and_process(monkeypatch, handler):
     handler.wfile = io.BytesIO()
     handler.do_POST()
     assert any(rid for rid in handler.server.responses)
+
 
 def test_response(handler):
     rid = "resp1"

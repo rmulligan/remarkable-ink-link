@@ -177,6 +177,7 @@ Standalone integration modules (coming soon):
 - [x] Web-to-ink conversion for articles and webpages  
 - [x] PDF-to-ink conversion with source linking
 - [x] reMarkable Cloud authentication UI
+- [x] Service-level Google Docs integration
 - [ ] AI Q&A roundtrip via `.rm` files
 - [ ] Handwriting recognition (MyScript iink SDK integration)
 - [ ] UI-based tag action system: `#summarize`, `#calendar`, `#index`, etc.

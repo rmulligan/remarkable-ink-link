@@ -59,7 +59,7 @@ class URLHandler(BaseHTTPRequestHandler):
         ai_service=None,
         **kwargs,
     ):
-        from src.inklink.services.ai_service import AIService
+        from inklink.services.ai_service import AIService
 
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
         self.pdf_service = pdf_service or PDFService(
@@ -104,7 +104,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not app_key or not hmac_key:
                     self._send_json({"error": "Missing keys"}, status=400)
                     return
-                cast(ServerType, self.server).tokens["myscript"] = {
+                self.server.tokens["myscript"] = {
                     "app_key": app_key,
                     "hmac_key": hmac_key,
                 }
@@ -286,12 +286,9 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            # Cast the rfile to IO[Any] to work around the type issue
+            headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
-                fp=cast(IO[Any], self.rfile),
-                headers=self.headers,
-                environ=env,
-                keep_blank_values=True
+                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
             fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:

@@ -18,6 +18,63 @@ from inklink.services.interfaces import IHandwritingRecognitionService
 from inklink.utils import retry_operation, format_error
 from inklink.config import CONFIG
 
+
+class RmsceneAdapter:
+    """
+    Adapter for rmscene tool to extract stroke data from ink files.
+    This class should be replaced or mocked in tests.
+    """
+
+    def extract_strokes(
+        self, ink_data: bytes = None, file_path: str = None
+    ) -> List[Dict[str, Any]]:
+        try:
+            # Placeholder: Replace with actual rmscene invocation logic
+            # For example, call a subprocess or library to parse the file or bytes
+            if file_path:
+                # Simulate reading and extracting strokes from file
+                return [{"x": [0, 1], "y": [0, 1]}]
+            elif ink_data:
+                # Simulate reading and extracting strokes from bytes
+                return [{"x": [0, 1], "y": [0, 1]}]
+            else:
+                raise ValueError(
+                    "No ink data or file path provided to rmscene adapter."
+                )
+        except Exception as e:
+            logging.error(f"Rmscene extraction failed: {e}")
+            raise
+
+
+class MyScriptAdapter:
+    """
+    Adapter for MyScript SDK/API to perform handwriting recognition.
+    This class should be replaced or mocked in tests.
+    """
+
+    def __init__(self):
+        self.initialized = False
+
+    def recognize(
+        self,
+        iink_data: Dict[str, Any],
+        content_type: str = "Text",
+        language: str = "en_US",
+    ) -> Dict[str, Any]:
+        if not self.initialized:
+            raise RuntimeError("MyScript SDK not initialized.")
+        # Placeholder: Replace with actual MyScript recognition logic
+        return {"text": "recognized text", "structured": {"lines": ["recognized text"]}}
+
+    def export(self, content_id: str, format_type: str = "text") -> Dict[str, Any]:
+        # Placeholder: Replace with actual export logic
+        return {
+            "content_id": content_id,
+            "format": format_type,
+            "data": "exported content",
+        }
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,7 +94,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         application_key: Optional[str] = None,
         hmac_key: Optional[str] = None,
         rmscene_adapter: Optional[Any] = None,
-        myscript_adapter: Optional[Any] = None,
+        myscript_adapter: Optional[MyScriptAdapter] = None,
     ):
         # Adapters for testability/extensibility
         self.rmscene = rmscene_adapter or rmscene
@@ -225,11 +282,13 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         If content_type is None or 'auto', classify region automatically.
         """
         try:
-            if ink_data is not None:
-                # Handle ink data extraction based on the available rmscene API
-                if hasattr(self.rmscene, 'extract_strokes'):
-                    strokes = self.rmscene.extract_strokes(ink_data=ink_data)
-                else:
+            # Extract strokes using direct rmscene or adapter pattern
+            if hasattr(self.rmscene, 'extract_strokes'):
+                # Use adapter pattern if available
+                strokes = self.rmscene.extract_strokes(ink_data=ink_data, file_path=file_path)
+            else:
+                # Use direct implementation
+                if ink_data is not None:
                     # Alternative approach if extract_strokes isn't available
                     # Save to a temporary file instead of using BytesIO
                     import tempfile
@@ -246,10 +305,10 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                             os.unlink(temp_path)
                         except Exception:
                             pass
-            elif file_path is not None:
-                strokes = self.extract_strokes(rm_file_path=file_path)
-            else:
-                raise ValueError("Either ink_data or file_path must be provided")
+                elif file_path is not None:
+                    strokes = self.extract_strokes(rm_file_path=file_path)
+                else:
+                    raise ValueError("Either ink_data or file_path must be provided")
                 
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)

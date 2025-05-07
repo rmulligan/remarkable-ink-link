@@ -18,10 +18,10 @@ except ImportError:
     build = None
 
 from inklink.utils import (
-    retry_operation, 
-    format_error, 
+    retry_operation,
+    format_error,
     extract_structured_content,
-    validate_and_fix_content
+    validate_and_fix_content,
 )
 
 logger = logging.getLogger(__name__)
@@ -80,13 +80,13 @@ class GoogleDocsService:
     def fetch(self, url_or_id: str) -> Dict[str, Any]:
         """
         Fetch a Google Docs document by URL or ID.
-        
+
         Exports the document as HTML and processes it into a structured format
         suitable for document generation.
 
         Args:
             url_or_id: Google Docs URL or document ID
-            
+
         Returns:
             Dict with keys: title, structured_content, images
         """
@@ -106,15 +106,17 @@ class GoogleDocsService:
             html_content = retry_operation(
                 export_html, operation_name="Google Docs export"
             )
-            
+
             # Process HTML into structured content
             content = extract_structured_content(html_content, url_or_id)
-            
+
             # Validate and ensure content structure is complete
             return validate_and_fix_content(content, url_or_id)
-            
+
         except Exception as e:
-            error_msg = format_error("googledocs", "Failed to fetch Google Docs document", e)
+            error_msg = format_error(
+                "googledocs", "Failed to fetch Google Docs document", e
+            )
             logger.error(error_msg)
             return {
                 "title": url_or_id,
@@ -130,10 +132,10 @@ class GoogleDocsService:
     def _extract_doc_id(self, url_or_id: str) -> str:
         """
         Extract document ID from Google Docs URL, or return as-is.
-        
+
         Args:
             url_or_id: Google Docs URL or document ID
-            
+
         Returns:
             Extracted document ID
         """
@@ -147,7 +149,12 @@ class GoogleDocsService:
                 path = parsed_url.path or ""
                 # Split into segments ['', 'document', 'd', '<ID>', ...]
                 segments = path.split("/")
-                if len(segments) >= 4 and segments[1] == "document" and segments[2] == "d" and segments[3]:
+                if (
+                    len(segments) >= 4
+                    and segments[1] == "document"
+                    and segments[2] == "d"
+                    and segments[3]
+                ):
                     return segments[3]
         except Exception:
             # If parsing fails or unexpected format, return input as-is
