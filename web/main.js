@@ -223,7 +223,7 @@ function renderMarkdown(md) {
  * Shows links from/to this page.
  */
 function renderContext() {
-  if (!contextContent) return;
+  if (!contextContent) {
   
   const fromLinks = links.filter(l => l.from === currentPage);
   const toLinks = links.filter(l => l.to === currentPage);
