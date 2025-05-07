@@ -1,7 +1,6 @@
 """AI Service for interacting with OpenAI models."""
 
 import os
-import logging
 import requests
 from typing import Optional, Dict, Any, List, Union
 
