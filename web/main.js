@@ -314,7 +314,7 @@ if (linkControls) {
     addLinkBtn.onclick = () => {
       if (addLinkPanel) {
         addLinkPanel.style.display = '';
-        if (linkFromInput) linkFromInput.value = currentPage;
+        if (linkFromInput) {
         if (linkToInput) linkToInput.value = '';
         if (linkDescInput) linkDescInput.value = '';
       }
