@@ -301,7 +301,7 @@ if (pageNav) {
     pageNumInput.onchange = () => {
       let val = parseInt(pageNumInput.value, 10);
       if (isNaN(val) || val < 1) {
-      if (val > totalPages) val = totalPages;
+      if (val > totalPages) {
       currentPage = val;
       renderCurrentPage();
     };
