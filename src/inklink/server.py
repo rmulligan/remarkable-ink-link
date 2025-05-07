@@ -166,10 +166,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 pass
 
             # Collect remaining output until process exits
-            while True:
-                # Stop reading if process has exited
-                if proc.poll() is not None:
-                    break
+            while not proc.poll() is not None:
                 r, _, _ = select.select([master_fd], [], [], 0.1)
                 if master_fd in r:
                     try:
