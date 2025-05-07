@@ -29,41 +29,39 @@ class RmsceneAdapter:
     """
 
     def extract_strokes(
-        self,
-        file_path: Optional[str] = None,
-        ink_data: Optional[bytes] = None
+        self, file_path: Optional[str] = None, ink_data: Optional[bytes] = None
     ) -> List[Dict[str, Any]]:
         """Extract stroke data from .rm file or raw ink data.
-        
+
         Args:
             file_path: Path to .rm file
             ink_data: Raw ink data bytes
-            
+
         Returns:
             List of stroke dictionaries with x, y coordinates
         """
         try:
             if file_path:
                 # If we have a file path, use the actual rmscene library
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     # Use the correct rmscene API to load the file
                     blocks = scene_stream.read_blocks(f)
                     scene = []
                     for block in blocks:
                         if isinstance(block, scene_stream.SceneItemBlock):
                             scene.append(block)
-                
+
                 # Now process the scene blocks to extract strokes
                 strokes = []
                 for item in scene:
-                    if hasattr(item, 'points') and item.points:
+                    if hasattr(item, "points") and item.points:
                         stroke = {
                             "points": [(p.x, p.y) for p in item.points],
-                            "width": getattr(item, 'width', 1.0),
-                            "color": getattr(item, 'color', 0)
+                            "width": getattr(item, "width", 1.0),
+                            "color": getattr(item, "color", 0),
                         }
                         strokes.append(stroke)
-                
+
                 return strokes
             elif ink_data:
                 # For raw bytes, we'd need to implement a way to parse them
