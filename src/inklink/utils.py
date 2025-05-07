@@ -137,9 +137,8 @@ def extract_title_from_html(
             title = twitter_title["content"].strip()
     
     # Try standard title tag
-    if not title or len(title) < 3:
-        if soup.title and soup.title.string:
-            title = soup.title.string.strip()
+    if (not title or len(title) < 3) and (soup.title and soup.title.string):
+        title = soup.title.string.strip()
     
     # Try h1 if no title found
     if not title or len(title) < 3:
