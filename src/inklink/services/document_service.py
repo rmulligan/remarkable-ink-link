@@ -536,8 +536,8 @@ class DocumentService:
                     item_content = item.get("content", "")  # Default to empty string
                     
                     # Allow list items with 'items'
-                    if item_type == "list" and item.get("items"):
-                        for sub_item in item.get("items", []):
+                    if item_type == "list" and "items" in item:
+                        for sub_item in item["items"]:
                             # Support list items as dicts or plain strings
                             if isinstance(sub_item, dict):
                                 sub_item_content = sub_item.get("content", "")

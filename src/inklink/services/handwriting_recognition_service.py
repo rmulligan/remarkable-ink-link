@@ -104,26 +104,36 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             scene = None
             if hasattr(self.rmscene, 'load'):
                 # Modern API
-                scene = self.rmscene.load(rm_file_path)
+                scene = self.rmscene.load(rm_file_path)  # type: ignore
             elif hasattr(self.rmscene, 'parse_rm_file'):
                 # Alternative API
-                scene = self.rmscene.parse_rm_file(rm_file_path)
+                scene = self.rmscene.parse_rm_file(rm_file_path)  # type: ignore
             else:
                 # Try direct module usage
                 try:
-                    # Try as a class constructor
-                    scene = self.rmscene(rm_file_path)
-                except TypeError:
-                    # If that fails, look for any parsing method
+                    # Look for Scene or RmScene class in the module
+                    scene_class = None
                     for attr_name in dir(self.rmscene):
-                        if attr_name.startswith('parse') or attr_name.startswith('load'):
-                            try:
-                                method = getattr(self.rmscene, attr_name)
-                                scene = method(rm_file_path)
-                                if scene is not None:
-                                    break
-                            except:
-                                continue
+                        if attr_name in ('Scene', 'RmScene'):
+                            scene_class = getattr(self.rmscene, attr_name)
+                            break
+                    
+                    if scene_class:
+                        scene = scene_class(rm_file_path)
+                    else:
+                        # Module itself is not callable, look for parsing methods
+                        for attr_name in dir(self.rmscene):
+                            if attr_name.startswith('parse') or attr_name.startswith('load'):
+                                try:
+                                    method = getattr(self.rmscene, attr_name)
+                                    scene = method(rm_file_path)
+                                    if scene is not None:
+                                        break
+                                except Exception:
+                                    continue
+                except Exception as e:
+                    logger.warning(f"Failed to use alternative method for rmscene: {e}")
+                    # Continue to the check below
 
             # If still no scene, raise an error
             if scene is None:
@@ -263,16 +273,17 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 strokes = self.extract_strokes(rm_file_path=file_path)
             else:
                 raise ValueError("Either ink_data or file_path must be provided")
-                
+
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
-                
+
             iink_data = self.convert_to_iink_format(strokes)
-            
             # Support both direct API call and adapter patterns
-            if self.myscript is not None and hasattr(self.myscript, "recognize"):
-                # Use adapter if provided
+            if hasattr(self, 'myscript') and self.myscript is not None and hasattr(self.myscript, 'recognize'):
                 result = self.myscript.recognize(iink_data, content_type, language)
+                if result.get('success'):
+                    # Extract from API format
+                    result = result.get('raw_result', {})
                 return result
             else:
                 # Otherwise use direct API
@@ -310,9 +321,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             strokes = self.extract_strokes(rm_file_path=file_path)
             content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
-            
             # Support both direct API call and adapter patterns
-            if hasattr(self.myscript, 'recognize'):
+            if hasattr(self, 'myscript') and self.myscript is not None and hasattr(self.myscript, 'recognize'):
                 result = self.myscript.recognize(iink_data, content_type, language)
             else:
                 result = self.recognize_handwriting(iink_data, content_type, language)
@@ -388,6 +398,6 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             "Accept": "application/json",
             "Content-Type": "application/json",
             "applicationKey": self.application_key,
-            "hmac": signature,
-            "timestamp": timestamp,
+            "hmacSignature": signature,
+            "hmacTimestamp": timestamp,
         }
