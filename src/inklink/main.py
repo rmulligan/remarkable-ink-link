@@ -29,6 +29,40 @@ def auth(host, port):
     from inklink.auth import app
 
     uvicorn.run(app, host=host, port=port)
+  
+@cli.command()
+@click.option("--prompt", prompt="Prompt", help="Question to send to AI model.")
+@click.option("--model", default=None, help="OpenAI model to use (overrides config).")
+def ask(prompt, model):
+    """Ask a question to the AI and upload the response as a .rm file."""
+    # Lazy imports of services
+    from inklink.services.ai_service import AIService
+    from inklink.services.document_service import DocumentService
+    from inklink.services.remarkable_service import RemarkableService
+    # Query AI
+    ai_service = AIService(model=model)
+    answer = ai_service.ask(prompt)
+    if not answer:
+        click.echo("No response from AI.")
+        return
+    # Prepare structured content from answer
+    paragraphs = [line for line in answer.splitlines() if line.strip()]
+    content = {"title": "AI Response", "structured_content": [{"type": "paragraph", "content": p} for p in paragraphs]}
+    # Create HCL and convert to .rm
+    ds = DocumentService(CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"])
+    hcl_path = ds.create_hcl("AI Response", None, content)
+    if not hcl_path:
+        click.echo("Failed to generate HCL for AI response.")
+        return
+    rm_path = ds.create_rmdoc(hcl_path, "AI Response")
+    if not rm_path:
+        click.echo("Failed to convert HCL to .rm file.")
+        return
+    # Upload to reMarkable
+    rs = RemarkableService(CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"])
+    success, message = rs.upload(rm_path, content.get("title", "AI Response"))
+    # Report result
+    click.echo(message)
 
 
 @cli.command()
@@ -37,15 +71,15 @@ def auth(host, port):
 def roundtrip(input_file, output):
     """Process a handwritten query and generate a response."""
     from inklink.services.round_trip_service import RoundTripService
-    
+
     service = RoundTripService()
     success, result = service.process_handwritten_query(input_file)
-    
+
     if success:
         click.echo(f"Round-trip processing successful!")
         click.echo(f"Recognized text: {result['recognized_text']}")
         click.echo(f"Response uploaded to reMarkable: {result['upload_message']}")
-        
+
         # Save to output file if specified
         if output:
             try:
