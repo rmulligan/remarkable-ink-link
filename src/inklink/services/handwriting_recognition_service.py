@@ -101,7 +101,13 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """Extract strokes from a reMarkable file."""
         try:
             # Use rmscene to parse the .rm file
-            scene = self.rmscene.load(rm_file_path)
+            # Assuming rmscene.load is the correct method; if not available, use appropriate alternative
+            if hasattr(self.rmscene, 'load'):
+                scene = self.rmscene.load(rm_file_path)
+            else:
+                # Alternative loading method if available
+                scene = self.rmscene.parse_rm_file(rm_file_path)
+                
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
@@ -207,9 +213,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
     def recognize_from_ink(
         self,
-        ink_data: bytes = None,
-        file_path: str = None,
-        content_type: str = None,
+        ink_data: Optional[bytes] = None,
+        file_path: Optional[str] = None,
+        content_type: Optional[str] = None,
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
@@ -218,16 +224,26 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """
         try:
             if ink_data is not None:
-                strokes = self.rmscene.extract_strokes(ink_data=ink_data)
+                # Handle ink data extraction based on the available rmscene API
+                if hasattr(self.rmscene, 'extract_strokes'):
+                    strokes = self.rmscene.extract_strokes(ink_data=ink_data)
+                else:
+                    # Alternative approach if extract_strokes isn't available
+                    import io
+                    temp_file = io.BytesIO(ink_data)
+                    strokes = self.extract_strokes(rm_file_path=temp_file)
             elif file_path is not None:
-                strokes = self.extract_strokes(file_path)
+                strokes = self.extract_strokes(rm_file_path=file_path)
             else:
                 raise ValueError("Either ink_data or file_path must be provided")
+                
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
+                
             iink_data = self.convert_to_iink_format(strokes)
+            
             # Support both direct API call and adapter patterns
-            if hasattr(self.myscript, "recognize"):
+            if self.myscript is not None and hasattr(self.myscript, "recognize"):
                 # Use adapter if provided
                 result = self.myscript.recognize(iink_data, content_type, language)
                 return result

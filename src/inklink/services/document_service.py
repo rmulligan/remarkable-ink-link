@@ -522,14 +522,19 @@ class DocumentService:
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
                     )
-
-                # Process structured content
-                y_pos += qr_size + line_height
+                    
+                    # Process structured content
+                    y_pos += qr_size + line_height
+                else:
+                    # If no QR code, still need to increment y_pos for content
+                    y_pos += line_height
 
                 structured_content = content.get("structured_content", [])
 
                 for item in structured_content:
                     item_type = item.get("type", "paragraph")
+                    item_content = item.get("content", "")  # Default to empty string
+                    
                     # Allow list items with 'items'
                     if item_type == "list" and item.get("items"):
                         for sub_item in item.get("items", []):
@@ -545,10 +550,9 @@ class DocumentService:
                                 f'puts "text {margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n'
                             )
                             y_pos += line_height
-                    else:
-                        item_content = item.get("content", "")
-                        if not item_content:
-                            continue
+                    # Skip if no content for non-list items
+                    elif not item_content:
+                        continue
 
                     # Check if we need a new page
                     if y_pos > (page_height - margin * 2):

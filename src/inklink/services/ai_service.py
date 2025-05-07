@@ -72,14 +72,12 @@ class AIService:
                 title = page.get("title", f"Page {page.get('number', '')}")
                 content = page.get("content", "")
                 links = page.get("links", [])
-                link_str = ""
-                if links:
-                    link_str = "Links: " + ", ".join(
-                        [
-                            f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
-                            for l in links
-                        ]
-                    )
+                link_str = "Links: " + ", ".join(
+                    [
+                        f"{link_data.get('label', link_data.get('target', ''))} (to page {link_data.get('target', '')})"
+                        for link_data in links
+                    ]
+                )
                 context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
 
             system_prompt = "Relevant document context:\n" + "\n\n".join(
@@ -105,4 +103,3 @@ class AIService:
         result = response.json()
         # OpenAI returns choices[0].message.content
         return result["choices"][0]["message"]["content"].strip()
-        

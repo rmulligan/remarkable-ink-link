@@ -13,7 +13,7 @@ import uuid
 import cgi
 import subprocess
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 from urllib.parse import urlparse, parse_qs
 
 
@@ -283,7 +283,6 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
                 fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
@@ -583,11 +582,12 @@ class URLHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(obj).encode("utf-8"))
 
 
-def run_server(host: str = None, port: int = None):
+def run_server(host: Optional[str] = None, port: Optional[int] = None):
     """Start the HTTP server with dependency injection support."""
-    host = host or CONFIG.get("HOST", "0.0.0.0")
-    port = port or CONFIG.get("PORT", 9999)
-    server_address = (host, port)
+    # Use string type for HOST and int type for PORT with defaults
+    host_value = host if host is not None else CONFIG.get("HOST", "0.0.0.0")
+    port_value = port if port is not None else int(CONFIG.get("PORT", 9999))
+    server_address = (host_value, port_value)
 
     # Dependency injection: create service instances here
     qr_service = QRCodeService(CONFIG["TEMP_DIR"])
@@ -620,7 +620,7 @@ def run_server(host: str = None, port: int = None):
     httpd.files = {}
     httpd.responses = {}
     logger = setup_logging()
-    logger.info(f"InkLink server listening on {host}:{port}")
+    logger.info(f"InkLink server listening on {host_value}:{port_value}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
