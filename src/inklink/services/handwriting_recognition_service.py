@@ -111,14 +111,14 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             else:
                 # Try direct module usage
                 try:
-                    # Look for Scene or RmScene class in the module
-                    scene_class = None
-                    for attr_name in dir(self.rmscene):
-                        if attr_name in ('Scene', 'RmScene'):
-                            scene_class = getattr(self.rmscene, attr_name)
-                            break
-
-                    if scene_class:
+                    if scene_class := next(
+                        (
+                            getattr(self.rmscene, attr_name)
+                            for attr_name in dir(self.rmscene)
+                            if attr_name in ('Scene', 'RmScene')
+                        ),
+                        None,
+                    ):
                         scene = scene_class(rm_file_path)
                     else:
                         # Module itself is not callable, look for parsing methods
