@@ -315,7 +315,7 @@ if (linkControls) {
       if (addLinkPanel) {
         addLinkPanel.style.display = '';
         if (linkFromInput) {
-        if (linkToInput) linkToInput.value = '';
+        if (linkToInput) {
         if (linkDescInput) linkDescInput.value = '';
       }
     };
