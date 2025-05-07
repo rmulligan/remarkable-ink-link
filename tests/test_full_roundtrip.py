@@ -106,7 +106,7 @@ def test_webpage_ai_summary_integration(tmp_path):
 
     # Check that context was passed to the AI service
     ai_service = handler.ai_service
-    # The context should be a dict (excluding 'content') with at least metadata or previous_content if present
+    # The MockAIService has explicit last_context attribute, but we need to verify it exists
     assert hasattr(ai_service, "last_context")
     # Accept either a non-empty dict or None if no context was available
     assert ai_service.last_context is None or isinstance(ai_service.last_context, dict)

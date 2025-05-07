@@ -100,16 +100,35 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     def extract_strokes(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """Extract strokes from a reMarkable file."""
         try:
-            # Use rmscene to parse the .rm file
-            # Try different available methods for loading RM files
+            # Use rmscene to parse the .rm file - handle different API possibilities
+            scene = None
             if hasattr(self.rmscene, 'load'):
+                # Modern API
                 scene = self.rmscene.load(rm_file_path)
             elif hasattr(self.rmscene, 'parse_rm_file'):
+                # Alternative API
                 scene = self.rmscene.parse_rm_file(rm_file_path)
             else:
-                # Use a direct call if module methods are not explicitly defined
-                scene = self.rmscene(rm_file_path)
-            
+                # Try direct module usage
+                try:
+                    # Try as a class constructor
+                    scene = self.rmscene(rm_file_path)
+                except TypeError:
+                    # If that fails, look for any parsing method
+                    for attr_name in dir(self.rmscene):
+                        if attr_name.startswith('parse') or attr_name.startswith('load'):
+                            try:
+                                method = getattr(self.rmscene, attr_name)
+                                scene = method(rm_file_path)
+                                if scene is not None:
+                                    break
+                            except:
+                                continue
+
+            # If still no scene, raise an error
+            if scene is None:
+                raise ValueError("Could not parse rm file with available methods")
+
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
@@ -226,25 +245,20 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """
         try:
             if ink_data is not None:
-                if hasattr(self.rmscene, 'extract_strokes'):
-                    strokes = self.rmscene.extract_strokes(ink_data=ink_data)
-                else:
-                    # Alternative approach if extract_strokes isn't available
-                    # Save to a temporary file instead of using BytesIO
-                    import tempfile
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.rm') as temp_file:
-                        temp_file.write(ink_data)
-                        temp_path = temp_file.name
-                    
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.rm') as temp_file:
+                    temp_file.write(ink_data)
+                    temp_path = temp_file.name
+
+                try:
+                    strokes = self.extract_strokes(rm_file_path=temp_path)
+                finally:
+                    # Clean up the temporary file
                     try:
-                        strokes = self.extract_strokes(rm_file_path=temp_path)
-                    finally:
-                        # Clean up the temporary file
-                        try:
-                            import os
-                            os.unlink(temp_path)
-                        except Exception:
-                            pass
+                        import os
+                        os.unlink(temp_path)
+                    except Exception:
+                        pass
             elif file_path is not None:
                 strokes = self.extract_strokes(rm_file_path=file_path)
             else:

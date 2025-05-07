@@ -522,7 +522,7 @@ class DocumentService:
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
                     )
-                    
+
                     # Process structured content
                     y_pos += qr_size + line_height
                 else:
