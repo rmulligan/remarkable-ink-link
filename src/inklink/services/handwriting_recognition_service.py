@@ -109,7 +109,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             else:
                 # Use a direct call if module methods are not explicitly defined
                 scene = self.rmscene(rm_file_path)
-                
+            
             strokes = []
             for layer in scene.layers:
                 for line in layer.lines:
@@ -244,7 +244,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                         try:
                             import os
                             os.unlink(temp_path)
-                        except:
+                        except Exception:
                             pass
             elif file_path is not None:
                 strokes = self.extract_strokes(rm_file_path=file_path)

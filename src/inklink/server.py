@@ -286,9 +286,9 @@ class URLHandler(BaseHTTPRequestHandler):
             env = {"REQUEST_METHOD": "POST"}
             # Cast the rfile to IO[Any] to work around the type issue
             fs = cgi.FieldStorage(
-                fp=cast(IO[Any], self.rfile), 
-                headers=self.headers, 
-                environ=env, 
+                fp=cast(IO[Any], self.rfile),
+                headers=self.headers,
+                environ=env,
                 keep_blank_values=True
             )
             fileitem = fs["file"] if "file" in fs else None
@@ -587,6 +587,17 @@ class URLHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(obj).encode("utf-8"))
 
 
+class CustomHTTPServer(HTTPServer):
+    """Custom HTTP Server with additional attributes for tokens, files, and responses."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize attributes needed by URLHandler
+        self.tokens = {}  # Store authentication tokens
+        self.files = {}   # Store uploaded files
+        self.responses = {}  # Store responses
+
+
 def run_server(host: Optional[str] = None, port: Optional[int] = None):
     """Start the HTTP server with dependency injection support."""
     # Use string type for HOST and int type for PORT with defaults
@@ -612,18 +623,7 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
             **kwargs,
         )
 
-    class CustomHTTPServer(HTTPServer):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.tokens = {}  # Add tokens attribute
-            self.files = {}   # Add files attribute
-            self.responses = {}  # Add responses attribute
-
     httpd = CustomHTTPServer(server_address, handler_factory)
-    # In-memory stores for tokens, files, responses
-    httpd.tokens = {}
-    httpd.files = {}
-    httpd.responses = {}
     logger = setup_logging()
     logger.info(f"InkLink server listening on {host_value}:{port_value}")
     try:
