@@ -170,7 +170,7 @@ function renderCurrentPage() {
   // Update nav UI
   pageNumInput.value = currentPage;
   totalPagesSpan.textContent = totalPages;
-  if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+  if (prevPageBtn) {
   if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
 
   // Render markdown for current page
