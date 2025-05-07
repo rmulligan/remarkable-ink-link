@@ -53,7 +53,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         Placeholder: Uses simple heuristics (to be replaced with ML or SDK logic).
         """
         # Example heuristic: very basic, for demonstration
-        if len(strokes) > 0:
+        if strokes:
             # If many strokes and some are long, guess diagram
             if any(len(s.get("x", [])) > 10 for s in strokes):
                 return "Diagram"
