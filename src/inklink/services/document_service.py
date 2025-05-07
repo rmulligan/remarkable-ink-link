@@ -534,7 +534,7 @@ class DocumentService:
                 for item in structured_content:
                     item_type = item.get("type", "paragraph")
                     item_content = item.get("content", "")  # Default to empty string
-                    
+
                     if item_type == "list" and "items" in item:
                         for sub_item in item["items"]:
                             # Support list items as dicts or plain strings
@@ -544,6 +544,7 @@ class DocumentService:
                                 sub_item_content = str(sub_item)
                             if not sub_item_content:
                                 continue
+
                             # Render each sub-item as a bullet point
                             f.write(
                                 f'puts "text {margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n'
