@@ -323,7 +323,7 @@ if (linkControls) {
   
   if (cancelLinkBtn) {
     cancelLinkBtn.onclick = () => {
-      if (addLinkPanel) addLinkPanel.style.display = 'none';
+      if (addLinkPanel) {
     };
   }
   
