@@ -342,7 +342,7 @@ if (linkControls) {
         return;
       }
       links.push({ from, to, desc });
-      if (addLinkPanel) addLinkPanel.style.display = 'none';
+      if (addLinkPanel) {
       showError('');
       renderCurrentPage();
     };
