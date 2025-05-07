@@ -5,29 +5,36 @@ InkLink Server
 Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
 import logging
-
-def setup_logging():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    return logging.getLogger("inklink.server")
-
 import json
 import traceback
-import uuid
 import os
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Dict, Optional, Tuple
 import time
+import uuid
+import cgi
+import subprocess
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Dict, Optional, Tuple, Any
+from urllib.parse import urlparse, parse_qs
 
-# Import configuration module
+
 from inklink.config import CONFIG
 from inklink.utils import is_safe_url
 
-# Import service implementations
+
 from inklink.services.qr_service import QRCodeService
 from inklink.services.pdf_service import PDFService
 from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.document_service import DocumentService
 from inklink.services.remarkable_service import RemarkableService
+
+
+def setup_logging():
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
+    return logging.getLogger("inklink.server")
+
 
 # Set up logging
 logger = setup_logging()
@@ -45,11 +52,14 @@ class URLHandler(BaseHTTPRequestHandler):
         document_service=None,
         remarkable_service=None,
         ai_service=None,
-        **kwargs
+        **kwargs,
     ):
         from src.inklink.services.ai_service import AIService
+
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
-        self.pdf_service = pdf_service or PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
+        self.pdf_service = pdf_service or PDFService(
+            CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"]
+        )
         self.web_scraper = web_scraper or WebScraperService()
         self.document_service = document_service or DocumentService(
             CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"]
@@ -89,7 +99,10 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not app_key or not hmac_key:
                     self._send_json({"error": "Missing keys"}, status=400)
                     return
-                self.server.tokens["myscript"] = {"app_key": app_key, "hmac_key": hmac_key}
+                self.server.tokens["myscript"] = {
+                    "app_key": app_key,
+                    "hmac_key": hmac_key,
+                }
                 self._send_json({"status": "ok"})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -113,11 +126,13 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return
-                
+
                 # Generate a unique ID for tracking
                 content_id = str(uuid.uuid4())
-                logger.info(f"Ingested content: type={content_type}, title={title}, id={content_id}")
-                
+                logger.info(
+                    f"Ingested content: type={content_type}, title={title}, id={content_id}"
+                )
+
                 # Generate QR code if source_url is provided in metadata
                 qr_path = ""
                 source_url = metadata.get("source_url", "")
@@ -127,10 +142,10 @@ class URLHandler(BaseHTTPRequestHandler):
                         logger.info(f"Generated QR code for source URL: {qr_filename}")
                     except Exception as e:
                         logger.warning(f"Failed to generate QR code: {str(e)}")
-                
+
                 # Prepare structured content based on content type
                 structured_content = []
-                
+
                 # Process content based on type
                 if content_type == "web":
                     # For web content, use as-is if already structured
@@ -139,30 +154,40 @@ class URLHandler(BaseHTTPRequestHandler):
                     else:
                         # Default to a single paragraph if content is a string
                         structured_content = [{"type": "paragraph", "content": content}]
-                
+
                 elif content_type == "note":
                     # For plain text notes, convert to paragraphs
                     paragraphs = content.split("\n\n")
-                    structured_content = [{"type": "paragraph", "content": p.strip()} for p in paragraphs if p.strip()]
-                
+                    structured_content = [
+                        {"type": "paragraph", "content": p.strip()}
+                        for p in paragraphs
+                        if p.strip()
+                    ]
+
                 elif content_type == "shortcut":
                     # For Siri shortcuts, handle markdown conversion if needed
                     if content.startswith("#"):
                         # Simple markdown parsing
                         lines = content.split("\n")
                         current_item = None
-                        
+
                         for line in lines:
                             line = line.strip()
                             if not line:
                                 continue
-                                
+
                             if line.startswith("# "):
-                                structured_content.append({"type": "h1", "content": line[2:]})
+                                structured_content.append(
+                                    {"type": "h1", "content": line[2:]}
+                                )
                             elif line.startswith("## "):
-                                structured_content.append({"type": "h2", "content": line[3:]})
+                                structured_content.append(
+                                    {"type": "h2", "content": line[3:]}
+                                )
                             elif line.startswith("### "):
-                                structured_content.append({"type": "h3", "content": line[4:]})
+                                structured_content.append(
+                                    {"type": "h3", "content": line[4:]}
+                                )
                             elif line.startswith("- ") or line.startswith("* "):
                                 if current_item and current_item["type"] == "list":
                                     current_item["items"].append(line[2:])
@@ -170,53 +195,61 @@ class URLHandler(BaseHTTPRequestHandler):
                                     current_item = {"type": "list", "items": [line[2:]]}
                                     structured_content.append(current_item)
                             else:
-                                structured_content.append({"type": "paragraph", "content": line})
+                                structured_content.append(
+                                    {"type": "paragraph", "content": line}
+                                )
                     else:
                         structured_content = [{"type": "paragraph", "content": content}]
                 else:
                     # Default handling for unknown content types
                     structured_content = [{"type": "paragraph", "content": content}]
-                
+
                 # Add any additional metadata as context
                 content_package = {
                     "title": title,
                     "structured_content": structured_content,
                     "images": [],
                 }
-                
+
                 # Add any AI processing if needed
                 try:
                     if metadata.get("process_with_ai", False):
                         context = {k: v for k, v in metadata.items()}
-                        ai_response = self.ai_service.process_query(content, context=context)
+                        ai_response = self.ai_service.process_query(
+                            content, context=context
+                        )
                         content_package["ai_summary"] = ai_response
                         logger.info(f"Added AI processing for content: {content_id}")
                 except Exception as e:
                     logger.warning(f"AI processing failed: {e}")
-                
+
                 # Convert to reMarkable document
                 rm_path = self.document_service.create_rmdoc_from_content(
                     url=source_url or f"inklink:/{content_id}",
                     qr_path=qr_path,
-                    content=content_package
+                    content=content_package,
                 )
-                
+
                 if not rm_path:
                     self._send_json({"error": "Failed to create document"}, status=500)
                     return
-                
+
                 # Upload to reMarkable if specified
                 upload_success = False
                 upload_message = ""
-                
+
                 if metadata.get("upload_to_remarkable", True):
-                    upload_success, upload_message = self.remarkable_service.upload(rm_path, title)
-                    
+                    upload_success, upload_message = self.remarkable_service.upload(
+                        rm_path, title
+                    )
+
                     if upload_success:
                         logger.info(f"Uploaded to reMarkable: {title}")
                     else:
-                        logger.error(f"Failed to upload to reMarkable: {upload_message}")
-                
+                        logger.error(
+                            f"Failed to upload to reMarkable: {upload_message}"
+                        )
+
                 # Store response for later retrieval
                 self.server.responses[content_id] = {
                     "content_id": content_id,
@@ -224,17 +257,23 @@ class URLHandler(BaseHTTPRequestHandler):
                     "structured_content": structured_content,
                     "uploaded": upload_success,
                     "upload_message": upload_message,
-                    "rm_path": rm_path
+                    "rm_path": rm_path,
                 }
-                
+
                 # Return success status with content ID
-                self._send_json({
-                    "status": "processed", 
-                    "content_id": content_id,
-                    "title": title,
-                    "uploaded": upload_success,
-                    "upload_message": upload_message if not upload_success else f"Uploaded to reMarkable: {title}"
-                })
+                self._send_json(
+                    {
+                        "status": "processed",
+                        "content_id": content_id,
+                        "title": title,
+                        "uploaded": upload_success,
+                        "upload_message": (
+                            upload_message
+                            if not upload_success
+                            else f"Uploaded to reMarkable: {title}"
+                        ),
+                    }
+                )
             except Exception as e:
                 logger.error(f"Error processing content: {str(e)}")
                 logger.error(traceback.format_exc())
@@ -243,16 +282,12 @@ class URLHandler(BaseHTTPRequestHandler):
 
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
-            import cgi, uuid, os
-            env = {'REQUEST_METHOD': 'POST'}
+            env = {"REQUEST_METHOD": "POST"}
             headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
-                fp=self.rfile,
-                headers=self.headers,
-                environ=env,
-                keep_blank_values=True
+                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
-            fileitem = fs['file'] if 'file' in fs else None
+            fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:
                 self._send_json({"error": "No file uploaded"}, status=400)
                 return
@@ -317,7 +352,6 @@ class URLHandler(BaseHTTPRequestHandler):
                     return None
                 # Trim and parse
                 url = url.strip()
-                from urllib.parse import urlparse
 
                 parsed = urlparse(url)
                 # Validate scheme, netloc, and allowed characters
@@ -342,8 +376,6 @@ class URLHandler(BaseHTTPRequestHandler):
             return None
         # Trim extraneous whitespace at ends
         raw = raw.strip()
-
-        from urllib.parse import urlparse
 
         parsed = urlparse(raw)
         # Validate scheme and netloc
@@ -402,14 +434,12 @@ class URLHandler(BaseHTTPRequestHandler):
             rm_path = self.document_service.create_pdf_rmdoc(
                 result["pdf_path"], result["title"], qr_path
             )
-            
+
             # If RCU conversion failed, try legacy conversion
             if not rm_path:
-                # Create HCL for the PDF 
+                # Create HCL for the PDF
                 hcl_path = self.document_service.create_hcl(
-                    url,
-                    qr_path,
-                    {"title": result["title"], "structured_content": []}
+                    url, qr_path, {"title": result["title"], "structured_content": []}
                 )
 
                 if not hcl_path:
@@ -420,7 +450,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 rm_path = self.document_service.create_rmdoc_legacy(
                     url, qr_path, {"title": result["title"]}
                 )
-                
+
                 if not rm_path:
                     self._send_error("Failed to convert PDF to Remarkable format")
                     return
@@ -443,9 +473,12 @@ class URLHandler(BaseHTTPRequestHandler):
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
         import logging
+
         logger = logging.getLogger("inklink.server")
         try:
-            logger.debug(f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}")
+            logger.debug(
+                f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}"
+            )
 
             # Scrape content
             logger.debug("Calling web_scraper.scrape")
@@ -477,9 +510,13 @@ class URLHandler(BaseHTTPRequestHandler):
 
             # Use new RCU-based direct conversion
             logger.debug("Calling document_service.create_rmdoc_from_content")
-            rm_path = self.document_service.create_rmdoc_from_content(url, qr_path, content)
-            logger.debug(f"document_service.create_rmdoc_from_content returned: {rm_path}")
-            
+            rm_path = self.document_service.create_rmdoc_from_content(
+                url, qr_path, content
+            )
+            logger.debug(
+                f"document_service.create_rmdoc_from_content returned: {rm_path}"
+            )
+
             if not rm_path:
                 logger.error("Failed to convert to Remarkable format")
                 self._send_error("Failed to convert to Remarkable format")
@@ -488,12 +525,12 @@ class URLHandler(BaseHTTPRequestHandler):
             # Upload to Remarkable
             logger.debug("Calling remarkable_service.upload")
             success, message = self.remarkable_service.upload(rm_path, content["title"])
-            logger.debug(f"remarkable_service.upload returned: success={success}, message={message}")
+            logger.debug(
+                f"remarkable_service.upload returned: success={success}, message={message}"
+            )
 
             if success:
-                logger.info(
-                    f"Webpage uploaded to Remarkable: {content['title']}"
-                )
+                logger.info(f"Webpage uploaded to Remarkable: {content['title']}")
                 self._send_success(
                     f"Webpage uploaded to Remarkable: {content['title']}"
                 )
@@ -524,10 +561,9 @@ class URLHandler(BaseHTTPRequestHandler):
         response = json.dumps({"success": False, "message": message})
         self.wfile.write(response.encode("utf-8"))
 
-
     def do_GET(self):
         """Handle GET requests for /response."""
-        from urllib.parse import urlparse, parse_qs
+
         if self.path.startswith("/response"):
             query = urlparse(self.path).query
             params = parse_qs(query)
@@ -545,6 +581,7 @@ class URLHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(obj).encode("utf-8"))
+
 
 def run_server(host: str = None, port: int = None):
     """Start the HTTP server with dependency injection support."""
@@ -567,10 +604,17 @@ def run_server(host: str = None, port: int = None):
             web_scraper=web_scraper,
             document_service=document_service,
             remarkable_service=remarkable_service,
-            **kwargs
+            **kwargs,
         )
 
-    httpd = HTTPServer(server_address, handler_factory)
+    class CustomHTTPServer(HTTPServer):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.tokens = {}  # Add tokens attribute
+            self.files = {}   # Add files attribute
+            self.responses = {}  # Add responses attribute
+
+    httpd = CustomHTTPServer(server_address, handler_factory)
     # In-memory stores for tokens, files, responses
     httpd.tokens = {}
     httpd.files = {}

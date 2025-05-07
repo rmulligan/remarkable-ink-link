@@ -10,15 +10,16 @@ import json
 import logging
 import tempfile
 import markdown
+import subprocess
 from typing import Dict, Any, Optional, List
 
 # Import utility functions for error handling and RCU integration
 from inklink.utils import (
-    retry_operation, 
+    retry_operation,
     format_error,
     ensure_rcu_available,
     convert_markdown_to_rm,
-    convert_html_to_rm
+    convert_html_to_rm,
 )
 
 # Use central configuration from inklink.config
@@ -50,7 +51,9 @@ logger = logging.getLogger(__name__)
 class DocumentService:
     """Creates reMarkable documents from web content."""
 
-    def __init__(self, temp_dir: str, drawj2d_path: Optional[str] = None, pdf_service=None):
+    def __init__(
+        self, temp_dir: str, drawj2d_path: Optional[str] = None, pdf_service=None
+    ):
         """
         Initialize with directories and paths.
 
@@ -96,6 +99,7 @@ class DocumentService:
             Path to generated .rm file or None if failed
         """
         import logging
+
         logger = logging.getLogger("inklink.document_service")
         try:
             # Ensure we have valid content
@@ -148,9 +152,13 @@ class DocumentService:
                         for link in cross_page_links:
                             from_page = link.get("from_page")
                             to_page = link.get("to_page")
-                            label = link.get("label", f"Link from page {from_page} to {to_page}")
+                            label = link.get(
+                                "label", f"Link from page {from_page} to {to_page}"
+                            )
                             link_type = link.get("type", "")
-                            f.write(f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n")
+                            f.write(
+                                f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n"
+                            )
                         f.write("\n---\n\n")
 
                     # Process pages (multi-page aware)
@@ -172,7 +180,9 @@ class DocumentService:
                                 ref_label = ref.get("label", "")
                                 ref_to = ref.get("to_page", "")
                                 ref_type = ref.get("type", "")
-                                f.write(f"- {ref_label} (to page {ref_to}, type: {ref_type})\n")
+                                f.write(
+                                    f"- {ref_label} (to page {ref_to}, type: {ref_type})\n"
+                                )
                             f.write("\n")
 
                         for item in items:
@@ -221,12 +231,13 @@ class DocumentService:
             # Convert to reMarkable format using RCU
             if self.use_rcu:
                 success, result = convert_markdown_to_rm(
-                    markdown_path=md_path,
-                    title=title
+                    markdown_path=md_path, title=title
                 )
 
                 if success:
-                    logger.info(f"Successfully converted to reMarkable format: {result}")
+                    logger.info(
+                        f"Successfully converted to reMarkable format: {result}"
+                    )
                     return result
                 else:
                     logger.error(f"RCU conversion failed: {result}")
@@ -255,18 +266,21 @@ class DocumentService:
                     # Example: Gather all pages info for the index (customize as needed)
                     # Here, we use a single-page list for demonstration; in production,
                     # aggregate all notebook pages as required.
-                    pages = [{
-                        'title': content.get('title', 'Untitled Document'),
-                        'summary': content.get('summary', ''),
-                        'page_number': 1,
-                        'device_location': None,
-                        'links': content.get('cross_page_links', [])
-                    }]
+                    pages = [
+                        {
+                            "title": content.get("title", "Untitled Document"),
+                            "summary": content.get("summary", ""),
+                            "page_number": 1,
+                            "device_location": None,
+                            "links": content.get("cross_page_links", []),
+                        }
+                    ]
                     output_path = os.path.join(self.temp_dir, "index_notebook.pdf")
-                    self.pdf_service.generate_index_notebook(
+                    if self.pdf_service:
+                        self.pdf_service.generate_index_notebook(
                         pages=pages,
                         output_path=output_path,
-                        graph_title="Index Node Graph"
+                        graph_title="Index Node Graph",
                     )
                     logger.info(f"Index notebook PDF updated at {output_path}")
                 except Exception as e:
@@ -280,22 +294,22 @@ class DocumentService:
         self, url: str, qr_path: str, html_content: str, title: Optional[str] = None
     ) -> Optional[str]:
         """Create reMarkable document directly from HTML content.
-        
+
         Uses RCU to convert HTML directly to reMarkable format.
-        
+
         Args:
             url: Source URL for reference
             qr_path: Path to QR code image
             html_content: Raw HTML content
             title: Optional document title
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
         if not self.use_rcu:
             logger.warning("RCU not available, cannot convert HTML directly")
             return None
-            
+
         try:
             # Generate temp HTML file
             with tempfile.NamedTemporaryFile(
@@ -303,26 +317,27 @@ class DocumentService:
             ) as temp_file:
                 temp_html_path = temp_file.name
                 temp_file.write(html_content.encode("utf-8"))
-            
+
             # Convert HTML to reMarkable format
             success, result = convert_html_to_rm(
-                html_path=temp_html_path,
-                title=title or f"Page from {url}"
+                html_path=temp_html_path, title=title or f"Page from {url}"
             )
-            
+
             # Clean up temp file
             try:
                 os.unlink(temp_html_path)
             except OSError:
                 pass
-                
+
             if success:
-                logger.info(f"Successfully converted HTML to reMarkable format: {result}")
+                logger.info(
+                    f"Successfully converted HTML to reMarkable format: {result}"
+                )
                 return result
             else:
                 logger.error(f"HTML conversion failed: {result}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
             return None
@@ -331,48 +346,49 @@ class DocumentService:
         self, pdf_path: str, title: str, qr_path: Optional[str] = None
     ) -> Optional[str]:
         """Create reMarkable document from PDF file.
-        
+
         Args:
             pdf_path: Path to PDF file
             title: Document title
             qr_path: Optional path to QR code image
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
         if not self.use_rcu:
             logger.warning("RCU not available, cannot convert PDF directly")
             return None
-            
+
         try:
             # Create RCU command
             timestamp = int(time.time())
             output_path = os.path.join(
                 self.temp_dir, f"pdf_{hash(pdf_path)}_{timestamp}.rm"
             )
-            
+
             # Use RCU to convert PDF to reMarkable format
             cmd = [
-                "rcu", "convert",
-                "--input", pdf_path,
-                "--output", output_path,
-                "--title", title
+                "rcu",
+                "convert",
+                "--input",
+                pdf_path,
+                "--output",
+                output_path,
+                "--title",
+                title,
             ]
-            
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            
+
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
             if result.returncode == 0 and os.path.exists(output_path):
-                logger.info(f"Successfully converted PDF to reMarkable format: {output_path}")
+                logger.info(
+                    f"Successfully converted PDF to reMarkable format: {output_path}"
+                )
                 return output_path
             else:
                 logger.error(f"PDF conversion failed: {result.stderr}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")
             return None
@@ -382,14 +398,14 @@ class DocumentService:
         self, url: str, qr_path: str, content: Dict[str, Any]
     ) -> Optional[str]:
         """Legacy method to create reMarkable document using HCL and drawj2d.
-        
+
         This is kept for compatibility when RCU is not available.
-        
+
         Args:
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -398,29 +414,29 @@ class DocumentService:
             if not self.drawj2d_path or not os.path.exists(self.drawj2d_path):
                 logger.error("drawj2d path not available for legacy conversion")
                 return None
-                
+
             # Create HCL file
             hcl_path = self.create_hcl(url, qr_path, content)
             if not hcl_path:
                 logger.error("Failed to create HCL script")
                 return None
-                
+
             # Convert to .rm file
             timestamp = int(time.time())
             rm_filename = f"rm_{hash(url)}_{timestamp}.rm"
             rm_path = os.path.join(self.temp_dir, rm_filename)
-            
+
             # Run drawj2d
             cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
             result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-            
+
             if result.returncode == 0 and os.path.exists(rm_path):
                 logger.info(f"Legacy conversion successful: {rm_path}")
                 return rm_path
             else:
                 logger.error(f"Legacy conversion failed: {result.stderr}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error in legacy document creation: {str(e)}")
             return None
@@ -430,19 +446,19 @@ class DocumentService:
         self, url: str, qr_path: str, content: Dict[str, Any]
     ) -> Optional[str]:
         """Create HCL script from structured content (legacy method).
-        
+
         Args:
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-            
+
         Returns:
             Path to generated HCL file or None if failed
         """
         try:
             # Implementation details of HCL generation remain the same
             # (This is the original implementation from the codebase)
-            
+
             # Ensure we have valid content, even if minimal
             if not content:
                 content = {"title": f"Page from {url}", "structured_content": []}
@@ -501,7 +517,7 @@ class DocumentService:
                     qr_size = 350
                     qr_x = page_width - margin - qr_size
                     f.write(
-                        f'puts "rectangle {qr_x-5} {y_pos-5} {qr_size+10} {qr_size+10} width=1.0"\n'
+                        f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
                     )
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
@@ -566,13 +582,11 @@ class DocumentService:
                         code_x = margin + 20
                         code_y = y_pos + line_height
                         code_lines = item_content.split("\n")
-                        code_height = (
-                            len(code_lines) * line_height + line_height
-                        )
+                        code_height = len(code_lines) * line_height + line_height
 
                         # Draw code block background and border
                         f.write(
-                            f'puts "rectangle {margin} {y_pos} {page_width - margin*2} {code_height} width=1.0"\n'
+                            f'puts "rectangle {margin} {y_pos} {page_width - margin * 2} {code_height} width=1.0"\n'
                         )
 
                         # Process each line of code
@@ -642,7 +656,7 @@ class DocumentService:
 
             logger.info(f"Created HCL file: {hcl_path}")
             return hcl_path
-            
+
         except Exception as e:
             logger.error(f"Error creating HCL document: {e}")
             return None
