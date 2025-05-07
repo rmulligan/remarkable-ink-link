@@ -29,7 +29,8 @@ def auth(host, port):
     from inklink.auth import app
 
     uvicorn.run(app, host=host, port=port)
-  
+
+
 @cli.command()
 @click.option("--prompt", prompt="Prompt", help="Question to send to AI model.")
 @click.option("--model", default=None, help="OpenAI model to use (overrides config).")
@@ -39,6 +40,7 @@ def ask(prompt, model):
     from inklink.services.ai_service import AIService
     from inklink.services.document_service import DocumentService
     from inklink.services.remarkable_service import RemarkableService
+
     # Query AI
     ai_service = AIService(model=model)
     answer = ai_service.ask(prompt)
@@ -47,7 +49,10 @@ def ask(prompt, model):
         return
     # Prepare structured content from answer
     paragraphs = [line for line in answer.splitlines() if line.strip()]
-    content = {"title": "AI Response", "structured_content": [{"type": "paragraph", "content": p} for p in paragraphs]}
+    content = {
+        "title": "AI Response",
+        "structured_content": [{"type": "paragraph", "content": p} for p in paragraphs],
+    }
     # Create HCL and convert to .rm
     ds = DocumentService(CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"])
     hcl_path = ds.create_hcl("AI Response", None, content)

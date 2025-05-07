@@ -1,6 +1,6 @@
 """Handwriting recognition service using MyScript iink SDK."""
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 import os
 import logging
 import json
@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 
 # Import rmscene for .rm file parsing
 import rmscene
+from rmscene import scene_stream
 
 from inklink.services.interfaces import IHandwritingRecognitionService
 from inklink.utils import retry_operation, format_error
@@ -28,24 +29,41 @@ class RmsceneAdapter:
     """
 
     def extract_strokes(
-        self, ink_data: bytes = None, file_path: str = None
+        self,
+        file_path: Optional[str] = None,
+        ink_data: Optional[bytes] = None
     ) -> List[Dict[str, Any]]:
+        """Extract stroke data from .rm file or raw ink data.
+        
+        Args:
+            file_path: Path to .rm file
+            ink_data: Raw ink data bytes
+            
+        Returns:
+            List of stroke dictionaries with x, y coordinates
+        """
         try:
-            # If we have a file path, use the actual rmscene library
             if file_path:
-                scene = rmscene.load(file_path)
+                # If we have a file path, use the actual rmscene library
+                with open(file_path, 'rb') as f:
+                    # Use the correct rmscene API to load the file
+                    blocks = scene_stream.read_blocks(f)
+                    scene = []
+                    for block in blocks:
+                        if isinstance(block, scene_stream.SceneItemBlock):
+                            scene.append(block)
+                
+                # Now process the scene blocks to extract strokes
                 strokes = []
-                for layer in scene.layers:
-                    for line in layer.lines:
+                for item in scene:
+                    if hasattr(item, 'points') and item.points:
                         stroke = {
-                            "id": str(len(strokes)),
-                            "x": [point.x for point in line.points],
-                            "y": [point.y for point in line.points],
-                            "pressure": [point.pressure for point in line.points],
-                            "timestamp": int(time.time() * 1000)
+                            "points": [(p.x, p.y) for p in item.points],
+                            "width": getattr(item, 'width', 1.0),
+                            "color": getattr(item, 'color', 0)
                         }
                         strokes.append(stroke)
-                logger.info(f"Extracted {len(strokes)} strokes from {file_path}")
+                
                 return strokes
             elif ink_data:
                 # For raw bytes, we'd need to implement a way to parse them
@@ -85,16 +103,13 @@ class MyScriptAdapter:
             self.hmac_key = hmac_key
 
             # Validate keys by making a simple test request
-            test_data = {
-                "type": "configuration",
-                "configuration": {"lang": "en_US"}
-            }
+            test_data = {"type": "configuration", "configuration": {"lang": "en_US"}}
             headers = self._generate_headers(test_data)
             response = requests.post(
                 urljoin(self.IINK_BASE_URL, "iink/configuration"),
                 json=test_data,
                 headers=headers,
-                timeout=10
+                timeout=10,
             )
             if response.status_code == 200:
                 logger.info("MyScript iink SDK initialized successfully")
@@ -115,35 +130,39 @@ class MyScriptAdapter:
     ) -> Dict[str, Any]:
         if not self.initialized:
             raise RuntimeError("MyScript SDK not initialized.")
-        
+
         try:
             request_data = {
                 "configuration": {
                     "lang": language,
                     "contentType": content_type,
                     "recognition": {
-                        "text": {
-                            "guides": {
-                                "enable": False
-                            },
-                            "smartGuide": False
-                        }
-                    }
+                        "text": {"guides": {"enable": False}, "smartGuide": False}
+                    },
                 },
-                **iink_data
+                **iink_data,
             }
             headers = self._generate_headers(request_data)
             response = requests.post(
                 urljoin(self.IINK_BASE_URL, self.RECOGNITION_ENDPOINT),
                 json=request_data,
-                headers=headers
+                headers=headers,
             )
             if response.status_code != 200:
-                logger.error(f"Recognition failed: {response.status_code} - {response.text}")
-                return {"success": False, "error": f"Recognition failed: {response.text}"}
+                logger.error(
+                    f"Recognition failed: {response.status_code} - {response.text}"
+                )
+                return {
+                    "success": False,
+                    "error": f"Recognition failed: {response.text}",
+                }
             result = response.json()
             logger.info(f"Recognition successful: {result.get('id')}")
-            return {"success": True, "content_id": result.get("id"), "raw_result": result}
+            return {
+                "success": True,
+                "content_id": result.get("id"),
+                "raw_result": result,
+            }
         except Exception as e:
             error_msg = format_error("recognition", "Handwriting recognition failed", e)
             logger.error(error_msg)
@@ -152,18 +171,14 @@ class MyScriptAdapter:
     def export(self, content_id: str, format_type: str = "text") -> Dict[str, Any]:
         if not self.initialized:
             raise RuntimeError("MyScript SDK not initialized.")
-        
+
         try:
-            request_data = {
-                "format": format_type
-            }
+            request_data = {"format": format_type}
             headers = self._generate_headers(request_data)
-            export_url = f"{urljoin(self.IINK_BASE_URL, self.EXPORT_ENDPOINT)}/{content_id}"
-            response = requests.post(
-                export_url,
-                json=request_data,
-                headers=headers
+            export_url = (
+                f"{urljoin(self.IINK_BASE_URL, self.EXPORT_ENDPOINT)}/{content_id}"
             )
+            response = requests.post(export_url, json=request_data, headers=headers)
             if response.status_code != 200:
                 logger.error(f"Export failed: {response.status_code} - {response.text}")
                 return {"success": False, "error": f"Export failed: {response.text}"}
@@ -177,23 +192,26 @@ class MyScriptAdapter:
 
     def _generate_headers(self, data: Dict[str, Any]) -> Dict[str, str]:
         """Generate headers with HMAC authentication for MyScript API."""
-        if not self.hmac_key:
-            raise ValueError("HMAC key is missing or empty, cannot generate headers")
+        if not self.application_key or not self.hmac_key:
+            raise ValueError(
+                "API or HMAC key is missing or empty, cannot generate headers"
+            )
+
         data_json = json.dumps(data, sort_keys=True)
         timestamp = str(int(time.time() * 1000))
         message = timestamp + data_json
         signature_bytes = hmac.new(
-            self.hmac_key.encode('utf-8'),
-            message.encode('utf-8'),
-            hashlib.sha512
+            self.hmac_key.encode("utf-8"), message.encode("utf-8"), hashlib.sha512
         ).digest()
-        signature = base64.b64encode(signature_bytes).decode('utf-8')
+        signature = base64.b64encode(signature_bytes).decode("utf-8")
+
+        # Ensure we never pass None values in the headers
         return {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'applicationKey': self.application_key,
-            'hmac': signature,
-            'timestamp': timestamp
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "applicationKey": str(self.application_key),
+            "hmac": signature,
+            "timestamp": timestamp,
         }
 
 
@@ -213,16 +231,26 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         application_key: Optional[str] = None,
         hmac_key: Optional[str] = None,
         rmscene_adapter: Optional[RmsceneAdapter] = None,
-        myscript_adapter: Optional[MyScriptAdapter] = None
+        myscript_adapter: Optional[MyScriptAdapter] = None,
     ):
         # Adapters for testability/extensibility
         self.rmscene = rmscene_adapter or RmsceneAdapter()
         self.myscript = myscript_adapter or MyScriptAdapter()
-        self.application_key = application_key or os.environ.get("MYSCRIPT_APP_KEY") or CONFIG.get("MYSCRIPT_APP_KEY", "")
-        self.hmac_key = hmac_key or os.environ.get("MYSCRIPT_HMAC_KEY") or CONFIG.get("MYSCRIPT_HMAC_KEY", "")
+        self.application_key = (
+            application_key
+            or os.environ.get("MYSCRIPT_APP_KEY")
+            or CONFIG.get("MYSCRIPT_APP_KEY", "")
+        )
+        self.hmac_key = (
+            hmac_key
+            or os.environ.get("MYSCRIPT_HMAC_KEY")
+            or CONFIG.get("MYSCRIPT_HMAC_KEY", "")
+        )
 
         if not self.application_key or not self.hmac_key:
-            logger.warning("MyScript keys not provided; handwriting recognition not available")
+            logger.warning(
+                "MyScript keys not provided; handwriting recognition not available"
+            )
         else:
             # Initialize the MyScript adapter
             self.myscript.initialize(self.application_key, self.hmac_key)
@@ -259,7 +287,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 "type": "inkData",
                 "width": CONFIG.get("PAGE_WIDTH", 1872),
                 "height": CONFIG.get("PAGE_HEIGHT", 2404),
-                "strokes": strokes
+                "strokes": strokes,
             }
             return iink_data
         except Exception as e:
@@ -283,9 +311,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
     def recognize_from_ink(
         self,
-        ink_data: bytes = None,
-        file_path: str = None,
-        content_type: str = None,
+        ink_data: Optional[bytes] = None,
+        file_path: Optional[str] = None,
+        content_type: Optional[str] = None,
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
@@ -299,7 +327,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 strokes = self.rmscene.extract_strokes(file_path=file_path)
             else:
                 raise ValueError("Either ink_data or file_path must be provided")
-                
+
             if content_type is None or content_type.lower() == "auto":
                 content_type = self.classify_region(strokes)
             iink_data = self.convert_to_iink_format(strokes)
@@ -334,8 +362,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         structured_pages = []
         cross_page_links = user_links[:] if user_links else []
 
-        # Temporary storage for automatic cross-page references
-        reference_map = {}
+        # Dictionary to store detected references for linking
+        detected_references = {}
 
         for i, file_path in enumerate(page_files):
             strokes = self.extract_strokes(file_path)
@@ -369,6 +397,11 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                         cross_page_links.append(link)
                         page_references.append(link)
 
+                        # Store this reference in our tracking dictionary
+                        if i + 1 not in detected_references:
+                            detected_references[i + 1] = []
+                        detected_references[i + 1].append(ref_page_num)
+
             structured_pages.append(
                 {
                     "page_number": i + 1,
@@ -390,7 +423,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             if key not in seen:
                 unique_links.append(link)
                 seen.add(key)
-        
+
         return {
             "pages": structured_pages,
             "cross_page_links": unique_links,

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 import os
 import logging
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -8,6 +9,7 @@ class HCLResourceConfig(BaseModel):
     resource_type: str = Field(..., description="Type of the HCL resource")
     resource_name: str = Field(..., description="Name of the HCL resource")
     attributes: dict = Field(default_factory=dict, description="Resource attributes")
+
 
 # Default configuration dictionary for InkLink
 CONFIG = {
@@ -68,9 +70,10 @@ except ImportError:
     which = None
 
 # Fallback: detect rmapi in PATH if default path not found or not executable
-if which and (not os.path.exists(CONFIG.get("RMAPI_PATH", "")) or not os.access(
-    CONFIG.get("RMAPI_PATH", ""), os.X_OK
-)):
+if which and (
+    not os.path.exists(CONFIG.get("RMAPI_PATH", ""))
+    or not os.access(CONFIG.get("RMAPI_PATH", ""), os.X_OK)
+):
     path_rmapi = which("rmapi")
     if path_rmapi:
         CONFIG["RMAPI_PATH"] = path_rmapi
