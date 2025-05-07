@@ -2,6 +2,7 @@
 
 import time
 import logging
+import re
 from typing import Any, Callable, TypeVar, Optional, Tuple, List, Dict
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup, Tag
@@ -19,8 +20,6 @@ except ImportError:
 
 # Set up logger
 logger = logging.getLogger(__name__)
-
-import re
 
 # Reusable, configurable regex for safe URLs
 SAFE_URL_REGEX = re.compile(

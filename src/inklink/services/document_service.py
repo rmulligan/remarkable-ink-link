@@ -607,7 +607,7 @@ class DocumentService:
                     qr_size = 350
                     qr_x = page_width - margin - qr_size
                     f.write(
-                        f'puts "rectangle {qr_x-5} {y_pos-5} {qr_size+10} {qr_size+10} width=1.0"\n'
+                        f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
                     )
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
@@ -678,7 +678,7 @@ class DocumentService:
 
                         # Draw code block background and border
                         f.write(
-                            f'puts "rectangle {margin} {y_pos} {page_width - margin*2} {code_height} width=1.0"\n'
+                            f'puts "rectangle {margin} {y_pos} {page_width - margin * 2} {code_height} width=1.0"\n'
                         )
 
                         # Process each line of code
@@ -799,7 +799,7 @@ class DocumentService:
                     qr_size = 350
                     qr_x = self.page_width - self.margin - qr_size
                     f.write(
-                        f'puts "rectangle {qr_x-5} {y_pos-5} {qr_size+10} {qr_size+10} width=1.0"\n'
+                        f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
                     )
                     f.write(
                         f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
