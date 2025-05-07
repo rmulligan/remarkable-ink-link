@@ -32,7 +32,7 @@ const cancelLinkBtn = document.getElementById('cancel-link-btn');
 // --- Helper: Show/hide navigation, context, and linking controls ---
 function showPageUI(show) {
   if (pageNav) {
-  if (contextPanel) contextPanel.style.display = show ? '' : 'none';
+  if (contextPanel) {
   if (linkControls) linkControls.style.display = show ? '' : 'none';
 }
 
