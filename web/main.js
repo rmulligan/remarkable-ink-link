@@ -269,7 +269,7 @@ function renderLinks() {
  */
 function setupDownload(raw) {
   const downloadLink = document.getElementById('download-raw');
-  if (!downloadLink) return;
+  if (!downloadLink) {
   
   const blob = new Blob([raw], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
