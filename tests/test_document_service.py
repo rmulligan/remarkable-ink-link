@@ -144,7 +144,7 @@ def test_convert_to_remarkable(mock_run, document_service):
     assert rm_path in args
     assert hcl_path in args
     # Check format flags based on model
-    if getattr(document_service, 'is_remarkable_pro', False):
+    if getattr(document_service, "is_remarkable_pro", False):
         # Pro model should use rmdoc format
         assert "-Trmdoc" in args
         assert "-rmv6" not in args

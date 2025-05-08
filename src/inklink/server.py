@@ -12,25 +12,22 @@ import time
 import uuid
 import cgi
 import subprocess
+import io
 from typing import Dict, Optional, Tuple, Any, List, cast, IO, TypeVar
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import io
 from urllib.parse import urlparse, parse_qs
-
-
-# Define a TypeVar for our custom server type
-ServerType = TypeVar('ServerType', bound='CustomHTTPServer')
-
 
 from inklink.config import CONFIG
 from inklink.utils import is_safe_url
-
-
 from inklink.services.qr_service import QRCodeService
 from inklink.services.pdf_service import PDFService
 from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.document_service import DocumentService
 from inklink.services.remarkable_service import RemarkableService
+from inklink.services.ai_service import AIService
+
+# Define a TypeVar for our custom server type
+ServerType = TypeVar("ServerType", bound="CustomHTTPServer")
 
 
 def setup_logging():
@@ -59,8 +56,6 @@ class URLHandler(BaseHTTPRequestHandler):
         ai_service=None,
         **kwargs,
     ):
-        from inklink.services.ai_service import AIService
-
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
         self.pdf_service = pdf_service or PDFService(
             CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"]
@@ -273,7 +268,9 @@ class URLHandler(BaseHTTPRequestHandler):
                         "title": title,
                         "uploaded": upload_success,
                         "upload_message": (
-                            f"Uploaded to reMarkable: {title}" if upload_success else upload_message
+                            f"Uploaded to reMarkable: {title}"
+                            if upload_success
+                            else upload_message
                         ),
                     }
                 )
@@ -286,10 +283,7 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            headers = {k: v for k, v in self.headers.items()}
-            fs = cgi.FieldStorage(
-                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
-            )
+            fs = cgi.FieldStorage(fp=self.rfile, environ=env, keep_blank_values=True)
             fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:
                 self._send_json({"error": "No file uploaded"}, status=400)
@@ -316,7 +310,10 @@ class URLHandler(BaseHTTPRequestHandler):
                 # For demo: just echo file_id as markdown and raw
                 md = f"# Processed file {file_id}\n\nAI response here."
                 raw = f"RAW_RESPONSE_FOR_{file_id}"
-                cast(ServerType, self.server).responses[response_id] = {"markdown": md, "raw": raw}
+                cast(ServerType, self.server).responses[response_id] = {
+                    "markdown": md,
+                    "raw": raw,
+                }
                 self._send_json({"status": "done", "response_id": response_id})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -399,27 +396,6 @@ class URLHandler(BaseHTTPRequestHandler):
                 and is_safe_url(prefix)
             ):
                 return prefix
-        # If there is a '^' suffix, strip it and validate the prefix
-        if "^" in raw:
-            prefix = raw.split("^", 1)[0]
-            parsed_pref = urlparse(prefix)
-            if (
-                parsed_pref.scheme in ("http", "https")
-                and parsed_pref.netloc
-                and is_safe_url(prefix)
-            ):
-                return prefix
-
-        # If there is a '^' suffix, strip it and validate the prefix
-        if raw.endswith("^"):
-            prefix = raw[:-1]  # Remove the trailing '^'
-            parsed_pref = urlparse(prefix)
-            if (
-                parsed_pref.scheme in ("http", "https")
-                and parsed_pref.netloc
-                and is_safe_url(prefix)
-            ):
-                return prefix
 
         # Not a valid URL
         return None
@@ -475,9 +451,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
-        import logging
-
-        logger = logging.getLogger("inklink.server")
+        # Using the already imported logger from the top of the file
         try:
             logger.debug(
                 f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}"
@@ -571,7 +545,10 @@ class URLHandler(BaseHTTPRequestHandler):
             query = urlparse(self.path).query
             params = parse_qs(query)
             response_id = params.get("response_id", [None])[0]
-            if not response_id or response_id not in cast(ServerType, self.server).responses:
+            if (
+                not response_id
+                or response_id not in cast(ServerType, self.server).responses
+            ):
                 self._send_json({"error": "Invalid response_id"}, status=400)
                 return
             resp = cast(ServerType, self.server).responses[response_id]
@@ -588,12 +565,12 @@ class URLHandler(BaseHTTPRequestHandler):
 
 class CustomHTTPServer(HTTPServer):
     """Custom HTTP Server with additional attributes for tokens, files, and responses."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Initialize attributes needed by URLHandler
         self.tokens = {}  # Store authentication tokens
-        self.files = {}   # Store uploaded files
+        self.files = {}  # Store uploaded files
         self.responses = {}  # Store responses
 
 
