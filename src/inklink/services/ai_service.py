@@ -117,8 +117,8 @@ class AIService:
                     if links:
                         link_str = "Links: " + ", ".join(
                             [
-                                f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
-                                for l in links
+                                f"{link.get('label', link.get('target', ''))} (to page {link.get('target', '')})"
+                                for link in links
                             ]
                         )
                     context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())

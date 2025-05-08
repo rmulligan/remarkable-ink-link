@@ -17,20 +17,17 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import io
 from urllib.parse import urlparse, parse_qs
 
-
-# Define a TypeVar for our custom server type
-ServerType = TypeVar("ServerType", bound="CustomHTTPServer")
-
-
 from inklink.config import CONFIG
 from inklink.utils import is_safe_url
-
-
 from inklink.services.qr_service import QRCodeService
 from inklink.services.pdf_service import PDFService
 from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.document_service import DocumentService
 from inklink.services.remarkable_service import RemarkableService
+from inklink.services.ai_service import AIService
+
+# Define a TypeVar for our custom server type
+ServerType = TypeVar("ServerType", bound="CustomHTTPServer")
 
 
 def setup_logging():
@@ -59,8 +56,6 @@ class URLHandler(BaseHTTPRequestHandler):
         ai_service=None,
         **kwargs,
     ):
-        from inklink.services.ai_service import AIService
-
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
         self.pdf_service = pdf_service or PDFService(
             CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"]
@@ -288,7 +283,6 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
                 fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
@@ -459,9 +453,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
-        import logging
-
-        logger = logging.getLogger("inklink.server")
+        # Using the already imported logger from the top of the file
         try:
             logger.debug(
                 f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}"
