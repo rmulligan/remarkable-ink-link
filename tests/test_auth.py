@@ -1,3 +1,11 @@
+# `import subprocess` in Python is used to import the built-in module `subprocess`, which allows you
+# to spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
+# This module provides a way to run system commands and interact with the system shell from within a
+# Python script.
+# `import subprocess` in Python is used to import the built-in module `subprocess`, which allows you
+# to spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
+# This module provides a way to run system commands and interact with the system shell from within a
+# Python script.
 import subprocess
 from fastapi.testclient import TestClient
 import pytest
