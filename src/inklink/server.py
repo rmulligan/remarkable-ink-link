@@ -12,9 +12,9 @@ import time
 import uuid
 import cgi
 import subprocess
+import io
 from typing import Dict, Optional, Tuple, Any, List, cast, IO, TypeVar
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import io
 from urllib.parse import urlparse, parse_qs
 
 from inklink.config import CONFIG
@@ -283,9 +283,7 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            fs = cgi.FieldStorage(
-                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
-            )
+            fs = cgi.FieldStorage(fp=self.rfile, environ=env, keep_blank_values=True)
             fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:
                 self._send_json({"error": "No file uploaded"}, status=400)

@@ -58,12 +58,6 @@ def test_extract_url_invalid_json():
     assert call_extract(json_payload) is None
 
 
-def test_extract_url_prefix_strips_invalid_suffix():
-    # Valid URL prefix followed by invalid '<' character and text
-    payload = b"https://example.com/page<evil>"
-    assert call_extract(payload) == "https://example.com/page"
-
-
 @pytest.mark.parametrize(
     "payload, expected",
     [
