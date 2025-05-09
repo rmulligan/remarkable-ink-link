@@ -132,30 +132,30 @@ class PDFService:
 
         except Exception as e:
             logger.error(f"Error extracting PDF title: {e}")
+            return "PDF Document"
 
+    def generate_index_notebook(
+        self, pages: list, output_path: str, graph_title: str = "Index Node Graph"
+    ) -> None:
+        """
+        Generate an index notebook as a PDF containing a node graph with cross-references.
 
-def generate_index_notebook(
-    self, pages: list, output_path: str, graph_title: str = "Index Node Graph"
-) -> None:
-    """
-    Generate an index notebook as a PDF containing a node graph with cross-references.
+        Args:
+            pages: List of dicts, each with keys:
+                - 'title': Title of the handwritten page
+                - 'summary': Short summary of the page
+                - 'page_number': Page number in the notebook
+                - 'device_location': Device-specific location or identifier
+                - 'links': List of page numbers this page references (optional)
+            output_path: Path to save the generated PDF
+            graph_title: Title for the node graph
 
-    Args:
-        pages: List of dicts, each with keys:
-            - 'title': Title of the handwritten page
-            - 'summary': Short summary of the page
-            - 'page_number': Page number in the notebook
-            - 'device_location': Device-specific location or identifier
-            - 'links': List of page numbers this page references (optional)
-        output_path: Path to save the generated PDF
-        graph_title: Title for the node graph
+        Returns:
+            None. Writes the PDF to output_path.
 
-    Returns:
-        None. Writes the PDF to output_path.
-
-    The node graph is generated using Graphviz and embedded in the PDF.
-    Each node represents a page, with edges for cross-references.
-    The PDF includes a table of pages with titles, summaries, page numbers, and device locations.
+        The node graph is generated using Graphviz and embedded in the PDF.
+        Each node represents a page, with edges for cross-references.
+        The PDF includes a table of pages with titles, summaries, page numbers, and device locations.
     """
     import tempfile
     from graphviz import Digraph
@@ -242,4 +242,3 @@ def generate_index_notebook(
                 )
 
         doc.build(elements)
-        return "PDF Document"
