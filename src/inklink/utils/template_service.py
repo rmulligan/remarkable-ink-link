@@ -1,5 +1,5 @@
-from src.inklink.config import HCLResourceConfig
-from src.inklink.utils.hcl_render import render_hcl_resource
+from inklink.config import HCLResourceConfig
+from inklink.utils.hcl_render import render_hcl_resource
 
 
 class HCLTemplateService:
@@ -10,6 +10,6 @@ class HCLTemplateService:
     def render(
         self,
         config: HCLResourceConfig,
-        template_path: str = "src/inklink/hcl_templates/main.j2",
+        template_path: str = "inklink/hcl_templates/main.j2",
     ) -> str:
         return render_hcl_resource(config, template_path)

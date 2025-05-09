@@ -163,89 +163,89 @@ class PDFService:
         The node graph is generated using Graphviz and embedded in the PDF.
         Each node represents a page, with edges for cross-references.
         The PDF includes a table of pages with titles, summaries, page numbers, and device locations.
-    """
-    import tempfile
-    from graphviz import Digraph
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    from reportlab.platypus import (
-        Table,
-        TableStyle,
-        SimpleDocTemplate,
-        Paragraph,
-        Spacer,
-    )
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    import os
-
-    # Step 1: Build the node graph using Graphviz
-    dot = Digraph(comment=graph_title)
-    for page in pages:
-        label = f"{page['page_number']}: {page['title']}"
-        dot.node(str(page["page_number"]), label)
-    for page in pages:
-        if "links" in page:
-            for ref in page["links"]:
-                dot.edge(str(page["page_number"]), str(ref))
-
-    # Step 2: Render the graph to a temporary PNG file
-    with tempfile.TemporaryDirectory() as tmpdir:
-        graph_path = os.path.join(tmpdir, "index_graph.png")
-        dot.render(filename=graph_path, format="png", cleanup=True)
-        graph_img_path = graph_path + ".png"
-
-        # Step 3: Build the PDF
-        doc = SimpleDocTemplate(output_path, pagesize=letter)
-        elements = []
-        styles = getSampleStyleSheet()
-        elements.append(Paragraph(graph_title, styles["Title"]))
-        elements.append(Spacer(1, 12))
-
-        # Insert the node graph image
-        from reportlab.platypus import Image
-
-        elements.append(Image(graph_img_path, width=500, height=300))
-        elements.append(Spacer(1, 24))
-
-        # Table of pages
-        data = [["Page", "Title", "Summary", "Device Location"]]
-        for page in pages:
-            data.append(
-                [
-                    page["page_number"],
-                    page["title"],
-                    page.get("summary", ""),
-                    page.get("device_location", ""),
-                ]
-            )
-        table = Table(data, repeatRows=1)
-        table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ]
-            )
+        """
+        import tempfile
+        from graphviz import Digraph
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.platypus import (
+            Table,
+            TableStyle,
+            SimpleDocTemplate,
+            Paragraph,
+            Spacer,
         )
-        elements.append(table)
-        elements.append(Spacer(1, 24))
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        import os
 
-        # Add cross-reference details
-        elements.append(Paragraph("Cross-References", styles["Heading2"]))
+        # Step 1: Build the node graph using Graphviz
+        graphviz_obj = Digraph(comment=graph_title)
         for page in pages:
-            if "links" in page and page["links"]:
-                refs = ", ".join(str(ref) for ref in page["links"])
-                elements.append(
-                    Paragraph(
-                        f"Page {page['page_number']} references: {refs}",
-                        styles["Normal"],
-                    )
-                )
+            label = f"{page['page_number']}: {page['title']}"
+            graphviz_obj.node(str(page["page_number"]), label)
+        for page in pages:
+            if "links" in page:
+                for ref in page["links"]:
+                    graphviz_obj.edge(str(page["page_number"]), str(ref))
 
-        doc.build(elements)
+        # Step 2: Render the graph to a temporary PNG file
+        with tempfile.TemporaryDirectory() as tmpdir:
+            graph_path = os.path.join(tmpdir, "index_graph.png")
+            graphviz_obj.render(filename=graph_path, format="png", cleanup=True)
+            graph_img_path = graph_path + ".png"
+
+            # Step 3: Build the PDF
+            doc = SimpleDocTemplate(output_path, pagesize=letter)
+            elements = []
+            styles = getSampleStyleSheet()
+            elements.append(Paragraph(graph_title, styles["Title"]))
+            elements.append(Spacer(1, 12))
+
+            # Insert the node graph image
+            from reportlab.platypus import Image
+
+            elements.append(Image(graph_img_path, width=500, height=300))
+            elements.append(Spacer(1, 24))
+
+            # Table of pages
+            data = [["Page", "Title", "Summary", "Device Location"]]
+            for page in pages:
+                data.append(
+                    [
+                        page["page_number"],
+                        page["title"],
+                        page.get("summary", ""),
+                        page.get("device_location", ""),
+                    ]
+                )
+            table = Table(data, repeatRows=1)
+            table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ]
+                )
+            )
+            elements.append(table)
+            elements.append(Spacer(1, 24))
+
+            # Add cross-reference details
+            elements.append(Paragraph("Cross-References", styles["Heading2"]))
+            for page in pages:
+                if "links" in page and page["links"]:
+                    refs = ", ".join(str(ref) for ref in page["links"])
+                    elements.append(
+                        Paragraph(
+                            f"Page {page['page_number']} references: {refs}",
+                            styles["Normal"],
+                        )
+                    )
+
+            doc.build(elements)
