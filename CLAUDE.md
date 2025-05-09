@@ -122,3 +122,4 @@ InkLink follows a service-oriented architecture with clear separation of concern
 
 - Keep the documentation updated at README.md, the docs directory, and your own notes
 - This project uses a virtual environment in .venv
+- Run black formatter and flake8 before pushing
