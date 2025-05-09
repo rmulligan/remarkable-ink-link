@@ -2,24 +2,11 @@
 
 import os
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 
-from bs4 import BeautifulSoup
-
-try:
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-except ImportError:
-    Request = None
-    Credentials = None
-    InstalledAppFlow = None
-    build = None
-
+from inklink.services.interfaces import IGoogleDocsService
+from inklink.adapters.google_adapter import GoogleAPIAdapter
 from inklink.utils import (
-    retry_operation,
-    format_error,
     extract_structured_content,
     validate_and_fix_content,
 )
@@ -27,55 +14,29 @@ from inklink.utils import (
 logger = logging.getLogger(__name__)
 
 
-class GoogleDocsService:
+class GoogleDocsService(IGoogleDocsService):
     """Service to fetch and convert Google Docs documents."""
 
-    SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-
     def __init__(
-        self, credentials_path: Optional[str] = None, token_path: Optional[str] = None
+        self, 
+        credentials_path: Optional[str] = None, 
+        token_path: Optional[str] = None,
+        google_adapter: Optional[GoogleAPIAdapter] = None
     ):
         """
         Initialize Google Docs service.
 
         Args:
-            credentials_path: Path to OAuth2 client secrets JSON.
-            token_path: Path to store user credentials.
+            credentials_path: Path to OAuth2 client secrets JSON
+            token_path: Path to store user credentials
+            google_adapter: Optional pre-configured Google API adapter
         """
-        self.credentials_path = credentials_path or os.getenv("GOOGLE_CREDENTIALS_PATH")
-        self.token_path = token_path or os.getenv("GOOGLE_TOKEN_PATH", "token.json")
-        self.creds: Optional[Credentials] = None
-        self.drive_service = None
-        self._authenticate()
-
-    def _authenticate(self):
-        """Authenticate with Google and build Drive service."""
-        # If Google API client libraries are unavailable, skip authentication
-        if not all([Request, Credentials, InstalledAppFlow, build]):
-            logger.warning(
-                "Google API client libraries not installed; authentication disabled."
-            )
-            return
-        try:
-            if os.path.exists(self.token_path):
-                self.creds = Credentials.from_authorized_user_file(
-                    self.token_path, self.SCOPES
-                )
-            if not self.creds or not self.creds.valid:
-                if self.creds and self.creds.expired and self.creds.refresh_token:
-                    self.creds.refresh(Request())
-                else:
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        self.credentials_path, self.SCOPES
-                    )
-                    self.creds = flow.run_local_server(port=0)
-                # Save credentials
-                with open(self.token_path, "w", encoding="utf-8") as token_file:
-                    token_file.write(self.creds.to_json())
-            self.drive_service = build("drive", "v3", credentials=self.creds)
-        except Exception as e:
-            logger.error(format_error("auth", "Google Docs authentication failed", e))
-            raise
+        # Use provided adapter or create a new one
+        self.adapter = google_adapter or GoogleAPIAdapter(
+            credentials_path=credentials_path,
+            token_path=token_path,
+            readonly=True  # Use read-only scope for safety
+        )
 
     def fetch(self, url_or_id: str) -> Dict[str, Any]:
         """
@@ -90,73 +51,122 @@ class GoogleDocsService:
         Returns:
             Dict with keys: title, structured_content, images
         """
-        doc_id = self._extract_doc_id(url_or_id)
         try:
-            # Define HTML export function for retry operation
-            def export_html():
-                if not self.drive_service:
-                    raise ValueError("Google Drive service not initialized")
-                return (
-                    self.drive_service.files()
-                    .export(fileId=doc_id, mimeType="text/html")
-                    .execute()
-                )
-
-            # Fetch HTML with retry handling
-            html_content = retry_operation(
-                export_html, operation_name="Google Docs export"
-            )
-
+            # Extract document ID
+            doc_id = self.adapter.extract_doc_id(url_or_id)
+            logger.debug(f"Extracted Google Docs ID: {doc_id}")
+            
+            # Get document metadata
+            success, metadata = self.adapter.get_document_metadata(doc_id)
+            if not success:
+                raise ValueError(f"Failed to get document metadata: {metadata}")
+                
+            # Get document title from metadata
+            doc_title = metadata.get("name", "Google Doc")
+            logger.debug(f"Document title: {doc_title}")
+            
+            # Export document as HTML
+            success, html_content = self.adapter.export_doc_as_html(doc_id)
+            if not success:
+                raise ValueError(f"Failed to export document: {html_content}")
+                
             # Process HTML into structured content
             content = extract_structured_content(html_content, url_or_id)
-
+            
+            # Use document title from metadata
+            content["title"] = doc_title
+            
             # Validate and ensure content structure is complete
             return validate_and_fix_content(content, url_or_id)
 
         except Exception as e:
-            error_msg = format_error(
-                "googledocs", "Failed to fetch Google Docs document", e
-            )
-            logger.error(error_msg)
-            return {
-                "title": url_or_id,
-                "structured_content": [
-                    {
-                        "type": "paragraph",
-                        "content": f"Could not fetch Google Docs doc {url_or_id}: {e}",
-                    }
-                ],
-                "images": [],
-            }
-
-    def _extract_doc_id(self, url_or_id: str) -> str:
+            logger.error(f"Failed to fetch Google Docs document: {e}")
+            return self._build_error_response(url_or_id, str(e))
+    
+    def fetch_as_pdf(self, url_or_id: str, output_path: str) -> bool:
         """
-        Extract document ID from Google Docs URL, or return as-is.
-
+        Fetch a Google Docs document as PDF.
+        
         Args:
             url_or_id: Google Docs URL or document ID
-
+            output_path: Path to save the PDF file
+            
         Returns:
-            Extracted document ID
+            True if successful, False otherwise
         """
-        from urllib.parse import urlparse
-
         try:
-            parsed_url = urlparse(url_or_id)
-            # Only extract ID for official Google Docs URLs at the expected path
-            if parsed_url.hostname == "docs.google.com":
-                # Expect path like '/document/d/<ID>/...'
-                path = parsed_url.path or ""
-                # Split into segments ['', 'document', 'd', '<ID>', ...]
-                segments = path.split("/")
-                if (
-                    len(segments) >= 4
-                    and segments[1] == "document"
-                    and segments[2] == "d"
-                    and segments[3]
-                ):
-                    return segments[3]
-        except Exception:
-            # If parsing fails or unexpected format, return input as-is
-            pass
-        return url_or_id
+            # Extract document ID
+            doc_id = self.adapter.extract_doc_id(url_or_id)
+            
+            # Export document as PDF
+            return self.adapter.export_doc_as_pdf(doc_id, output_path)
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch Google Docs document as PDF: {e}")
+            return False
+    
+    def fetch_as_docx(self, url_or_id: str, output_path: str) -> bool:
+        """
+        Fetch a Google Docs document as DOCX.
+        
+        Args:
+            url_or_id: Google Docs URL or document ID
+            output_path: Path to save the DOCX file
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Extract document ID
+            doc_id = self.adapter.extract_doc_id(url_or_id)
+            
+            # Export document as DOCX
+            return self.adapter.export_doc_as_docx(doc_id, output_path)
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch Google Docs document as DOCX: {e}")
+            return False
+    
+    def list_documents(self, max_results: int = 10) -> List[Dict[str, Any]]:
+        """
+        List Google Docs documents.
+        
+        Args:
+            max_results: Maximum number of results to return
+            
+        Returns:
+            List of document metadata dictionaries
+        """
+        try:
+            success, docs = self.adapter.list_documents(max_results=max_results)
+            if not success:
+                logger.error(f"Failed to list documents: {docs}")
+                return []
+                
+            return docs
+            
+        except Exception as e:
+            logger.error(f"Failed to list Google Docs documents: {e}")
+            return []
+    
+    def _build_error_response(self, url_or_id: str, error_message: str) -> Dict[str, Any]:
+        """
+        Build a standardized error response.
+        
+        Args:
+            url_or_id: URL or document ID
+            error_message: Error message
+            
+        Returns:
+            Structured content dictionary with error information
+        """
+        return {
+            "title": url_or_id,
+            "structured_content": [
+                {
+                    "type": "paragraph",
+                    "content": f"Could not fetch Google Docs document {url_or_id}: {error_message}",
+                }
+            ],
+            "images": [],
+        }
