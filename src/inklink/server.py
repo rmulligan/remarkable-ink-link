@@ -80,18 +80,36 @@ class URLHandler(BaseHTTPRequestHandler):
         elif self.path.startswith("/download/"):
             # Serve generated document for manual download
             from urllib.parse import unquote
+            import os.path
+            import re
+
+            # Get the filename from the path and sanitize it
             fname = unquote(self.path[len("/download/"):])
+
+            # Prevent path traversal by removing directory components and only allowing specific characters
+            safe_fname = re.sub(r'[^a-zA-Z0-9._-]', '', os.path.basename(fname))
+
+            if not safe_fname:
+                self.send_response(400)
+                self.end_headers()
+                return
+
             temp_dir = CONFIG.get("TEMP_DIR")
-            file_path = os.path.join(temp_dir, fname)
-            if not os.path.isfile(file_path):
+            file_path = os.path.join(temp_dir, safe_fname)
+
+            # Verify the file exists and is within the temp directory
+            real_path = os.path.realpath(file_path)
+            if not real_path.startswith(os.path.realpath(temp_dir)) or not os.path.isfile(real_path):
                 self.send_response(404)
                 self.end_headers()
                 return
+
             self.send_response(200)
             self.send_header("Content-Type", "application/octet-stream")
-            self.send_header("Content-Disposition", f"attachment; filename=\"{fname}\"")
+            self.send_header("Content-Disposition", f"attachment; filename=\"{safe_fname}\"")
             self.end_headers()
-            with open(file_path, 'rb') as f:
+
+            with open(real_path, 'rb') as f:
                 while True:
                     chunk = f.read(8192)
                     if not chunk:
@@ -128,88 +146,141 @@ class URLHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"<html><body><h1>Error: No code provided.</h1><a href='/auth'>Try again</a></body></html>")
             return
+
         rmapi = CONFIG["RMAPI_PATH"]
-        # Use a pseudo-tty to run rmapi login so it can read the one-time code interactively
+        logger.info("Starting rmapi authentication with one-time code")
+
+        # First, try to authenticate using the more direct approach with expect script
         try:
-            import pty, os, select, subprocess, time
+            import tempfile
+            import subprocess
 
-            # Open a new pty pair
-            master_fd, slave_fd = pty.openpty()
-            # Launch rmapi ls to trigger login flow and then exit
-            proc = subprocess.Popen([rmapi, "ls"], stdin=slave_fd, stdout=slave_fd, stderr=slave_fd, close_fds=True)
-            os.close(slave_fd)
+            # Create a temporary expect script file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.exp', delete=False) as expect_file:
+                expect_path = expect_file.name
+                expect_file.write(f'''#!/usr/bin/expect -f
+                set timeout 30
+                set code "{code}"
 
-            output = b""
-            # Read until we see the prompt or timeout (up to 10 seconds)
-            start = time.time()
-            prompt_seen = False
-            while time.time() - start < 10:
-                r, _, _ = select.select([master_fd], [], [], 0.1)
-                if master_fd in r:
-                    try:
-                        data = os.read(master_fd, 1024)
-                    except OSError:
-                        break
-                    if not data:
-                        break
-                    output += data
-                    if b"Enter one-time code" in output:
-                        prompt_seen = True
-                        break
-            if not prompt_seen:
-                proc.terminate()
-                os.close(master_fd)
-                self.send_response(500)
-                self.send_header("Content-Type", "text/html")
-                self.end_headers()
-                self.wfile.write(b"<html><body><h1>Error: rmapi login did not prompt for code.</h1></body></html>")
-                return
+                spawn {rmapi} ls
+                expect {{
+                    "Enter one-time code:" {{
+                        send "$code\\r"
+                        exp_continue
+                    }}
+                    "Permanent token stored" {{
+                        exit 0
+                    }}
+                    eof {{
+                        exit 1
+                    }}
+                    timeout {{
+                        exit 2
+                    }}
+                }}
+                ''')
 
-            # Send the one-time code
+            # Make the script executable
+            import os
+            os.chmod(expect_path, 0o755)
+
+            # Run the expect script
+            process = subprocess.run(
+                [expect_path],
+                capture_output=True,
+                text=True,
+                timeout=45
+            )
+
+            # Remove the temporary script
             try:
-                os.write(master_fd, (code + "\n").encode())
-            except OSError:
-                # Ignore write errors (pty may be closed)
+                os.unlink(expect_path)
+            except:
                 pass
 
-            # Collect remaining output until process exits
-            while not proc.poll() is not None:
-                r, _, _ = select.select([master_fd], [], [], 0.1)
-                if master_fd in r:
-                    try:
-                        data = os.read(master_fd, 1024)
-                    except OSError:
-                        break
-                    if not data:
-                        break
-                    output += data
+            # Check if authentication was successful
+            if process.returncode == 0:
+                logger.info("Authentication successful using expect script")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                self.wfile.write(b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>")
+                return
 
-            exit_code = proc.wait()
-            os.close(master_fd)
+            # If expect script failed, fall back to alternative method
+            logger.warning(f"Expect script failed with code {process.returncode}, output: {process.stdout}")
 
-            # Decode output for display
+        except Exception as e:
+            logger.warning(f"Expect script approach failed: {str(e)}")
+            # Continue to fallback method
+
+        # Fallback: Try using named pipe approach which is more reliable than PTY
+        try:
+            import tempfile
+            import os
+            import subprocess
+            import time
+
+            # Create a named pipe (FIFO)
+            pipe_path = os.path.join(tempfile.gettempdir(), f"rmapi_auth_{int(time.time())}.pipe")
             try:
-                text_out = output.decode('utf-8', errors='ignore')
-            except Exception:
-                text_out = str(output)
+                os.mkfifo(pipe_path)
+            except Exception as e:
+                logger.error(f"Failed to create named pipe: {str(e)}")
+                raise
 
-            if exit_code == 0:
+            # Start a process that will write the code to the pipe
+            with open(pipe_path, 'w') as fifo:
+                # Write the code with a newline
+                fifo.write(f"{code}\n")
+                fifo.flush()
+
+                # Run rmapi with stdin from the pipe
+                process = subprocess.run(
+                    [rmapi, "ls"],
+                    stdin=open(pipe_path, 'r'),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+            # Remove the pipe
+            try:
+                os.unlink(pipe_path)
+            except:
+                pass
+
+            # Check the result
+            if process.returncode == 0:
+                logger.info("Authentication successful using named pipe")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>")
             else:
+                logger.error(f"Authentication failed: {process.stderr}")
                 self.send_response(400)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                msg = f"<html><body><h1>Authentication Failed</h1><pre>{text_out}</pre><a href='/auth'>Try again</a></body></html>"
+                msg = f"""<html><body>
+                    <h1>Authentication Failed</h1>
+                    <pre>{process.stderr}</pre>
+                    <a href='/auth'>Try again</a>
+                    </body></html>"""
                 self.wfile.write(msg.encode("utf-8"))
+
         except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
             self.send_response(500)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
             err = str(e)
-            msg = f"<html><body><h1>Error running rmapi login</h1><pre>{err}</pre></body></html>"
+            msg = f"""<html><body>
+                <h1>Error running rmapi login</h1>
+                <pre>{err}</pre>
+                <p>Please try again or check server logs.</p>
+                <a href='/auth'>Try again</a>
+                </body></html>"""
             self.wfile.write(msg.encode("utf-8"))
 
     def do_POST(self):
@@ -594,18 +665,29 @@ class URLHandler(BaseHTTPRequestHandler):
             if success:
                 # Provide optional download link for the converted PDF ink document
                 from urllib.parse import quote
-                import os, json
-                fname = os.path.basename(rm_path)
-                download_url = f"/download/{quote(fname)}"
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                resp = {
-                    "success": True,
-                    "message": f"PDF uploaded to Remarkable as native ink: {result['title']}",
-                    "download": download_url,
-                }
-                self.wfile.write(json.dumps(resp).encode("utf-8"))
+                import os
+
+                # Create response message
+                message = f"PDF uploaded to Remarkable as native ink: {result['title']}"
+
+                # Check if client accepts JSON (modern client)
+                accept_header = self.headers.get("Accept", "")
+                if "application/json" in accept_header:
+                    # Return JSON response with download link for new clients
+                    fname = os.path.basename(rm_path)
+                    download_url = f"/download/{quote(fname)}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    resp = {
+                        "success": True,
+                        "message": message,
+                        "download": download_url,
+                    }
+                    self.wfile.write(json.dumps(resp).encode("utf-8"))
+                else:
+                    # Return plain text response for backward compatibility
+                    self._send_success(message)
             else:
                 self._send_error(f"Failed to upload PDF: {message}")
 
@@ -674,18 +756,29 @@ class URLHandler(BaseHTTPRequestHandler):
             if success:
                 # Provide optional download link for the converted document
                 from urllib.parse import quote
-                import os, json
-                fname = os.path.basename(rm_path)
-                download_url = f"/download/{quote(fname)}"
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                resp = {
-                    "success": True,
-                    "message": f"Webpage uploaded to Remarkable: {content['title']}",
-                    "download": download_url,
-                }
-                self.wfile.write(json.dumps(resp).encode("utf-8"))
+                import os
+
+                # Create response message
+                message = f"Webpage uploaded to Remarkable: {content['title']}"
+
+                # Check if client accepts JSON (modern client)
+                accept_header = self.headers.get("Accept", "")
+                if "application/json" in accept_header:
+                    # Return JSON response with download link for new clients
+                    fname = os.path.basename(rm_path)
+                    download_url = f"/download/{quote(fname)}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    resp = {
+                        "success": True,
+                        "message": message,
+                        "download": download_url,
+                    }
+                    self.wfile.write(json.dumps(resp).encode("utf-8"))
+                else:
+                    # Return plain text response for backward compatibility
+                    self._send_success(message)
                 logger.info(f"Webpage uploaded to Remarkable: {content['title']}")
             else:
                 logger.error(f"Failed to upload document: {message}")

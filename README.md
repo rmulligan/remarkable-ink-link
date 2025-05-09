@@ -166,10 +166,31 @@ Or with a simple request containing just the URL:
 curl -X POST http://localhost:9999/share -d "https://example.com"
 ```
 
-The response will contain success status and a message:
+The response will contain success status and a message.
+
+For backward compatibility, the default response is in plain text:
 ```json
 {"success": true, "message": "Webpage uploaded to Remarkable: Example Domain"}
 ```
+
+If your client includes `Accept: application/json` in the request header, you'll receive a JSON response with a download link:
+```json
+{
+  "success": true,
+  "message": "Webpage uploaded to Remarkable: Example Domain",
+  "download": "/download/document123.rm"
+}
+```
+
+### Downloading Generated Documents
+
+You can directly download the converted reMarkable documents using the `/download` endpoint:
+
+```
+GET /download/filename.rm
+```
+
+This allows you to save and review documents locally without requiring a reMarkable device.
 
 ---
 
@@ -214,6 +235,30 @@ Standalone integration modules (coming soon):
 
 MIT License — permissive and open.  
 You are free to use, modify, extend, and build commercial or personal tools on top of InkLink. We may provide a hosted version in the future, but the core will always remain open and community-driven.
+
+## 💡 Configuration Options
+
+### PDF Rendering Modes
+
+InkLink supports two PDF rendering modes, configurable via the `INKLINK_PDF_RENDER_MODE` environment variable:
+
+- **`raster`** (default): Renders PDFs as rasterized PNG images. More reliable with complex PDFs but lower quality.
+- **`outline`**: Embeds vector outlines from PDFs directly. Higher quality but may fail with complex PDFs.
+
+To change the mode:
+
+```bash
+# In Docker
+docker-compose up -d -e INKLINK_PDF_RENDER_MODE=outline inklink
+
+# Or set in your environment before running
+export INKLINK_PDF_RENDER_MODE=outline
+yarn start
+```
+
+When using `outline` mode, you can also configure:
+- `INKLINK_PDF_PAGE`: Which page to render (default: 1)
+- `INKLINK_PDF_SCALE`: Scale factor for rendering (default: 1.0)
 
 ## 🐞 Troubleshooting
 

@@ -44,9 +44,14 @@ CONFIG = {
     # Logging
     "LOG_LEVEL": os.environ.get("INKLINK_LOG_LEVEL", "INFO"),
     "LOG_FILE": os.environ.get("INKLINK_LOG_FILE", "inklink.log"),
-    # PDF rendering mode: "outline" for vector outlines via drawj2d or "raster" for PNG rasterization
+    # PDF rendering mode:
+    # - "outline": Uses vector outlines via drawj2d (more accurate but may fail with complex PDFs)
+    # - "raster": Uses PNG rasterization (more reliable but lower quality)
+    # NOTE: Default changed from "outline" to "raster" in v1.2 for better reliability.
+    # Set INKLINK_PDF_RENDER_MODE=outline to use the previous default.
     "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "raster"),
-    # Default PDF page number and scale for outline embedding
+
+    # Default PDF page number and scale for outline embedding (only used when PDF_RENDER_MODE="outline")
     "PDF_PAGE": int(os.environ.get("INKLINK_PDF_PAGE", 1)),
     "PDF_SCALE": float(os.environ.get("INKLINK_PDF_SCALE", 1.0)),
     # MyScript iink SDK configuration
