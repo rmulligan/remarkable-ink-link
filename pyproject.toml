@@ -30,13 +30,13 @@ python-multipart = "^0.0.20"
 httpx = "^0.28.1"
 rmscene = "^0.7.0"
 cryptography = "^44.0.3"
-openai = "^0.27.8"
+openai = "^1.78.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
 black = "^25.1.0"
 flake8 = "^7.2"
-pre-commit = "^3.4.0"
+pre-commit = "^4.2.0"
 
 [tool.poetry.scripts]
 inklink = "inklink.main:main"
