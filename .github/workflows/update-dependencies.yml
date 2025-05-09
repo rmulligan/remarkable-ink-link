@@ -32,7 +32,7 @@ jobs:
         run: poetry update --no-interaction
 
       - name: Create Pull Request for Lockfile
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "ci: poetry update lock file"
