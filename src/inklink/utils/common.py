@@ -6,6 +6,8 @@ This module provides common utility functions used throughout the project.
 import time
 import logging
 import subprocess
+import re
+from urllib.parse import urlparse
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
@@ -179,3 +181,48 @@ def convert_html_to_rm(
             return False, result.stderr
     except Exception as e:
         return False, str(e)
+
+
+def is_safe_url(url: str) -> bool:
+    """
+    Check if URL is safe to process.
+    
+    Args:
+        url: URL to check
+        
+    Returns:
+        True if URL is safe, False otherwise
+    """
+    # Check for whitespace or control characters
+    if any(c.isspace() or ord(c) < 32 for c in url):
+        return False
+        
+    # Parse URL
+    parsed = urlparse(url)
+    
+    # Check scheme
+    if parsed.scheme not in ("http", "https"):
+        return False
+        
+    # Check netloc
+    if not parsed.netloc:
+        return False
+        
+    # Check for suspicious or dangerous characters
+    unsafe_chars = "<>'\"`;|{}\\^~[]`"
+    if any(c in unsafe_chars for c in url):
+        return False
+        
+    # Check for potentially malicious patterns
+    malicious_patterns = [
+        "javascript:",
+        "data:",
+        "vbscript:",
+        "file:",
+        "about:",
+    ]
+    for pattern in malicious_patterns:
+        if pattern in url.lower():
+            return False
+            
+    return True

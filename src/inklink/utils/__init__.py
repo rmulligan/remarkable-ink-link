@@ -9,11 +9,16 @@ from inklink.utils.common import (
     ensure_rcu_available,
     convert_markdown_to_rm,
     convert_html_to_rm,
+    is_safe_url,
 )
 
 from inklink.utils.hcl_render import (
     create_hcl_from_content,
     escape_hcl,
+)
+
+from inklink.utils.url_utils import (
+    extract_url,
 )
 
 __all__ = [
@@ -24,4 +29,6 @@ __all__ = [
     'convert_html_to_rm',
     'create_hcl_from_content',
     'escape_hcl',
+    'is_safe_url',
+    'extract_url',
 ]
