@@ -9,6 +9,8 @@ from urllib.parse import quote
 
 from inklink.controllers.base_controller import BaseController
 from inklink.utils.url_utils import extract_url
+from inklink.pipeline.factory import PipelineFactory
+from inklink.pipeline.processor import PipelineContext
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +27,8 @@ class ShareController(BaseController):
             services: Dictionary of service instances
         """
         super().__init__(handler)
-        self.qr_service = services.get("qr_service")
-        self.pdf_service = services.get("pdf_service")
-        self.web_scraper = services.get("web_scraper")
-        self.document_service = services.get("document_service")
-        self.remarkable_service = services.get("remarkable_service")
-        self.ai_service = services.get("ai_service")
+        self.services = services
+        self.pipeline_factory = PipelineFactory(services)
     
     def handle(self, method: str = "POST", path: str = "") -> None:
         """
@@ -57,179 +55,54 @@ class ShareController(BaseController):
         try:
             logger.info(f"Processing URL: {url}")
             
-            # Generate QR code
-            qr_path, qr_filename = self.qr_service.generate_qr(url)
-            logger.info(f"Generated QR code: {qr_filename}")
+            # Create pipeline context
+            context = PipelineContext(url=url)
             
-            # Process URL
-            if self.pdf_service.is_pdf_url(url):
-                self._handle_pdf_url(url, qr_path)
+            # Create pipeline for URL
+            pipeline = self.pipeline_factory.create_pipeline_for_url(url)
+            
+            # Process URL through pipeline
+            result_context = pipeline.process(context)
+            
+            # Check for errors
+            if result_context.has_errors():
+                logger.error(f"Errors during processing: {result_context.errors}")
+                self.send_error(f"Error processing URL: {result_context.errors[0]['message']}")
+                return
+                
+            # Process successful results
+            if result_context.get_artifact("upload_success", False):
+                self._handle_successful_upload(result_context)
             else:
-                self._handle_webpage_url(url, qr_path)
+                self.send_error(f"Failed to upload: {result_context.get_artifact('upload_message', 'Unknown error')}")
                 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}")
             self.send_error(f"Error processing request: {str(e)}")
     
-    def _handle_pdf_url(self, url: str, qr_path: str) -> None:
+    def _handle_successful_upload(self, context: PipelineContext) -> None:
         """
-        Handle PDF URL processing.
+        Handle successful upload result.
         
         Args:
-            url: URL to process
-            qr_path: Path to QR code
+            context: Processed pipeline context
         """
-        try:
-            # Process PDF
-            result = self.pdf_service.process_pdf(url, qr_path)
-            
-            if not result:
-                self.send_error("Failed to process PDF")
-                return
-                
-            # First try RCU-based conversion method if available
-            rm_path = self.document_service.create_pdf_rmdoc(
-                result["pdf_path"], result["title"], qr_path
-            )
-            
-            # If RCU conversion failed, try HCL-based method with image support
-            if not rm_path:
-                hcl_path = self.document_service.create_pdf_hcl(
-                    result["pdf_path"], result["title"], qr_path, result.get("images")
-                )
-                
-            # If RCU conversion failed, try legacy conversion
-            if not rm_path:
-                # Create HCL for the PDF
-                hcl_path = self.document_service.create_hcl(
-                    url, qr_path, {"title": result["title"], "structured_content": []}
-                )
-                
-                if not hcl_path:
-                    self.send_error("Failed to create HCL script for PDF")
-                    return
-                    
-                # Convert to Remarkable document
-                rm_path = self.document_service.create_rmdoc_legacy(
-                    url, qr_path, {"title": result["title"]}
-                )
-                
-                if not rm_path:
-                    self.send_error("Failed to convert PDF to Remarkable format")
-                    return
-                    
-            # Upload to Remarkable
-            success, message = self.remarkable_service.upload(rm_path, result["title"])
-            
-            if success:
-                # Provide optional download link for the converted PDF ink document
-                
-                # Create response message
-                message = f"PDF uploaded to Remarkable as native ink: {result['title']}"
-                
-                # Check if client accepts JSON (modern client)
-                accept_header = self.get_accept_header()
-                if "application/json" in accept_header:
-                    # Return JSON response with download link for new clients
-                    fname = os.path.basename(rm_path)
-                    download_url = f"/download/{quote(fname)}"
-                    self.send_json({
-                        "success": True,
-                        "message": message,
-                        "download": download_url,
-                    })
-                else:
-                    # Return plain text response for backward compatibility
-                    self.send_success(message)
-            else:
-                self.send_error(f"Failed to upload PDF: {message}")
-                
-        except Exception as e:
-            logger.error(f"Error processing PDF: {str(e)}")
-            self.send_error(f"Error processing PDF: {str(e)}")
-    
-    def _handle_webpage_url(self, url: str, qr_path: str) -> None:
-        """
-        Handle webpage URL processing.
+        # Get results from context
+        title = context.get_artifact("document_title", context.url)
+        rm_path = context.get_artifact("rm_path", "")
+        message = f"Document uploaded to Remarkable: {title}"
         
-        Args:
-            url: URL to process
-            qr_path: Path to QR code
-        """
-        try:
-            logger.debug(f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}")
-            
-            # Scrape content
-            logger.debug("Calling web_scraper.scrape")
-            content = self.web_scraper.scrape(url)
-            logger.debug("web_scraper.scrape completed")
-            
-            # AI processing of main content
-            logger.debug("Calling ai_service.process_query on scraped content")
-            main_text = ""
-            if isinstance(content.get("content"), str):
-                main_text = content["content"]
-            elif isinstance(content.get("content"), list):
-                # Join all text fields if structured as a list of dicts
-                main_text = " ".join(
-                    item.get("text", "") if isinstance(item, dict) else str(item)
-                    for item in content["content"]
-                )
-            else:
-                main_text = str(content)
-                
-            try:
-                # Extract context: all content fields except the main text
-                context = {k: v for k, v in content.items() if k != "content"}
-                ai_response = self.ai_service.process_query(main_text, context=context)
-                logger.debug(f"AI response: {ai_response}")
-                content["ai_summary"] = ai_response
-            except Exception as e:
-                logger.error(f"AI service failed: {e}")
-                content["ai_summary"] = "AI processing failed."
-                
-            # Use new RCU-based direct conversion
-            logger.debug("Calling document_service.create_rmdoc_from_content")
-            rm_path = self.document_service.create_rmdoc_from_content(
-                url, qr_path, content
-            )
-            logger.debug(f"document_service.create_rmdoc_from_content returned: {rm_path}")
-            
-            if not rm_path:
-                logger.error("Failed to convert to Remarkable format")
-                self.send_error("Failed to convert to Remarkable format")
-                return
-                
-            # Upload to Remarkable
-            logger.debug("Calling remarkable_service.upload")
-            success, message = self.remarkable_service.upload(rm_path, content["title"])
-            logger.debug(f"remarkable_service.upload returned: success={success}, message={message}")
-            
-            if success:
-                # Provide optional download link for the converted document
-                
-                # Create response message
-                message = f"Webpage uploaded to Remarkable: {content['title']}"
-                
-                # Check if client accepts JSON (modern client)
-                accept_header = self.get_accept_header()
-                if "application/json" in accept_header:
-                    # Return JSON response with download link for new clients
-                    fname = os.path.basename(rm_path)
-                    download_url = f"/download/{quote(fname)}"
-                    self.send_json({
-                        "success": True,
-                        "message": message,
-                        "download": download_url,
-                    })
-                else:
-                    # Return plain text response for backward compatibility
-                    self.send_success(message)
-                logger.info(f"Webpage uploaded to Remarkable: {content['title']}")
-            else:
-                logger.error(f"Failed to upload document: {message}")
-                self.send_error(f"Failed to upload document: {message}")
-                
-        except Exception as e:
-            logger.error(f"Error processing webpage: {str(e)}")
-            self.send_error(f"Error processing webpage: {str(e)}")
+        # Check if client accepts JSON (modern client)
+        accept_header = self.get_accept_header()
+        if "application/json" in accept_header:
+            # Return JSON response with download link for new clients
+            fname = os.path.basename(rm_path)
+            download_url = f"/download/{quote(fname)}"
+            self.send_json({
+                "success": True,
+                "message": message,
+                "download": download_url,
+            })
+        else:
+            # Return plain text response for backward compatibility
+            self.send_success(message)
