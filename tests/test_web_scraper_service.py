@@ -131,7 +131,7 @@ def test_scrape_basic(mock_http_adapter, monkeypatch):
     types = [item["type"] for item in result["structured_content"]]
     assert "h1" in types
     assert "paragraph" in types
-    assert "list" in types
+    assert "bullet" in types  # "list" items get converted to "bullet" type
     assert "code" in types
 
 
