@@ -1,3 +1,5 @@
+"""Utilities package for InkLink."""
+
 from .common import (
     is_safe_url,
     retry_operation,
