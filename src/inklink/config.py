@@ -50,7 +50,6 @@ CONFIG = {
     # NOTE: Default changed from "outline" to "raster" in v1.2 for better reliability.
     # Set INKLINK_PDF_RENDER_MODE=outline to use the previous default.
     "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "raster"),
-
     # Default PDF page number and scale for outline embedding (only used when PDF_RENDER_MODE="outline")
     "PDF_PAGE": int(os.environ.get("INKLINK_PDF_PAGE", 1)),
     "PDF_SCALE": float(os.environ.get("INKLINK_PDF_SCALE", 1.0)),

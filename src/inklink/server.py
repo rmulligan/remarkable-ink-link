@@ -73,50 +73,75 @@ class URLHandler(BaseHTTPRequestHandler):
     # _is_safe_url removed; use is_safe_url from utils instead
 
     def do_GET(self):
-        """Handle GET requests for authentication UI."""
-        # Authentication form or file download
+        """Handle GET requests for auth, download, and response endpoints."""
+        # Authentication form
         if self.path == "/auth":
             self._send_auth_form()
+        # File download
         elif self.path.startswith("/download/"):
-            # Serve generated document for manual download
-            from urllib.parse import unquote
-            import os.path
-            import re
-
-            # Get the filename from the path and sanitize it
-            fname = unquote(self.path[len("/download/"):])
-
-            # Prevent path traversal by removing directory components and only allowing specific characters
-            safe_fname = re.sub(r'[^a-zA-Z0-9._-]', '', os.path.basename(fname))
-
-            if not safe_fname:
-                self.send_response(400)
-                self.end_headers()
-                return
-
-            temp_dir = CONFIG.get("TEMP_DIR")
-            file_path = os.path.join(temp_dir, safe_fname)
-
-            # Verify the file exists and is within the temp directory
-            real_path = os.path.realpath(file_path)
-            if not real_path.startswith(os.path.realpath(temp_dir)) or not os.path.isfile(real_path):
-                self.send_response(404)
-                self.end_headers()
-                return
-
-            self.send_response(200)
-            self.send_header("Content-Type", "application/octet-stream")
-            self.send_header("Content-Disposition", f"attachment; filename=\"{safe_fname}\"")
-            self.end_headers()
-
-            with open(real_path, 'rb') as f:
-                while True:
-                    chunk = f.read(8192)
-                    if not chunk:
-                        break
-                    self.wfile.write(chunk)
+            self._handle_download()
+        # Response endpoint
+        elif self.path.startswith("/response"):
+            self._handle_response()
         else:
-            self._send_error("Invalid endpoint. Use /auth, /download/<file>, or /share")
+            self._send_error("Invalid endpoint. Use /auth, /download/<file>, /response, or /share")
+
+    def _handle_download(self):
+        """Handle download requests for generated documents."""
+        from urllib.parse import unquote
+        import os.path
+        import re
+
+        # Get the filename from the path and sanitize it
+        fname = unquote(self.path[len("/download/") :])
+
+        # Prevent path traversal by removing directory components and only allowing specific characters
+        safe_fname = re.sub(r"[^a-zA-Z0-9._-]", "", os.path.basename(fname))
+
+        if not safe_fname:
+            self.send_response(400)
+            self.end_headers()
+            return
+
+        temp_dir = CONFIG.get("TEMP_DIR")
+        file_path = os.path.join(temp_dir, safe_fname)
+
+        # Verify the file exists and is within the temp directory
+        real_path = os.path.realpath(file_path)
+        if not real_path.startswith(
+            os.path.realpath(temp_dir)
+        ) or not os.path.isfile(real_path):
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header(
+            "Content-Disposition", f'attachment; filename="{safe_fname}"'
+        )
+        self.end_headers()
+
+        with open(real_path, "rb") as f:
+            while True:
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+
+    def _handle_response(self):
+        """Handle requests for /response endpoint."""
+        query = urlparse(self.path).query
+        params = parse_qs(query)
+        response_id = params.get("response_id", [None])[0]
+        if (
+            not response_id
+            or response_id not in cast(ServerType, self.server).responses
+        ):
+            self._send_json({"error": "Invalid response_id"}, status=400)
+            return
+        resp = cast(ServerType, self.server).responses[response_id]
+        self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
 
     def _send_auth_form(self):
         """Serve the authentication HTML form."""
@@ -138,13 +163,16 @@ class URLHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length)
         from urllib.parse import parse_qs
+
         params = parse_qs(post_data.decode("utf-8"))
         code = params.get("code", [""])[0].strip()
         if not code:
             self.send_response(400)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
-            self.wfile.write(b"<html><body><h1>Error: No code provided.</h1><a href='/auth'>Try again</a></body></html>")
+            self.wfile.write(
+                b"<html><body><h1>Error: No code provided.</h1><a href='/auth'>Try again</a></body></html>"
+            )
             return
 
         rmapi = CONFIG["RMAPI_PATH"]
@@ -153,12 +181,14 @@ class URLHandler(BaseHTTPRequestHandler):
         # First, try to authenticate using the more direct approach with expect script
         try:
             import tempfile
-            import subprocess
 
             # Create a temporary expect script file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.exp', delete=False) as expect_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".exp", delete=False
+            ) as expect_file:
                 expect_path = expect_file.name
-                expect_file.write(f'''#!/usr/bin/expect -f
+                expect_file.write(
+                    f"""#!/usr/bin/expect -f
                 set timeout 30
                 set code "{code}"
 
@@ -178,24 +208,21 @@ class URLHandler(BaseHTTPRequestHandler):
                         exit 2
                     }}
                 }}
-                ''')
+                """
+                )
 
             # Make the script executable
-            import os
             os.chmod(expect_path, 0o755)
 
             # Run the expect script
             process = subprocess.run(
-                [expect_path],
-                capture_output=True,
-                text=True,
-                timeout=45
+                [expect_path], capture_output=True, text=True, timeout=45
             )
 
             # Remove the temporary script
             try:
                 os.unlink(expect_path)
-            except:
+            except Exception:
                 pass
 
             # Check if authentication was successful
@@ -204,11 +231,15 @@ class URLHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                self.wfile.write(b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>")
+                self.wfile.write(
+                    b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>"
+                )
                 return
 
             # If expect script failed, fall back to alternative method
-            logger.warning(f"Expect script failed with code {process.returncode}, output: {process.stdout}")
+            logger.warning(
+                f"Expect script failed with code {process.returncode}, output: {process.stdout}"
+            )
 
         except Exception as e:
             logger.warning(f"Expect script approach failed: {str(e)}")
@@ -217,12 +248,12 @@ class URLHandler(BaseHTTPRequestHandler):
         # Fallback: Try using named pipe approach which is more reliable than PTY
         try:
             import tempfile
-            import os
-            import subprocess
-            import time
+            from time import time as get_time
 
             # Create a named pipe (FIFO)
-            pipe_path = os.path.join(tempfile.gettempdir(), f"rmapi_auth_{int(time.time())}.pipe")
+            pipe_path = os.path.join(
+                tempfile.gettempdir(), f"rmapi_auth_{int(get_time())}.pipe"
+            )
             try:
                 os.mkfifo(pipe_path)
             except Exception as e:
@@ -230,7 +261,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 raise
 
             # Start a process that will write the code to the pipe
-            with open(pipe_path, 'w') as fifo:
+            with open(pipe_path, "w") as fifo:
                 # Write the code with a newline
                 fifo.write(f"{code}\n")
                 fifo.flush()
@@ -238,16 +269,16 @@ class URLHandler(BaseHTTPRequestHandler):
                 # Run rmapi with stdin from the pipe
                 process = subprocess.run(
                     [rmapi, "ls"],
-                    stdin=open(pipe_path, 'r'),
+                    stdin=open(pipe_path, "r"),
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
 
             # Remove the pipe
             try:
                 os.unlink(pipe_path)
-            except:
+            except Exception:
                 pass
 
             # Check the result
@@ -256,7 +287,9 @@ class URLHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                self.wfile.write(b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>")
+                self.wfile.write(
+                    b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>"
+                )
             else:
                 logger.error(f"Authentication failed: {process.stderr}")
                 self.send_response(400)
@@ -806,24 +839,6 @@ class URLHandler(BaseHTTPRequestHandler):
         self.end_headers()
         response = json.dumps({"success": False, "message": message})
         self.wfile.write(response.encode("utf-8"))
-
-    def do_GET(self):
-        """Handle GET requests for /response."""
-
-        if self.path.startswith("/response"):
-            query = urlparse(self.path).query
-            params = parse_qs(query)
-            response_id = params.get("response_id", [None])[0]
-            if (
-                not response_id
-                or response_id not in cast(ServerType, self.server).responses
-            ):
-                self._send_json({"error": "Invalid response_id"}, status=400)
-                return
-            resp = cast(ServerType, self.server).responses[response_id]
-            self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
-        else:
-            self._send_json({"error": "Invalid endpoint"}, status=404)
 
     def _send_json(self, obj, status=200):
         self.send_response(status)
