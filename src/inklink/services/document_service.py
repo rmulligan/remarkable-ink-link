@@ -847,14 +847,20 @@ class DocumentService:
                 logger.info(f"Creating output directory: {output_dir}")
                 os.makedirs(output_dir, exist_ok=True)
 
-<<<<<<< HEAD
+            # Validate drawj2d executable is available and executable
+            if not os.path.isfile(self.drawj2d_path) or not os.access(
+                self.drawj2d_path, os.X_OK
+            ):
+                logger.error(
+                    f"drawj2d executable not found or not executable at: {self.drawj2d_path}"
+                )
+                return None
+
             # Use parameters for raw reMarkable page format
             # -Trm: Target is raw reMarkable page format
             # -rmv6: Use version 6 file format
             # -o: Specify output file
-            # Use drawj2d to generate raw reMarkable page format
             # Explicitly specify frontend as HCL and output type RM
-            # Use parameters for raw reMarkable page format, including version flag
             cmd = [
                 self.drawj2d_path,
                 "-F", "hcl",
@@ -909,65 +915,6 @@ class DocumentService:
                 operation_name="Document conversion",
                 max_retries=2,  # Only retry a couple of times for conversion
             )
-        except Exception as e:
-            logger.error(
-                format_error(
-                    "conversion", "Failed to convert document to Remarkable format", e
-=======
-            # Prepare conversion commands: use rm v6 format by default
-            if not os.path.isfile(self.drawj2d_path) or not os.access(
-                self.drawj2d_path, os.X_OK
-            ):
-                logger.error(
-                    f"drawj2d executable not found or not executable at: {self.drawj2d_path}"
->>>>>>> origin/main
-                )
-                return None
-            # Primary: reMarkable v6 (rm) format; Fallback: standard rm format
-            primary_cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
-            fallback_cmd = [self.drawj2d_path, "-Trm", "-o", rm_path, hcl_path]
-            logger.info(f"Primary conversion command: {' '.join(primary_cmd)}")
-            logger.info(f"Fallback conversion command: {' '.join(fallback_cmd)}")
-
-            # Try primary command
-            try:
-                result = subprocess.run(primary_cmd, capture_output=True, text=True)
-                logger.debug(f"Command stdout: {result.stdout}")
-                logger.debug(f"Command stderr: {result.stderr}")
-                if result.returncode != 0:
-                    logger.warning("rmv6 format failed, trying older format")
-                    result = subprocess.run(
-                        fallback_cmd, capture_output=True, text=True
-                    )
-                    logger.debug(f"Fallback stdout: {result.stdout}")
-                    logger.debug(f"Fallback stderr: {result.stderr}")
-                    if result.returncode != 0:
-                        raise RuntimeError(
-                            f"All conversion attempts failed: {result.stderr}"
-                        )
-            except Exception as conv_error:
-                logger.error(f"Conversion error: {conv_error}")
-                return None
-
-            # Verify output file
-            if not os.path.exists(rm_path):
-                logger.error(f"Output file missing: {rm_path}")
-                return None
-            file_size = os.path.getsize(rm_path)
-            logger.info(f"Output file created: {rm_path} ({file_size} bytes)")
-            if file_size < 50:
-                logger.error(f"Output file too small: {file_size} bytes")
-                return None
-
-            # Read and log binary header for debugging
-            try:
-                with open(rm_path, "rb") as rf:
-                    header = rf.read(100)
-                    logger.debug(f"RM file header (hex): {header.hex()}")
-            except Exception as e:
-                logger.warning(f"Could not read RM file header: {e}")
-
-            return rm_path
         except Exception as e:
             logger.error(format_error("conversion", "Failed to convert document", e))
             return None

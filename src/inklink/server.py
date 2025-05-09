@@ -557,17 +557,16 @@ class URLHandler(BaseHTTPRequestHandler):
                 self._send_error("Failed to process PDF")
                 return
 
-<<<<<<< HEAD
-            # Create HCL for the PDF instead of uploading directly
-            # Create HCL for the PDF, passing through any raster images if available
-            hcl_path = self.document_service.create_pdf_hcl(
-                result["pdf_path"], result["title"], qr_path, result.get("images")
-=======
-            # Use new RCU-based conversion method
+            # First try RCU-based conversion method if available
             rm_path = self.document_service.create_pdf_rmdoc(
                 result["pdf_path"], result["title"], qr_path
->>>>>>> origin/main
             )
+
+            # If RCU conversion failed, try HCL-based method with image support
+            if not rm_path:
+                hcl_path = self.document_service.create_pdf_hcl(
+                    result["pdf_path"], result["title"], qr_path, result.get("images")
+                )
 
             # If RCU conversion failed, try legacy conversion
             if not rm_path:
