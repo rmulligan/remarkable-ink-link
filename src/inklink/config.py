@@ -1,16 +1,19 @@
-"""
-Configuration management for InkLink.
-
-This module provides configuration settings from environment variables
-with reasonable defaults.
-"""
-
+from pydantic import BaseModel, Field
 import os
 import logging
 
-# Path configuration
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Load configuration from environment variables with defaults
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+class HCLResourceConfig(BaseModel):
+    resource_type: str = Field(..., description="Type of the HCL resource")
+    resource_name: str = Field(..., description="Name of the HCL resource")
+    attributes: dict = Field(default_factory=dict, description="Resource attributes")
+
+
+# Default configuration dictionary for InkLink
+
+
 CONFIG = {
     # Server settings
     "HOST": os.environ.get("INKLINK_HOST", "0.0.0.0"),
@@ -22,7 +25,11 @@ CONFIG = {
     "RMAPI_PATH": os.environ.get("INKLINK_RMAPI", "/usr/local/bin/rmapi"),
     "DRAWJ2D_PATH": os.environ.get("INKLINK_DRAWJ2D", "/usr/local/bin/drawj2d"),
     # Remarkable settings
-    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "/"),
+    # Default remote folder on reMarkable device
+    "RM_FOLDER": os.environ.get("INKLINK_RM_FOLDER", "InkLink"),
+    # Device model: "pro" for reMarkable Pro, "rm2" for reMarkable 2
+    # Can be overridden via INKLINK_RM_MODEL env var
+    "REMARKABLE_MODEL": os.environ.get("INKLINK_RM_MODEL", "pro").lower(),
     # Remarkable Pro page dimensions (portrait mode)
     "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 1872)),
     "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 2404)),
@@ -42,6 +49,14 @@ CONFIG = {
     # Default PDF page number and scale for outline embedding
     "PDF_PAGE": int(os.environ.get("INKLINK_PDF_PAGE", 1)),
     "PDF_SCALE": float(os.environ.get("INKLINK_PDF_SCALE", 1.0)),
+    # MyScript iink SDK configuration
+    "MYSCRIPT_APP_KEY": os.environ.get("MYSCRIPT_APP_KEY", ""),
+    "MYSCRIPT_HMAC_KEY": os.environ.get("MYSCRIPT_HMAC_KEY", ""),
+    # OpenAI settings
+    "OPENAI_MODEL": os.environ.get("INKLINK_OPENAI_MODEL", "gpt-3.5-turbo"),
+    "OPENAI_SYSTEM_PROMPT": os.environ.get(
+        "INKLINK_OPENAI_SYSTEM_PROMPT", "You are a helpful assistant."
+    ),
 }
 
 # Ensure required directories exist
@@ -53,10 +68,22 @@ try:
     from shutil import which
 except ImportError:
     which = None
-# ddvk rmapi location
-ddvk_rmapi = os.path.expanduser("~/Projects/rmapi/rmapi")
-if os.path.exists(ddvk_rmapi):
-    CONFIG["RMAPI_PATH"] = ddvk_rmapi
+# Auto-detect local ddvk rmapi fork if present
+ddvk_candidate = os.path.expanduser("~/Projects/rmapi/rmapi")
+if os.path.exists(ddvk_candidate) and os.access(ddvk_candidate, os.X_OK):
+    CONFIG["RMAPI_PATH"] = ddvk_candidate
+# Fallback: detect rmapi in PATH if default path not found or not executable
+try:
+    from shutil import which
+
+    if not os.path.exists(CONFIG.get("RMAPI_PATH", "")) or not os.access(
+        CONFIG.get("RMAPI_PATH", ""), os.X_OK
+    ):
+        path_rmapi = which("rmapi")
+        if path_rmapi:
+            CONFIG["RMAPI_PATH"] = path_rmapi
+except ImportError:
+    pass
 # Detect drawj2d in PATH
 if which:
     drawj2d_path = which("drawj2d")

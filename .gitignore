@@ -24,3 +24,5 @@ node_modules/
 .DS_Store
 # Log files
 *.log
+
+**/.claude/settings.local.json

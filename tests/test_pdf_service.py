@@ -64,6 +64,7 @@ def test_process_pdf(monkeypatch, tmp_path, pdf_service):
     except Exception:
         pytest.skip("Default PDF processing not implemented in this environment")
 
+
 def test_process_pdf_raster_mode(monkeypatch, tmp_path, pdf_service):
     """Test raster mode generates PNG images for each PDF page."""
     from inklink.config import CONFIG
@@ -85,6 +86,7 @@ def test_process_pdf_raster_mode(monkeypatch, tmp_path, pdf_service):
     # Mock convert_from_path to return two dummy images
     def fake_convert(path):
         return [Image.new("RGB", (100, 200)), Image.new("RGB", (200, 100))]
+
     monkeypatch.setattr(pdf2image, "convert_from_path", fake_convert)
 
     result = pdf_service.process_pdf("http://example.com/test.pdf", qr_path="")

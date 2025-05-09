@@ -113,3 +113,22 @@ Tests validate initialization, core methods, error paths, and end‑to‑end con
 5. **DocumentService** builds HCL and calls `drawj2d` →  
 6. **RemarkableService** uploads `.rm` via `rmapi` →  
 7. **Server** returns JSON success/failure response.  
+---
+
+## Implementation Status
+
+**Completed Features**
+- Web-to-Ink Sharing: HTTP server endpoint (`/share`) for converting URLs to `.rm`.
+- PDF Processing: HCL generation, drawj2d conversion, and metadata support.
+- QR Code Generation: Automatic QR code creation for source linking.
+- reMarkable Cloud Auth UI: FastAPI-based pairing interface via ddvk `rmapi`.
+- Document Conversion Pipeline: Structured content → HCL → `.rm`.
+- Docker Environment: Containerized setup with Docker Compose.
+
+**In Progress & Future Work**
+- AI Integration: LLM orchestration and ink-based responses.
+- Handwriting Recognition: MyScript iink SDK and local OCR.
+- UI-Based Tag Actions: Tag-triggered AI/workflows (`#summarize`, `#calendar`).
+- Smart Indexing & Knowledge Graph: Entity extraction and note-linking.
+- Two-Way Sync: Push/pull sync of `.rm` files.
+- MCP Integration: Modular AI tool connection via MCP.
