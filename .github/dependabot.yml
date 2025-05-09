@@ -20,7 +20,8 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      # Removed the "ci" label that was causing issues
+      # Keeping ci label, but adding comment about potential issues
+      - "ci"
     
   # JavaScript dependencies (if applicable)
   - package-ecosystem: "npm"
