@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_hcl_from_content(
-    url: str, qr_path: str, content: Dict[str, Any], temp_dir: str
+    url: str, qr_path: str, content: Dict[str, Any], temp_dir: str,
+    config: Optional[Dict[str, Any]] = None
 ) -> Optional[str]:
     """
     Create HCL script from structured content.
@@ -25,11 +26,15 @@ def create_hcl_from_content(
         qr_path: Path to QR code image
         content: Structured content dictionary
         temp_dir: Directory for temporary files
+        config: Optional configuration dictionary
 
     Returns:
         Path to generated HCL file or None if failed
     """
     try:
+        # Use provided config or fall back to global CONFIG
+        config = config or CONFIG
+
         # Ensure we have valid content, even if minimal
         if not content:
             content = {"title": f"Page from {url}", "structured_content": []}
@@ -49,16 +54,16 @@ def create_hcl_from_content(
         hcl_path = os.path.join(temp_dir, hcl_filename)
 
         # Get page dimensions from config
-        page_width = CONFIG.get("PAGE_WIDTH", 2160)
-        page_height = CONFIG.get("PAGE_HEIGHT", 1620)
-        margin = CONFIG.get("PAGE_MARGIN", 120)
+        page_width = config.get("PAGE_WIDTH", 2160)
+        page_height = config.get("PAGE_HEIGHT", 1620)
+        margin = config.get("PAGE_MARGIN", 120)
         # line_height = 40  # Needed for future implementations
 
         # Get fonts from config
-        heading_font = CONFIG.get("HEADING_FONT", "Liberation Sans")
+        heading_font = config.get("HEADING_FONT", "Liberation Sans")
         # body_font and code_font saved for future use in template rendering
-        # body_font = CONFIG.get("BODY_FONT", "Liberation Sans")
-        # code_font = CONFIG.get("CODE_FONT", "DejaVu Sans Mono")
+        # body_font = config.get("BODY_FONT", "Liberation Sans")
+        # code_font = config.get("CODE_FONT", "DejaVu Sans Mono")
 
         # This is a simplified stub of the original implementation
         # In a real implementation, this would contain the full HCL generation code

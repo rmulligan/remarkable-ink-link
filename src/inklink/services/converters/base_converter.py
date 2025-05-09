@@ -8,7 +8,7 @@ import os
 import time
 import logging
 from abc import ABC
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from inklink.services.interfaces import IContentConverter
 from inklink.config import CONFIG
@@ -19,30 +19,32 @@ logger = logging.getLogger(__name__)
 class BaseConverter(IContentConverter, ABC):
     """Base implementation for content converters."""
 
-    def __init__(self, temp_dir: str):
+    def __init__(self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
         """
-        Initialize with temporary directory.
+        Initialize with temporary directory and configuration.
 
         Args:
             temp_dir: Directory for temporary files
+            config: Optional configuration dictionary
         """
-        self.temp_dir = temp_dir
-        os.makedirs(temp_dir, exist_ok=True)
+        self.config = config or CONFIG
+        self.temp_dir = temp_dir or self.config.get("TEMP_DIR", "/tmp/inklink")
+        os.makedirs(self.temp_dir, exist_ok=True)
 
         # Determine Remarkable model ("pro" or "rm2")
-        rm_model = CONFIG.get("REMARKABLE_MODEL", "pro").lower()
+        rm_model = self.config.get("REMARKABLE_MODEL", "pro").lower()
         self.is_remarkable_pro = rm_model == "pro"
 
         # Page dimensions (pixels) and layout defaults
-        self.page_width = CONFIG.get("PAGE_WIDTH", 2160)
-        self.page_height = CONFIG.get("PAGE_HEIGHT", 1620)
-        self.margin = CONFIG.get("PAGE_MARGIN", 120)
+        self.page_width = self.config.get("PAGE_WIDTH", 2160)
+        self.page_height = self.config.get("PAGE_HEIGHT", 1620)
+        self.margin = self.config.get("PAGE_MARGIN", 120)
         self.line_height = 40
 
-        # Set font settings from CONFIG
-        self.heading_font = CONFIG.get("HEADING_FONT", "Liberation Sans")
-        self.body_font = CONFIG.get("BODY_FONT", "Liberation Sans")
-        self.code_font = CONFIG.get("CODE_FONT", "DejaVu Sans Mono")
+        # Set font settings from configuration
+        self.heading_font = self.config.get("HEADING_FONT", "Liberation Sans")
+        self.body_font = self.config.get("BODY_FONT", "Liberation Sans")
+        self.code_font = self.config.get("CODE_FONT", "DejaVu Sans Mono")
 
     def _get_timestamp(self) -> str:
         """Return formatted timestamp."""

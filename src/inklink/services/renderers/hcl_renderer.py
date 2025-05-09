@@ -20,16 +20,23 @@ logger = logging.getLogger(__name__)
 class HCLRenderer(IDocumentRenderer):
     """Creates reMarkable documents from HCL scripts using drawj2d."""
 
-    def __init__(self, temp_dir: str, drawj2d_path: Optional[str] = None):
+    def __init__(
+        self,
+        temp_dir: str,
+        drawj2d_path: Optional[str] = None,
+        config: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize with temporary directory and drawj2d path.
 
         Args:
             temp_dir: Directory for temporary files
             drawj2d_path: Path to drawj2d executable
+            config: Configuration dictionary
         """
         self.temp_dir = temp_dir
-        self.drawj2d_path = drawj2d_path or CONFIG.get("DRAWJ2D_PATH")
+        self.config = config or CONFIG
+        self.drawj2d_path = drawj2d_path or self.config.get("DRAWJ2D_PATH")
 
         # Validate drawj2d executable
         if not self.drawj2d_path or not os.path.exists(self.drawj2d_path):

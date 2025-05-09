@@ -110,6 +110,7 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
         "document_service": provider.resolve(IDocumentService),
         "remarkable_service": provider.resolve(IRemarkableService),
         "ai_service": provider.resolve(AIService),
+        "rmapi_path": CONFIG.get("RMAPI_PATH"),
     }
 
     # Create router

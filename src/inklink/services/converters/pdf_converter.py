@@ -7,7 +7,7 @@ into reMarkable-compatible formats.
 import os
 import subprocess
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 
 from inklink.services.converters.base_converter import BaseConverter
 from inklink.config import CONFIG
@@ -17,6 +17,16 @@ logger = logging.getLogger(__name__)
 
 class PDFConverter(BaseConverter):
     """Converts PDF files to reMarkable format."""
+
+    def __init__(self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize the PDF converter.
+
+        Args:
+            temp_dir: Directory for temporary files
+            config: Optional configuration dictionary
+        """
+        super().__init__(temp_dir, config)
 
     def can_convert(self, content_type: str) -> bool:
         """Check if this converter can handle the given content type."""
@@ -117,7 +127,7 @@ class PDFConverter(BaseConverter):
             rm_path = self._generate_temp_path("rm", pdf_path, "rm")
 
             # Check if drawj2d_path is available
-            drawj2d_path = CONFIG.get("DRAWJ2D_PATH")
+            drawj2d_path = self.config.get("DRAWJ2D_PATH")
             if not drawj2d_path or not os.path.exists(drawj2d_path):
                 logger.error("drawj2d path not available for legacy conversion")
                 return None
@@ -206,11 +216,11 @@ class PDFConverter(BaseConverter):
 
                 # Embed PDF vector outlines if in outline mode and no raster images
                 # drawj2d will interpret PDF and redraw vector data as editable strokes
-                mode = CONFIG.get("PDF_RENDER_MODE", "outline")
+                mode = self.config.get("PDF_RENDER_MODE", "outline")
                 if not images and mode == "outline":
                     # Use configured page and scale
-                    page = CONFIG.get("PDF_PAGE", 1)
-                    scale = CONFIG.get("PDF_SCALE", 1.0)
+                    page = self.config.get("PDF_PAGE", 1)
+                    scale = self.config.get("PDF_SCALE", 1.0)
                     # Position at left margin
                     f.write(f'puts "moveto {self.margin} 0"\n')
                     # Embed specified PDF page at given scale

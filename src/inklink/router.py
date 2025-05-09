@@ -62,11 +62,11 @@ class Router:
         # Route POST requests
         elif method == "POST":
             if route == "/auth":
-                return AuthController(handler)
+                return AuthController(handler, self.services.get("rmapi_path"))
             elif route == "/auth/remarkable":
-                return AuthController(handler)
+                return AuthController(handler, self.services.get("rmapi_path"))
             elif route == "/auth/myscript":
-                return AuthController(handler)
+                return AuthController(handler, self.services.get("rmapi_path"))
             elif route == "/ingest":
                 return IngestController(handler, self.services)
             elif route == "/upload":
