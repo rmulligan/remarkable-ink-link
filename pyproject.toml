@@ -36,7 +36,7 @@ openai = "^0.27.8"
 pytest = "^8.3"
 black = "^25.1.0"
 flake8 = "^7.2"
-pre-commit = "^3.4.0"
+pre-commit = "^4.2.0"
 
 [tool.poetry.scripts]
 inklink = "inklink.main:main"
