@@ -1,5 +1,6 @@
 """AI Service for interacting with OpenAI models."""
 
+import logging
 import os
 import requests
 from typing import Optional, Dict, Any, List, Union
@@ -8,7 +9,6 @@ from inklink.utils import retry_operation, format_error
 from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
-
 
 
 class AIService:
@@ -73,6 +73,7 @@ class AIService:
         Returns:
             str: AI-generated response.
         """
+
         def call_api():
             url = f"{self.api_base}/chat/completions"
             headers = {
@@ -117,8 +118,8 @@ class AIService:
                     if links:
                         link_str = "Links: " + ", ".join(
                             [
-                                f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
-                                for l in links
+                                f"{link.get('label', link.get('target', ''))} (to page {link.get('target', '')})"
+                                for link in links
                             ]
                         )
                     context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())

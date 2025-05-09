@@ -4,30 +4,30 @@ InkLink Server
 
 Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
-import logging
-
-def setup_logging():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    return logging.getLogger("inklink.server")
-
 import json
+import logging
+import os
+import time
 import traceback
 import uuid
-import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Dict, Optional, Tuple
-import time
 
-# Import configuration module
 from inklink.config import CONFIG
+from inklink.services.document_service import DocumentService
+from inklink.services.pdf_service import PDFService
+from inklink.services.qr_service import QRCodeService
+from inklink.services.remarkable_service import RemarkableService
+from inklink.services.web_scraper_service import WebScraperService
 from inklink.utils import is_safe_url
 
-# Import service implementations
-from inklink.services.qr_service import QRCodeService
-from inklink.services.pdf_service import PDFService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.remarkable_service import RemarkableService
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
+    return logging.getLogger("inklink.server")
+
 
 # Set up logging
 logger = setup_logging()
@@ -45,11 +45,14 @@ class URLHandler(BaseHTTPRequestHandler):
         document_service=None,
         remarkable_service=None,
         ai_service=None,
-        **kwargs
+        **kwargs,
     ):
         from src.inklink.services.ai_service import AIService
+
         self.qr_service = qr_service or QRCodeService(CONFIG["TEMP_DIR"])
-        self.pdf_service = pdf_service or PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
+        self.pdf_service = pdf_service or PDFService(
+            CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"]
+        )
         self.web_scraper = web_scraper or WebScraperService()
         self.document_service = document_service or DocumentService(
             CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"]
@@ -89,7 +92,10 @@ class URLHandler(BaseHTTPRequestHandler):
                 if not app_key or not hmac_key:
                     self._send_json({"error": "Missing keys"}, status=400)
                     return
-                self.server.tokens["myscript"] = {"app_key": app_key, "hmac_key": hmac_key}
+                self.server.tokens["myscript"] = {
+                    "app_key": app_key,
+                    "hmac_key": hmac_key,
+                }
                 self._send_json({"status": "ok"})
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
@@ -109,7 +115,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 content_type = data.get("type")
                 title = data.get("title")
                 content = data.get("content")
-                metadata = data.get("metadata", {})
+                # metadata not used yet, but will be in future implementation
+                # metadata = data.get("metadata", {})
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return
@@ -122,16 +129,15 @@ class URLHandler(BaseHTTPRequestHandler):
 
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
-            import cgi, uuid, os
-            env = {'REQUEST_METHOD': 'POST'}
-            headers = {k: v for k, v in self.headers.items()}
+            import cgi
+
+            env = {"REQUEST_METHOD": "POST"}
+            # Headers dictionary for potential future use
+            # headers = {k: v for k, v in self.headers.items()}
             fs = cgi.FieldStorage(
-                fp=self.rfile,
-                headers=self.headers,
-                environ=env,
-                keep_blank_values=True
+                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
             )
-            fileitem = fs['file'] if 'file' in fs else None
+            fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:
                 self._send_json({"error": "No file uploaded"}, status=400)
                 return
@@ -281,14 +287,12 @@ class URLHandler(BaseHTTPRequestHandler):
             rm_path = self.document_service.create_pdf_rmdoc(
                 result["pdf_path"], result["title"], qr_path
             )
-            
+
             # If RCU conversion failed, try legacy conversion
             if not rm_path:
-                # Create HCL for the PDF 
+                # Create HCL for the PDF
                 hcl_path = self.document_service.create_hcl(
-                    url,
-                    qr_path,
-                    {"title": result["title"], "structured_content": []}
+                    url, qr_path, {"title": result["title"], "structured_content": []}
                 )
 
                 if not hcl_path:
@@ -299,7 +303,7 @@ class URLHandler(BaseHTTPRequestHandler):
                 rm_path = self.document_service.create_rmdoc_legacy(
                     url, qr_path, {"title": result["title"]}
                 )
-                
+
                 if not rm_path:
                     self._send_error("Failed to convert PDF to Remarkable format")
                     return
@@ -322,9 +326,12 @@ class URLHandler(BaseHTTPRequestHandler):
     def _handle_webpage_url(self, url, qr_path):
         """Handle webpage URL processing."""
         import logging
+
         logger = logging.getLogger("inklink.server")
         try:
-            logger.debug(f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}")
+            logger.debug(
+                f"Starting _handle_webpage_url for url={url}, qr_path={qr_path}"
+            )
 
             # Scrape content
             logger.debug("Calling web_scraper.scrape")
@@ -356,9 +363,13 @@ class URLHandler(BaseHTTPRequestHandler):
 
             # Use new RCU-based direct conversion
             logger.debug("Calling document_service.create_rmdoc_from_content")
-            rm_path = self.document_service.create_rmdoc_from_content(url, qr_path, content)
-            logger.debug(f"document_service.create_rmdoc_from_content returned: {rm_path}")
-            
+            rm_path = self.document_service.create_rmdoc_from_content(
+                url, qr_path, content
+            )
+            logger.debug(
+                f"document_service.create_rmdoc_from_content returned: {rm_path}"
+            )
+
             if not rm_path:
                 logger.error("Failed to convert to Remarkable format")
                 self._send_error("Failed to convert to Remarkable format")
@@ -367,12 +378,12 @@ class URLHandler(BaseHTTPRequestHandler):
             # Upload to Remarkable
             logger.debug("Calling remarkable_service.upload")
             success, message = self.remarkable_service.upload(rm_path, content["title"])
-            logger.debug(f"remarkable_service.upload returned: success={success}, message={message}")
+            logger.debug(
+                f"remarkable_service.upload returned: success={success}, message={message}"
+            )
 
             if success:
-                logger.info(
-                    f"Webpage uploaded to Remarkable: {content['title']}"
-                )
+                logger.info(f"Webpage uploaded to Remarkable: {content['title']}")
                 self._send_success(
                     f"Webpage uploaded to Remarkable: {content['title']}"
                 )
@@ -403,10 +414,10 @@ class URLHandler(BaseHTTPRequestHandler):
         response = json.dumps({"success": False, "message": message})
         self.wfile.write(response.encode("utf-8"))
 
-
     def do_GET(self):
         """Handle GET requests for /response."""
         from urllib.parse import urlparse, parse_qs
+
         if self.path.startswith("/response"):
             query = urlparse(self.path).query
             params = parse_qs(query)
@@ -424,6 +435,7 @@ class URLHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(obj).encode("utf-8"))
+
 
 def run_server(host: str = None, port: int = None):
     """Start the HTTP server with dependency injection support."""
@@ -446,7 +458,7 @@ def run_server(host: str = None, port: int = None):
             web_scraper=web_scraper,
             document_service=document_service,
             remarkable_service=remarkable_service,
-            **kwargs
+            **kwargs,
         )
 
     httpd = HTTPServer(server_address, handler_factory)

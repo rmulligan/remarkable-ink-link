@@ -3,6 +3,7 @@ import subprocess
 import logging
 import uuid
 import tempfile
+import shutil
 from typing import Optional, Tuple, Any
 from .interfaces import IRemarkableService
 
@@ -17,7 +18,7 @@ class RemarkableService(IRemarkableService):
     def __init__(self, rmapi_path: str, upload_folder: str = "/"):
         self.rmapi_path = rmapi_path
         self.upload_folder = upload_folder
-        
+
     def test_connection(self) -> Tuple[bool, str]:  # noqa: D102
         """
         Test connectivity and authentication to reMarkable cloud via rmapi.
@@ -29,7 +30,9 @@ class RemarkableService(IRemarkableService):
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 # Authentication or connectivity failed
-                err = (result.stderr or result.stdout or f"Exit code {result.returncode}").strip()
+                err = (
+                    result.stderr or result.stdout or f"Exit code {result.returncode}"
+                ).strip()
                 return False, err
             return True, "OK"
         except Exception as e:
@@ -292,6 +295,7 @@ class RemarkableService(IRemarkableService):
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
             filename = filename.replace(char, "_")
+        return filename
 
 
 def get_notebook(self, notebook_id: str, export_format: str = "pdf") -> Optional[bytes]:

@@ -52,8 +52,14 @@ def test_webpage_ai_summary_integration(tmp_path):
             self.last_query_text = None
             self.last_context = None  # Explicitly declare this attribute
 
-        def process_query(self, query_text, context=None, structured_content=None,
-                          context_window=None, selected_pages=None):
+        def process_query(
+            self,
+            query_text,
+            context=None,
+            structured_content=None,
+            context_window=None,
+            selected_pages=None,
+        ):
             """Process query with the same signature as AIService."""
             self.last_query_text = query_text
             self.last_context = context
