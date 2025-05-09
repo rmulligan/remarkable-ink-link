@@ -122,8 +122,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 content_type = data.get("type")
                 title = data.get("title")
                 content = data.get("content")
-                # metadata not used yet, but will be in future implementation
-                # metadata = data.get("metadata", {})
+                # Get metadata
+                metadata = data.get("metadata", {})
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return

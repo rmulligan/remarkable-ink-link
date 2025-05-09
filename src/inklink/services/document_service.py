@@ -535,13 +535,13 @@ class DocumentService:
                         f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
                     )
                     f.write(
-                        f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
+                        f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \"{qr_path}\""\n'
                     )
                     # Move y_pos past the QR code
                     y_pos += qr_size + self.line_height
 
                 # Process structured content
-                y_pos += qr_size + self.line_height
+                y_pos += qr_size + line_height
 
                 structured_content = content.get("structured_content", [])
 
@@ -611,7 +611,7 @@ class DocumentService:
                         for i, line in enumerate(code_lines):
                             line_y = code_y + (i * line_height)
                             f.write(
-                                f'puts "text {code_x} {line_y} \\"{self._escape_hcl(line)}\\""\n'
+                                f'puts "text {code_x} {line_y} \"{self._escape_hcl(line)}\""\n'
                             )
 
                         f.write(f'puts "set_font {body_font} 20"\n')
