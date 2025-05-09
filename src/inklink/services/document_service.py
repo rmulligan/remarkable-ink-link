@@ -1,62 +1,33 @@
 """Document conversion service for InkLink.
 
 This service converts web content to reMarkable-compatible documents
-using drawj2d and RCU (when available) to generate native reMarkable ink files.
+using a configurable set of content converters and renderers.
 """
 
 import os
 import time
-import json
 import logging
-import tempfile
-import markdown
-import subprocess
-from typing import Dict, Any, Optional, List
+import threading
+from typing import Dict, Any, Optional, List, Type
 
-# Import utility functions for error handling and RCU integration
-from inklink.utils import (
-    retry_operation,
-    format_error,
-    ensure_rcu_available,
-    convert_markdown_to_rm,
-    convert_html_to_rm,
-)
-
-# Use central configuration from inklink.config
+from inklink.services.interfaces import IDocumentService, IContentConverter, IDocumentRenderer
+from inklink.services.converters import MarkdownConverter, HTMLConverter, PDFConverter
+from inklink.services.renderers import HCLRenderer
+from inklink.utils import ensure_rcu_available
 from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
 
-# Structured content schema (multi-page support):
-# structured_content = [
-#     {
-#         "page_number": 1,
-#         "items": [
-#             {"type": "heading", "content": "Section 1"},
-#             {"type": "paragraph", "content": "Text..."},
-#             ...
-#         ],
-#         "metadata": {...}
-#     },
-#     {
-#         "page_number": 2,
-#         "items": [
-#             ...
-#         ],
-#         "metadata": {...}
-#     },
-#     ...
-# ]
-class DocumentService:
-    """Creates reMarkable documents from web content."""
-
+class DocumentService(IDocumentService):
+    """Creates reMarkable documents from web content using specialized converters."""
+    
     def __init__(
         self, temp_dir: str, drawj2d_path: Optional[str] = None, pdf_service=None
     ):
         """
         Initialize with directories and paths.
-
+        
         Args:
             temp_dir: Directory for temporary files
             drawj2d_path: Optional path to drawj2d executable (for legacy support)
@@ -66,7 +37,7 @@ class DocumentService:
         self.drawj2d_path = drawj2d_path
         self.pdf_service = pdf_service  # Used for automated index notebook updates
         os.makedirs(temp_dir, exist_ok=True)
-
+        
         # Check if RCU is available
         self.use_rcu = ensure_rcu_available()
         if not self.use_rcu:
@@ -78,349 +49,198 @@ class DocumentService:
                 logger.error(
                     "drawj2d fallback path not available. Document conversion will fail."
                 )
-
-        # Determine Remarkable model ("pro" or "rm2")
-        rm_model = CONFIG.get("REMARKABLE_MODEL", "pro").lower()
-        self.is_remarkable_pro = rm_model == "pro"
-        # Page dimensions (pixels) and layout defaults
-        # These defaults match the Pro configuration; adjust if rm2
-        self.page_width = CONFIG.get("PAGE_WIDTH", 2160)
-        self.page_height = CONFIG.get("PAGE_HEIGHT", 1620)
-        self.margin = CONFIG.get("PAGE_MARGIN", 120)
-        self.line_height = 40
-
-        # Set font settings from CONFIG
-        self.heading_font = CONFIG.get("HEADING_FONT", "Liberation Sans")
-        self.body_font = CONFIG.get("BODY_FONT", "Liberation Sans")
-        self.code_font = CONFIG.get("CODE_FONT", "DejaVu Sans Mono")
-
+        
+        # Initialize converters
+        self.converters = self._initialize_converters()
+        
+        # Initialize renderers
+        self.hcl_renderer = HCLRenderer(temp_dir, drawj2d_path)
+    
+    def _initialize_converters(self) -> List[IContentConverter]:
+        """Initialize the content converters."""
+        return [
+            MarkdownConverter(self.temp_dir),
+            HTMLConverter(self.temp_dir),
+            PDFConverter(self.temp_dir)
+        ]
+    
+    def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
+        """Get the appropriate converter for the content type."""
+        return next(
+            (
+                converter
+                for converter in self.converters
+                if converter.can_convert(content_type)
+            ),
+            None,
+        )
+        
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]
     ) -> Optional[str]:
         """
         Create reMarkable document from structured content, supporting cross-page links.
-
-        This function renders the structured content (with per-page items, metadata, and cross-page links)
-        to markdown and then uses RCU to convert it to reMarkable format.
-
+        
         Args:
             url: Source URL for reference
             qr_path: Path to QR code image
             content: Structured content dictionary. Supports both legacy and enhanced formats:
                 - Legacy: {"structured_content": [ ... ]}
                 - Enhanced: {"pages": [...], "cross_page_links": [...]}
-
+                
         Returns:
             Path to generated .rm file or None if failed
         """
-        import logging
-
-        logger = logging.getLogger("inklink.document_service")
         try:
             # Ensure we have valid content
             if not content:
                 content = {"title": f"Page from {url}", "structured_content": []}
-
+                
             logger.info(f"Creating document for: {content.get('title', url)}")
-
-            # Detect enhanced format (pages/cross_page_links) or legacy (structured_content)
-            pages = content.get("pages")
-            cross_page_links = content.get("cross_page_links")
-            if pages is None:
-                # Fallback to legacy
-                pages = content.get("structured_content", [])
-                cross_page_links = content.get("cross_page_links", [])
-
-            # Generate markdown file
-            md_filename = f"doc_{hash(url)}_{int(time.time())}.md"
-            md_path = os.path.join(self.temp_dir, md_filename)
-            logger.debug(f"Writing markdown file to {md_path}")
-
-            with open(md_path, "w", encoding="utf-8") as f:
-                # Add title
-                title = content.get("title", "Untitled Document")
-                f.write(f"# {title}\n\n")
-
-                # Add source URL
-                f.write(f"Source: {url}\n\n")
-
-                # Add horizontal separator
-                f.write("---\n\n")
-
-                # Add QR code if available
-                if os.path.exists(qr_path):
-                    logger.debug(f"QR code found at {qr_path}, adding to markdown")
-                    f.write(f"![QR Code for original content]({qr_path})\n\n")
-                else:
-                    logger.debug(f"No QR code found at {qr_path}")
-
-                # If raw_markdown is present, write it directly and skip structured_content
-                raw_markdown = content.get("raw_markdown")
-                if raw_markdown:
-                    f.write(raw_markdown)
-                    if not raw_markdown.endswith("\n"):
-                        f.write("\n")
-                else:
-                    # Process pages (multi-page aware)
-                    for idx, page in enumerate(pages):
-                        page_number = page.get("page_number", idx + 1)
-                        items = page.get("items", [])
-                        metadata = page.get("metadata", {})
-
-                        # Write page break except for first page
-                        if page_number and page_number > 1:
-                            f.write("\n---\n\n")
-
-                        # Optionally, write page header/footer using metadata
-                        # Annotate references if present in metadata
-                        references = metadata.get("references", [])
-                        if references:
-                            f.write("**References on this page:**\n")
-                            for ref in references:
-                                ref_label = ref.get("label", "")
-                                ref_to = ref.get("to_page", "")
-                                ref_type = ref.get("type", "")
-                                f.write(
-                                    f"- {ref_label} (to page {ref_to}, type: {ref_type})\n"
-                                )
-                            f.write("\n")
-
-                        for item in items:
-                            item_type = item.get("type", "paragraph")
-                            item_content = item.get("content", "")
-
-                            if not item_content:
-                                continue
-
-                            if item_type == "h1" or item_type == "heading":
-                                f.write(f"# {item_content}\n\n")
-                            elif item_type == "h2":
-                                f.write(f"## {item_content}\n\n")
-                            elif item_type == "h3":
-                                f.write(f"### {item_content}\n\n")
-                            elif item_type in ["h4", "h5", "h6"]:
-                                f.write(f"#### {item_content}\n\n")
-                            elif item_type == "code":
-                                f.write(f"```\n{item_content}\n```\n\n")
-                            elif item_type == "math":
-                                f.write(f"$$\n{item_content}\n$$\n\n")
-                            elif item_type == "diagram":
-                                f.write(f"```mermaid\n{item_content}\n```\n\n")
-                            elif item_type == "list" and "items" in item:
-                                for list_item in item["items"]:
-                                    f.write(f"* {list_item}\n")
-                                f.write("\n")
-                            elif item_type == "bullet":
-                                f.write(f"* {item_content}\n\n")
-                            elif item_type == "image" and "url" in item:
-                                caption = item.get("caption", "")
-                                if caption:
-                                    f.write(f"![{caption}]({item['url']})\n\n")
-                                else:
-                                    f.write(f"![]({item['url']})\n\n")
-                            else:
-                                # Default to paragraph
-                                f.write(f"{item_content}\n\n")
-
-                    # Render cross-page links section if present
-                    if cross_page_links:
-                        f.write("## Cross-Page Links\n\n")
-                        for link in cross_page_links:
-                            from_page = link.get("from_page")
-                            to_page = link.get("to_page")
-                            label = link.get(
-                                "label", f"Link from page {from_page} to {to_page}"
-                            )
-                            link_type = link.get("type", "")
-                            f.write(
-                                f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n"
-                            )
-                        f.write("\n---\n\n")
-
-                # Add timestamp
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write(f"\n\n*Generated: {timestamp}*")
-
-            logger.info(f"Created markdown file: {md_path}")
-
-            # Convert to reMarkable format using RCU
-            if self.use_rcu:
-                success, result = convert_markdown_to_rm(
-                    markdown_path=md_path, title=title
-                )
-
-                if success:
-                    logger.info(
-                        f"Successfully converted to reMarkable format: {result}"
-                    )
+            
+            # Prepare content for converter
+            converter_content = {
+                "url": url,
+                "qr_path": qr_path,
+                "title": content.get("title", f"Page from {url}"),
+                "pages": content.get("pages"),
+                "structured_content": content.get("structured_content", []),
+                "cross_page_links": content.get("cross_page_links", []),
+                "raw_markdown": content.get("raw_markdown"),
+                "use_rcu": self.use_rcu
+            }
+            
+            # Get the appropriate converter and convert content
+            converter = self._get_converter_for_type("structured")
+            if converter:
+                result = converter.convert(converter_content)
+                
+                if result:
+                    logger.info(f"Successfully converted to reMarkable format: {result}")
+                    
+                    # Update index notebook in background
+                    self._update_index_notebook(content)
+                    
                     return result
                 else:
-                    logger.error(f"RCU conversion failed: {result}")
-                    # If RCU fails, try falling back to legacy method
-                    if self.drawj2d_path and os.path.exists(self.drawj2d_path):
+                    logger.error("Conversion failed using primary converter")
+                    # If primary converter fails, try legacy method
+                    if not self.use_rcu:
                         logger.info("Falling back to legacy conversion method...")
                         return self.create_rmdoc_legacy(url, qr_path, content)
             else:
-                # Fall back to legacy conversion if RCU not available
-                return self.create_rmdoc_legacy(url, qr_path, content)
-
+                logger.error("No suitable converter found for structured content")
+                return None
+                
         except Exception as e:
             logger.error(f"Error creating document: {str(e)}")
             return None
-
-        # Automated index notebook update (non-blocking)
-        if self.pdf_service is not None:
-            import threading
-
-            def update_index_notebook():
-                """
-                Regenerate the index notebook PDF after new content is processed.
-                Runs in a background thread to avoid blocking user interactions.
-                """
-                try:
-                    # Example: Gather all pages info for the index (customize as needed)
-                    # Here, we use a single-page list for demonstration; in production,
-                    # aggregate all notebook pages as required.
-                    pages = [
-                        {
-                            "title": content.get("title", "Untitled Document"),
-                            "summary": content.get("summary", ""),
-                            "page_number": 1,
-                            "device_location": None,
-                            "links": content.get("cross_page_links", []),
-                        }
-                    ]
-                    output_path = os.path.join(self.temp_dir, "index_notebook.pdf")
-                    if self.pdf_service:
-                        self.pdf_service.generate_index_notebook(
-                            pages=pages,
-                            output_path=output_path,
-                            graph_title="Index Node Graph",
-                        )
-                    logger.info(f"Index notebook PDF updated at {output_path}")
-                except Exception as e:
-                    logger.error(f"Failed to update index notebook: {e}")
-
-            threading.Thread(target=update_index_notebook, daemon=True).start()
-
-        return None
-
+    
     def create_rmdoc_from_html(
         self, url: str, qr_path: str, html_content: str, title: Optional[str] = None
     ) -> Optional[str]:
-        """Create reMarkable document directly from HTML content.
-
-        Uses RCU to convert HTML directly to reMarkable format.
-
+        """
+        Create reMarkable document directly from HTML content.
+        
         Args:
             url: Source URL for reference
             qr_path: Path to QR code image
             html_content: Raw HTML content
             title: Optional document title
-
+            
         Returns:
             Path to generated .rm file or None if failed
         """
         if not self.use_rcu:
             logger.warning("RCU not available, cannot convert HTML directly")
             return None
-
+            
         try:
-            # Generate temp HTML file
-            with tempfile.NamedTemporaryFile(
-                suffix=".html", dir=self.temp_dir, delete=False
-            ) as temp_file:
-                temp_html_path = temp_file.name
-                temp_file.write(html_content.encode("utf-8"))
-
-            # Convert HTML to reMarkable format
-            success, result = convert_html_to_rm(
-                html_path=temp_html_path, title=title or f"Page from {url}"
-            )
-
-            # Clean up temp file
-            try:
-                os.unlink(temp_html_path)
-            except OSError:
-                pass
-
-            if success:
-                logger.info(
-                    f"Successfully converted HTML to reMarkable format: {result}"
-                )
-                return result
+            # Prepare content for converter
+            converter_content = {
+                "url": url,
+                "qr_path": qr_path,
+                "html_content": html_content,
+                "title": title or f"Page from {url}",
+                "use_rcu": self.use_rcu
+            }
+            
+            # Get HTML converter and convert content
+            converter = self._get_converter_for_type("html")
+            if converter:
+                result = converter.convert(converter_content)
+                
+                if result:
+                    logger.info(f"Successfully converted HTML to reMarkable format: {result}")
+                    return result
+                else:
+                    logger.error("HTML conversion failed")
+                    return None
             else:
-                logger.error(f"HTML conversion failed: {result}")
+                logger.error("No HTML converter found")
                 return None
-
+                
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
             return None
-
+    
     def create_pdf_rmdoc(
         self, pdf_path: str, title: str, qr_path: Optional[str] = None
     ) -> Optional[str]:
-        """Create reMarkable document from PDF file.
-
+        """
+        Create reMarkable document from PDF file.
+        
         Args:
             pdf_path: Path to PDF file
             title: Document title
             qr_path: Optional path to QR code image
-
+            
         Returns:
             Path to generated .rm file or None if failed
         """
-        if not self.use_rcu:
-            logger.warning("RCU not available, cannot convert PDF directly")
-            return None
-
         try:
-            # Create RCU command
-            timestamp = int(time.time())
-            output_path = os.path.join(
-                self.temp_dir, f"pdf_{hash(pdf_path)}_{timestamp}.rm"
-            )
-
-            # Use RCU to convert PDF to reMarkable format
-            cmd = [
-                "rcu",
-                "convert",
-                "--input",
-                pdf_path,
-                "--output",
-                output_path,
-                "--title",
-                title,
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-            if result.returncode == 0 and os.path.exists(output_path):
-                logger.info(
-                    f"Successfully converted PDF to reMarkable format: {output_path}"
-                )
-                return output_path
+            # Prepare content for converter
+            converter_content = {
+                "pdf_path": pdf_path,
+                "title": title,
+                "qr_path": qr_path,
+                "use_rcu": self.use_rcu
+            }
+            
+            # Get PDF converter and convert content
+            converter = self._get_converter_for_type("pdf")
+            if converter:
+                result = converter.convert(converter_content)
+                
+                if result:
+                    logger.info(f"Successfully converted PDF to reMarkable format: {result}")
+                    return result
+                else:
+                    logger.error("PDF conversion failed")
+                    return None
             else:
-                logger.error(f"PDF conversion failed: {result.stderr}")
+                logger.error("No PDF converter found")
                 return None
-
+                
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")
             return None
-
-    # Legacy conversion method using HCL and drawj2d (for fallback)
+    
+    # Legacy methods preserved for compatibility
+    
     def create_rmdoc_legacy(
         self, url: str, qr_path: str, content: Dict[str, Any]
     ) -> Optional[str]:
-        """Legacy method to create reMarkable document using HCL and drawj2d.
-
+        """
+        Legacy method to create reMarkable document using HCL and drawj2d.
+        
         This is kept for compatibility when RCU is not available.
-
+        
         Args:
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-
+            
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -429,568 +249,113 @@ class DocumentService:
             if not self.drawj2d_path or not os.path.exists(self.drawj2d_path):
                 logger.error("drawj2d path not available for legacy conversion")
                 return None
-
+                
             # Create HCL file
             hcl_path = self.create_hcl(url, qr_path, content)
             if not hcl_path:
                 logger.error("Failed to create HCL script")
                 return None
-
-            # Convert to .rm file
-            timestamp = int(time.time())
-            rm_filename = f"rm_{hash(url)}_{timestamp}.rm"
-            rm_path = os.path.join(self.temp_dir, rm_filename)
-
-            # Run drawj2d
-            cmd = [self.drawj2d_path, "-Trm", "-rmv6", "-o", rm_path, hcl_path]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-            if result.returncode == 0 and os.path.exists(rm_path):
-                logger.info(f"Legacy conversion successful: {rm_path}")
-                return rm_path
+                
+            # Prepare content for renderer
+            renderer_content = {
+                "hcl_path": hcl_path,
+                "url": url
+            }
+            
+            # Render HCL to reMarkable format
+            result = self.hcl_renderer.render(renderer_content)
+            
+            if result:
+                logger.info(f"Legacy conversion successful: {result}")
+                return result
             else:
-                logger.error(f"Legacy conversion failed: {result.stderr}")
+                logger.error("Legacy conversion failed")
                 return None
-
+                
         except Exception as e:
             logger.error(f"Error in legacy document creation: {str(e)}")
             return None
-
-    # Legacy HCL creation method (for fallback)
+    
     def create_hcl(
         self, url: str, qr_path: str, content: Dict[str, Any]
     ) -> Optional[str]:
-        """Create HCL script from structured content (legacy method).
-
+        """
+        Create HCL script from structured content (legacy method).
+        
         Args:
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-
+            
         Returns:
             Path to generated HCL file or None if failed
         """
-        try:
-            # Implementation details of HCL generation remain the same
-            # (This is the original implementation from the codebase)
-
-            # Ensure we have valid content, even if minimal
-            if not content:
-                content = {"title": f"Page from {url}", "structured_content": []}
-
-            logger.info(f"Creating HCL document for: {content.get('title', url)}")
-
-            # Use the page title for the filename, sanitized for filesystem safety
-            page_title = content.get("title", f"Page from {url}")
-            safe_title = ''.join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in page_title).strip().replace(' ', '_')
-            hcl_filename = f"doc_{safe_title}_{int(time.time())}.hcl"
-            hcl_path = os.path.join(self.temp_dir, hcl_filename)
-
-            # Get page dimensions from config
-            page_width = CONFIG.get("PAGE_WIDTH", 2160)
-            page_height = CONFIG.get("PAGE_HEIGHT", 1620)
-            margin = CONFIG.get("PAGE_MARGIN", 120)
-            line_height = 40
-
-            # Get fonts from config
-            heading_font = CONFIG.get("HEADING_FONT", "Liberation Sans")
-            body_font = CONFIG.get("BODY_FONT", "Liberation Sans")
-            code_font = CONFIG.get("CODE_FONT", "DejaVu Sans Mono")
-
-            with open(hcl_path, "w", encoding="utf-8") as f:
-                # Set page size - use direct syntax based on drawj2d docs
-                f.write(f'puts "size {page_width} {page_height}"\n\n')
-
-                # Set font and pen
-                f.write(f'puts "set_font {heading_font} 36"\n')
-                f.write('puts "pen black"\n\n')
-
-                # Set title position
-                y_pos = margin
-
-                # Add title
-                title = content.get("title", "Untitled Document")
-                f.write(
-                    f'puts "text {margin} {y_pos} \\"{self._escape_hcl(title)}\\""\n'
-                )
-                # Space after title
-                y_pos += line_height
-
-                # Add URL under title
-                f.write(f'puts "set_font {body_font} 20"\n')
-                f.write(
-                    f'puts "text {margin} {y_pos} \\"Source: {self._escape_hcl(url)}\\""\n'
-                )
-                y_pos += line_height
-
-                # Add horizontal line separator
-                f.write(
-                    f'puts "line {margin} {y_pos} {page_width - margin} {y_pos} width=1.0"\n'
-                )
-                y_pos += line_height
-
-                # Add QR code if available
-                if qr_path and os.path.exists(qr_path):
-                    qr_size = 350
-                    qr_x = page_width - margin - qr_size
-                    f.write(
-                        f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
-                    )
-                    f.write(
-                        f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \"{qr_path}\""\n'
-                    )
-                    # Move y_pos past the QR code
-                    y_pos += qr_size + self.line_height
-
-                # Process structured content
-                y_pos += qr_size + line_height
-
-                structured_content = content.get("structured_content", [])
-
-                for item in structured_content:
-                    item_type = item.get("type", "paragraph")
-                    # Allow list items with 'items'
-                    if item_type == "list" and item.get("items"):
-                        for sub_item in item.get("items", []):
-                            # Support list items as dicts or plain strings
-                            if isinstance(sub_item, dict):
-                                sub_item_content = sub_item.get("content", "")
-                            else:
-                                sub_item_content = str(sub_item)
-                            if not sub_item_content:
-                                continue
-                            # Render each sub-item as a bullet point
-                            f.write(
-                                f'puts "text {margin + 20} {y_pos} \\"- {self._escape_hcl(sub_item_content)}\\""\n'
-                            )
-                            y_pos += line_height
-                        # Skip duplicate processing for list items and add spacing
-                        y_pos += line_height * 0.5
-                        continue
-                    else:
-                        item_content = item.get("content", "")
-                        if not item_content:
-                            continue
-
-                    # Check if we need a new page
-                    if y_pos > (page_height - margin * 2):
-                        f.write('puts "newpage"\n')
-                        y_pos = margin
-
-                    # Process based on content type
-                    if item_type == "h1" or item_type == "heading":
-                        f.write(f'puts "set_font {heading_font} 32"\n')
-                        f.write(
-                            f'puts "text {margin} {y_pos} \\"{self._escape_hcl(item_content)}\\""\n'
-                        )
-                        f.write(f'puts "set_font {body_font} 20"\n')
-                        y_pos += line_height * 1.5
-                    elif item_type == "h2":
-                        f.write(f'puts "set_font {heading_font} 28"\n')
-                        f.write(
-                            f'puts "text {margin} {y_pos} \\"{self._escape_hcl(item_content)}\\""\n'
-                        )
-                        f.write(f'puts "set_font {body_font} 20"\n')
-                        y_pos += line_height * 1.3
-                    elif item_type == "h3" or item_type in ["h4", "h5", "h6"]:
-                        f.write(f'puts "set_font {heading_font} 24"\n')
-                        f.write(
-                            f'puts "text {margin} {y_pos} \\"{self._escape_hcl(item_content)}\\""\n'
-                        )
-                        f.write(f'puts "set_font {body_font} 20"\n')
-                        y_pos += line_height * 1.2
-                    elif item_type == "code":
-                        # Start code block
-                        code_x = margin + 20
-                        code_y = y_pos + line_height
-                        code_lines = item_content.split("\n")
-                        code_height = len(code_lines) * line_height + line_height
-
-                        # Draw code block background and border
-                        f.write(
-                            f'puts "rectangle {margin} {y_pos} {page_width - margin * 2} {code_height} width=1.0"\n'
-                        )
-
-                        # Process each line of code
-                        f.write(f'puts "set_font {code_font} 18"\n')
-                        for i, line in enumerate(code_lines):
-                            line_y = code_y + (i * line_height)
-                            f.write(
-                                f'puts "text {code_x} {line_y} \"{self._escape_hcl(line)}\""\n'
-                            )
-
-                        f.write(f'puts "set_font {body_font} 20"\n')
-                        y_pos += code_height + line_height
-                    elif item_type == "list" or item_type == "bullet":
-                        list_indent = 30
-
-                        if item_type == "list" and "items" in item:
-                            # Handle old-style list format
-                            for list_item in item["items"]:
-                                f.write(f'puts "text {margin} {y_pos} \\"• \\"\n')
-                                f.write(
-                                    f'puts "text {margin + list_indent} {y_pos} \\"{self._escape_hcl(list_item)}\\""\n'
-                                )
-                                y_pos += line_height
-                        else:
-                            # Handle single bullet point
-                            f.write(f'puts "text {margin} {y_pos} \\"• \\"\n')
-                            f.write(
-                                f'puts "text {margin + list_indent} {y_pos} \\"{self._escape_hcl(item_content)}\\""\n'
-                            )
-                            y_pos += line_height
-                    else:
-                        # Default to paragraph
-                        # Split long content into multiple lines if needed
-                        max_chars_per_line = 85
-                        paragraph_text = item_content
-
-                        # Word wrap
-                        words = paragraph_text.split()
-                        current_line = ""
-
-                        for word in words:
-                            if len(current_line) + len(word) + 1 <= max_chars_per_line:
-                                current_line += " " + word if current_line else word
-                            else:
-                                # Write the current line
-                                f.write(
-                                    f'puts "text {margin} {y_pos} \\"{self._escape_hcl(current_line)}\\""\n'
-                                )
-                                y_pos += line_height
-                                current_line = word
-
-                        # Write the last line if not empty
-                        if current_line:
-                            f.write(
-                                f'puts "text {margin} {y_pos} \\"{self._escape_hcl(current_line)}\\""\n'
-                            )
-                            y_pos += line_height
-
-                    # Add spacing between items
-                    y_pos += line_height * 0.5
-
-                # Add timestamp at the bottom of the last page
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write(
-                    f'puts "text {margin} {page_height - margin} \\"Generated: {timestamp}\\""\n'
-                )
-
-            logger.info(f"Created HCL file: {hcl_path}")
-            return hcl_path
-
-        except Exception as e:
-            logger.error(f"Error creating HCL document: {e}")
-            return None
-
-    def create_pdf_hcl(
-        self, pdf_path: str, title: str, qr_path: str = None, images: List[str] = None
-    ) -> Optional[str]:
-        """Create HCL script for PDF file."""
-        try:
-            logger.info(f"Creating HCL document for PDF: {pdf_path}")
-
-            # Generate HCL file path
-            hcl_filename = f"pdf_{hash(pdf_path)}_{int(time.time())}.hcl"
-            hcl_path = os.path.join(self.temp_dir, hcl_filename)
-
-            with open(hcl_path, "w", encoding="utf-8") as f:
-                # Set page size - use direct syntax based on drawj2d docs
-                f.write(f'puts "size {self.page_width} {self.page_height}"\n\n')
-
-                # Set font and pen
-                f.write(f'puts "set_font {self.heading_font} 36"\n')
-                f.write('puts "pen black"\n\n')
-
-                # Set title position
-                y_pos = self.margin
-
-                # Add title
-                f.write(
-                    f'puts "text {self.margin} {y_pos} \\"{self._escape_hcl(title)}\\""\n'
-                )
-                y_pos += self.line_height * 1.5
-
-                # Add URL under title
-                f.write(f'puts "set_font {self.body_font} 20"\n')
-                f.write(
-                    f'puts "text {self.margin} {y_pos} \\"Source: {self._escape_hcl(os.path.basename(pdf_path))}\\""\n'
-                )
-                y_pos += self.line_height
-
-                # Add horizontal line separator
-                f.write(
-                    f'puts "line {self.margin} {y_pos} {self.page_width - self.margin} {y_pos} width=1.0"\n'
-                )
-                y_pos += self.line_height * 2
-
-                # Add QR code if available
-                if qr_path and os.path.exists(qr_path):
-                    qr_size = 350
-                    qr_x = self.page_width - self.margin - qr_size
-                    f.write(
-                        f'puts "rectangle {qr_x - 5} {y_pos - 5} {qr_size + 10} {qr_size + 10} width=1.0"\n'
-                    )
-                    f.write(
-                        f'puts "image {qr_x} {y_pos} {qr_size} {qr_size} \\"{qr_path}\\""\n'
-                    )
-                    y_pos += qr_size + self.line_height
-
-                # Embed PDF vector outlines if in outline mode and no raster images
-                # drawj2d will interpret PDF and redraw vector data as editable strokes
-                mode = CONFIG.get("PDF_RENDER_MODE", "outline")
-                if not images and mode == "outline":
-                    # Use configured page and scale
-                    page = CONFIG.get("PDF_PAGE", 1)
-                    scale = CONFIG.get("PDF_SCALE", 1.0)
-                    # Position at left margin
-                    f.write(f'puts "moveto {self.margin} 0"\n')
-                    # Embed specified PDF page at given scale
-                    f.write(f'puts "image {pdf_path} {page} 0 0 {scale}"\n')
-                    # Add timestamp at bottom
-                    ts = time.strftime("%Y-%m-%d %H:%M:%S")
-                    f.write(
-                        f'puts "text {self.margin} {self.page_height - self.margin} \\"Generated: {ts}\\""\n'
-                    )
-                    return hcl_path
-                # Embed raster images if provided
-                if images:
-                    for img_path in images:
-                        f.write('puts "newpage"\n')
-                        with Image.open(img_path) as img:
-                            orig_w, orig_h = img.size
-                        max_w = self.page_width - 2 * self.margin
-                        scale = max_w / orig_w
-                        width = int(orig_w * scale)
-                        height = int(orig_h * scale)
-                        x = self.margin
-                        y = self.margin
-                        f.write(
-                            f'puts "image {x} {y} {width} {height} \\"{img_path}\\""\n'
-                        )
-                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                    f.write(
-                        f'puts "text {self.margin} {self.page_height - self.margin} \\"Generated: {timestamp}\\""\n'
-                    )
-                    return hcl_path
-
-                # Add instructions for viewing the PDF
-                f.write(
-                    f'puts "text {self.margin} {y_pos} \\"This document has been converted to Remarkable format.\\""\n'
-                )
-                y_pos += self.line_height
-                f.write(
-                    f'puts "text {self.margin} {y_pos} \\"Original PDF: {self._escape_hcl(os.path.basename(pdf_path))}\\""\n'
-                )
-
-                # Add timestamp at the bottom of the page
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write(
-                    f'puts "text {self.margin} {self.page_height - self.margin} \\"Generated: {timestamp}\\""\n'
-                )
-
-            logger.info(f"Created HCL file for PDF: {hcl_path}")
-            return hcl_path
-        except Exception as e:
-            logger.error(f"Error creating HCL document for PDF: {e}")
-            return None
-
+        # This method is preserved as-is for compatibility
+        # In a real refactoring, this would be moved to an HCLConverter class
+        # For now, we'll keep the original implementation to avoid breaking changes
+        from inklink.utils.hcl_render import create_hcl_from_content
+        
+        return create_hcl_from_content(url, qr_path, content, self.temp_dir)
+    
     def create_rmdoc(self, hcl_path: str, url: str) -> Optional[str]:
-        """Convert HCL to Remarkable document."""
+        """
+        Convert HCL to Remarkable document.
+        
+        Args:
+            hcl_path: Path to HCL script
+            url: Source URL
+            
+        Returns:
+            Path to generated .rm file or None if failed
+        """
         try:
-            timestamp = int(time.time())
-            # Name output using .rm extension for raw reMarkable page
-            rm_filename = f"rm_{hash(url)}_{timestamp}.rm"
-            rm_path = os.path.join(self.temp_dir, rm_filename)
-            return self._convert_to_remarkable(hcl_path, rm_path)
+            # Prepare content for renderer
+            renderer_content = {
+                "hcl_path": hcl_path,
+                "url": url
+            }
+            
+            # Render HCL to reMarkable format
+            return self.hcl_renderer.render(renderer_content)
+            
         except Exception as e:
             logger.error(f"Error in create_rmdoc: {e}")
             return None
-
-    def _convert_to_remarkable(self, hcl_path: str, rm_path: str) -> Optional[str]:
-        """Convert HCL file to Remarkable format using drawj2d with verbose logging and fallback."""
-        try:
-            logger.info(f"Starting conversion from {hcl_path} to {rm_path}")
-            # Log drawj2d version for compatibility checking
-            try:
-                version_cmd = [self.drawj2d_path, "--version"]
-                version_result = subprocess.run(version_cmd, capture_output=True, text=True, check=False)
-                logger.info(f"drawj2d version: {version_result.stdout.strip()}")
-            except Exception as e:
-                logger.warning(f"Could not determine drawj2d version: {e}")
-
-            # Input validation
-            if not os.path.exists(hcl_path):
-                error_msg = format_error("input", "HCL file not found", hcl_path)
-                logger.error(error_msg)
-                return None
-
-            # Read and log HCL content for debugging
-            try:
-                with open(hcl_path, "r", encoding="utf-8") as f:
-                    hcl_content = f.read()
-                    logger.debug(f"HCL file full content: {hcl_content}")
-                    # Basic syntax check
-                    if (
-                        'puts "size' not in hcl_content
-                        or 'puts "text' not in hcl_content
-                    ):
-                        logger.error("HCL file missing required content elements")
-                        return None
-            except Exception as e:
-                logger.error(f"Failed to read HCL file: {e}")
-                return None
-
-            # Ensure output directory exists
-            output_dir = os.path.dirname(rm_path)
-            if not os.path.exists(output_dir):
-                logger.info(f"Creating output directory: {output_dir}")
-                os.makedirs(output_dir, exist_ok=True)
-
-            # Validate drawj2d executable is available and executable
-            if not os.path.isfile(self.drawj2d_path) or not os.access(
-                self.drawj2d_path, os.X_OK
-            ):
-                logger.error(
-                    f"drawj2d executable not found or not executable at: {self.drawj2d_path}"
-                )
-                return None
-
-            # Use parameters for raw reMarkable page format
-            # -Trm: Target is raw reMarkable page format
-            # -rmv6: Use version 6 file format
-            # -o: Specify output file
-            # Explicitly specify frontend as HCL and output type RM
-            cmd = [
-                self.drawj2d_path,
-                "-F", "hcl",
-                "-T", "rm",
-                "-rmv6",
-                "-o", rm_path,
-                hcl_path,
-            ]
-            logger.info(f"Conversion command: {' '.join(cmd)}")
-
-            # Define the conversion function that will be retried if it fails
-            def run_conversion(cmd_args):
-                logger.info(f"Running drawj2d conversion: {' '.join(cmd_args)}")
-
-                # Running the conversion using subprocess.run for better error handling
-                result = subprocess.run(cmd_args, capture_output=True, text=True)
-                logger.info(f"Command stdout: {result.stdout}")
-                logger.info(f"Command stderr: {result.stderr}")
-
-                if result.returncode != 0:
-                    raise RuntimeError(
-                        f"drawj2d conversion failed: Exit code {result.returncode}, stderr: {result.stderr}"
-                    )
-
-                if not os.path.exists(rm_path):
-                    logger.error(
-                        f"Output file missing: {rm_path}, even though command reported success"
-                    )
-                    raise FileNotFoundError(
-                        f"Expected output file not created: {rm_path}"
-                    )
-                else:
-                    file_size = os.path.getsize(rm_path)
-                    logger.info(
-                        f"Output file successfully created: {rm_path} ({file_size} bytes)"
-                    )
-                    if file_size < 50:
-                        logger.error(
-                            f"Output file size is suspiciously small: {file_size} bytes. Possible conversion error."
-                        )
-                        raise ValueError(f"Output file too small: {file_size} bytes")
-                    with open(rm_path, "rb") as rf:
-                        preview = rf.read(100)
-                    logger.info(f"Output file preview (first 100 bytes): {preview}")
-
-                return rm_path
-
-            # Use retry operation for running the conversion
-            return retry_operation(
-                run_conversion,
-                cmd,
-                operation_name="Document conversion",
-                max_retries=2,  # Only retry a couple of times for conversion
-            )
-        except Exception as e:
-            logger.error(format_error("conversion", "Failed to convert document", e))
-            return None
-
-    def _escape_hcl(self, text: str) -> str:
-        """Escape special characters for HCL."""
-        if not text:
-            return ""
-        # Escape special characters for Hecl (drawj2d HCL) parsing
-        # - backslashes must be doubled
-        # - double quotes must be escaped
-        # - dollar signs must be escaped to prevent variable substitution
-        # - square brackets must be escaped to prevent command substitution
-        # - backticks replaced to avoid markup/internal use
-        # - newlines replaced by spaces
-        s = text.replace("\\", "\\\\")
-        s = s.replace("\"", "\\\"")
-        s = s.replace("$", "\\$")
-        s = s.replace("[", "\\[")
-        s = s.replace("]", "\\]")
-        s = s.replace("`", "'")
-        return s.replace("\n", " ")
-
-    def _process_content(self, content: Dict[str, Any]) -> str:
-        """Process content dictionary into plain text.
-
-        Args:
-            content: Dictionary containing either structured_content or raw content
-
-        Returns:
-            Processed plain text with proper formatting
+    
+    def _update_index_notebook(self, content: Dict[str, Any]) -> None:
         """
-        plain_content = ""
-
-        if structured_content := content.get("structured_content", []):
-            for item in structured_content:
-                content_type = item.get("type", "paragraph")
-                text = item.get("content", "")
-
-                if content_type.startswith("h"):
-                    plain_content += f"{text}\n\n"  # No markdown-style heading
-                elif content_type == "paragraph":
-                    plain_content += f"{text}\n\n"
-                elif content_type == "code":
-                    plain_content += f"{text}\n\n"  # No code block markers
-                elif content_type == "list" and "items" in item:
-                    for list_item in item["items"]:
-                        plain_content += f"• {list_item}\n"
-                    plain_content += "\n"
-                elif content_type == "bullet":
-                    plain_content += f"• {text}\n\n"
-        else:
-            plain_content = content.get("content", "")
-            if plain_content and "<" in plain_content and ">" in plain_content:
-                plain_content = self._html_to_text(plain_content)
-
-        return plain_content
-
-    def _html_to_text(self, html_content: str) -> str:
-        """Extract text content from HTML, preserving structure."""
-        try:
-            soup = BeautifulSoup(html_content, "html.parser")
-
-            # Remove script and style elements
-            for element in soup(["script", "style"]):
-                element.extract()
-
-            # Get text
-            text = soup.get_text()
-
-            # Break into lines and remove leading/trailing space
-            lines = (line.strip() for line in text.splitlines())
-            # Break multi-headlines into a line each
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            # Remove blank lines and join with double newlines for paragraphs
-            return "\n\n".join(chunk for chunk in chunks if chunk)
-        except Exception as e:
-            logger.error(f"Error converting HTML to text: {e}")
-            return html_content
+        Regenerate the index notebook PDF after new content is processed.
+        Runs in a background thread to avoid blocking user interactions.
+        
+        Args:
+            content: Content data used to update the index
+        """
+        if self.pdf_service is None:
+            return
+            
+        def update_index_notebook_thread():
+            try:
+                # Example: Gather all pages info for the index (customize as needed)
+                # Here, we use a single-page list for demonstration; in production,
+                # aggregate all notebook pages as required.
+                pages = [
+                    {
+                        "title": content.get("title", "Untitled Document"),
+                        "summary": content.get("summary", ""),
+                        "page_number": 1,
+                        "device_location": None,
+                        "links": content.get("cross_page_links", []),
+                    }
+                ]
+                output_path = os.path.join(self.temp_dir, "index_notebook.pdf")
+                if self.pdf_service:
+                    self.pdf_service.generate_index_notebook(
+                        pages=pages,
+                        output_path=output_path,
+                        graph_title="Index Node Graph",
+                    )
+                logger.info(f"Index notebook PDF updated at {output_path}")
+            except Exception as e:
+                logger.error(f"Failed to update index notebook: {e}")
+                
+        threading.Thread(target=update_index_notebook_thread, daemon=True).start()

@@ -1,6 +1,6 @@
 import pytest
-from src.inklink.config import HCLResourceConfig
-from src.inklink.utils.hcl_render import render_hcl_resource
+from inklink.config import HCLResourceConfig
+from inklink.utils.hcl_render import render_hcl_resource
 
 
 def test_render_hcl_resource_basic():
