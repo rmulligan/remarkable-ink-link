@@ -59,9 +59,7 @@ class URLHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         """Handle POST requests."""
         try:
-            controller = self.router.route(self, "POST", self.path)
-            
-            if controller:
+            if controller := self.router.route(self, "POST", self.path):
                 controller.handle("POST", self.path)
             else:
                 self._send_error("Invalid endpoint")
