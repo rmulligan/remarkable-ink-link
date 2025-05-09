@@ -20,7 +20,7 @@ class MarkdownConverter(BaseConverter):
     
     def can_convert(self, content_type: str) -> bool:
         """Check if this converter can handle the given content type."""
-        return content_type in ["structured", "markdown"]
+        return content_type in {"structured", "markdown"}
     
     def convert(self, content: Dict[str, Any], output_path: Optional[str] = None) -> Optional[str]:
         """
