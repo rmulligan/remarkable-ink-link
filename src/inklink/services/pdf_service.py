@@ -6,8 +6,15 @@ import PyPDF2
 from urllib.parse import urlparse
 from typing import Dict, Optional, Any
 import logging
-
-# CONFIG import removed (no longer used)
+import pdf2image
+import graphviz
+import reportlab
+import reportlab.lib.pagesizes
+import reportlab.pdfgen
+import reportlab.pdfgen.canvas
+import reportlab.platypus
+import reportlab.lib.colors
+import reportlab.lib.styles
 
 # Configure logging
 logger = logging.getLogger(__name__)

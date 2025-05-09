@@ -1,9 +1,9 @@
 import os
 import subprocess
 import logging
-import shutil
 import uuid
 import tempfile
+import shutil
 from typing import Optional, Tuple, Any
 from .interfaces import IRemarkableService
 
@@ -30,7 +30,9 @@ class RemarkableService(IRemarkableService):
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 # Authentication or connectivity failed
-                err = (result.stderr or result.stdout or f"Exit code {result.returncode}").strip()
+                err = (
+                    result.stderr or result.stdout or f"Exit code {result.returncode}"
+                ).strip()
                 return False, err
             return True, "OK"
         except Exception as e:

@@ -42,6 +42,12 @@ def test_extract_url_invalid_plain(payload):
     assert call_extract(payload) is None
 
 
+def test_extract_url_prefix_strips_invalid_suffix():
+    # Valid URL prefix followed by invalid '<' character and text
+    payload = b"https://example.com/page<evil>"
+    assert call_extract(payload) == "https://example.com/page"
+
+
 def test_extract_url_valid_json():
     json_payload = b'{"url": "https://json.example.com/test"}'
     assert call_extract(json_payload) == "https://json.example.com/test"
@@ -50,12 +56,6 @@ def test_extract_url_valid_json():
 def test_extract_url_invalid_json():
     json_payload = b'{"url": "https://bad.com\nbad"}'
     assert call_extract(json_payload) is None
-
-
-def test_extract_url_prefix_strips_invalid_suffix():
-    # Valid URL prefix followed by invalid '<' character and text
-    payload = b"https://example.com/page<evil>"
-    assert call_extract(payload) == "https://example.com/page"
 
 
 @pytest.mark.parametrize(

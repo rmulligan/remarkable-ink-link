@@ -1,16 +1,10 @@
-<<<<<<< HEAD
-// Minimal InkLink Web UI Logic
-=======
 /**
  * InkLink Web UI Logic with Multi-Page Navigation, Context Visualization, and Manual Linking
  */
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 
 let fileId = null;
 let responseId = null;
 
-<<<<<<< HEAD
-=======
 // --- Multi-page and linking state ---
 let pageContents = [];      // Array of markdown for each page
 let currentPage = 1;        // 1-based index
@@ -37,11 +31,11 @@ const cancelLinkBtn = document.getElementById('cancel-link-btn');
 
 // --- Helper: Show/hide navigation, context, and linking controls ---
 function showPageUI(show) {
-  pageNav.style.display = show ? '' : 'none';
-  contextPanel.style.display = show ? '' : 'none';
-  linkControls.style.display = show ? '' : 'none';
+  if (pageNav) {
+  if (contextPanel) {
+  if (linkControls) {
 }
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
+
 // Helper: Show/hide sections
 function showSection(id) {
   document.getElementById('auth-section').style.display = 'none';
@@ -53,7 +47,10 @@ function showSection(id) {
 
 // Helper: Show error
 function showError(msg) {
-  document.getElementById('error').textContent = msg || '';
+  const errorElement = document.getElementById('error');
+  if (errorElement) {
+    errorElement.textContent = msg || '';
+  }
 }
 
 // Authenticate reMarkable
@@ -96,7 +93,7 @@ document.getElementById('upload-btn').onclick = async () => {
   showError('');
   const fileInput = document.getElementById('rm-file');
   if (!fileInput.files.length) {
-    showError('Please select a .rm file');
+    showError('Please select a file');
     return;
   }
   const formData = new FormData();
@@ -133,13 +130,9 @@ document.getElementById('process-btn').onclick = async () => {
   }
 };
 
-<<<<<<< HEAD
-// Poll for AI response
-=======
 /**
  * Poll for AI response and initialize multi-page UI if markdown is received.
  */
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 async function pollResponse() {
   let tries = 0;
   while (tries < 20) {
@@ -148,10 +141,6 @@ async function pollResponse() {
       const data = await res.json();
       if (data.markdown) {
         showSection('response-section');
-<<<<<<< HEAD
-        renderMarkdown(data.markdown);
-        setupDownload(data.raw);
-=======
         // --- Split markdown into pages (delimiter: '\n---PAGE---\n' or fallback to single page) ---
         pageContents = data.markdown.split(/\n-{3,}PAGE-{3,}\n/);
         totalPages = pageContents.length;
@@ -161,7 +150,6 @@ async function pollResponse() {
         setupDownload(data.raw);
         // Show navigation/context/linking UI if multi-page
         showPageUI(totalPages > 1);
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
         return;
       }
     }
@@ -172,51 +160,6 @@ async function pollResponse() {
   showError('Timed out waiting for AI response');
 }
 
-<<<<<<< HEAD
-// Render markdown (basic)
-function renderMarkdown(md) {
-  // Simple markdown to HTML (replace with a library for full support)
-  let html = md
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
-    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
-    .replace(/\n$/gim, '<br>');
-  document.getElementById('markdown-viewer').innerHTML = html;
-
-  // Trigger MathJax rendering for LaTeX blocks
-  if (window.MathJax && window.MathJax.typesetPromise) {
-    MathJax.typesetPromise();
-  }
-
-  // Render mermaid diagrams
-  if (window.mermaid) {
-    // Find all mermaid code blocks
-    const viewer = document.getElementById('markdown-viewer');
-    const mermaidBlocks = viewer.querySelectorAll('pre code.language-mermaid, code.language-mermaid, pre code, code');
-    mermaidBlocks.forEach((block, i) => {
-      if (block.textContent.trim().startsWith('graph') || block.textContent.trim().startsWith('sequenceDiagram')) {
-        const parent = block.parentElement;
-        const id = 'mermaid-' + i + '-' + Date.now();
-        const code = block.textContent;
-        const div = document.createElement('div');
-        div.className = 'mermaid';
-        div.id = id;
-        div.textContent = code;
-        parent.replaceWith(div);
-        try {
-          window.mermaid.init(undefined, '#' + id);
-        } catch (e) {
-          div.textContent = 'Mermaid render error: ' + e;
-        }
-      }
-    });
-  }
-}
-
-// Setup download link for raw response
-=======
 /**
  * Render the current page's markdown and update navigation/context/linking UI.
  */
@@ -227,8 +170,8 @@ function renderCurrentPage() {
   // Update nav UI
   pageNumInput.value = currentPage;
   totalPagesSpan.textContent = totalPages;
-  prevPageBtn.disabled = currentPage === 1;
-  nextPageBtn.disabled = currentPage === totalPages;
+  if (prevPageBtn) {
+  if (nextPageBtn) {
 
   // Render markdown for current page
   renderMarkdown(pageContents[currentPage - 1] || '');
@@ -259,13 +202,16 @@ function renderMarkdown(md) {
 
   // Mermaid block handling
   html = html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, function(_, code) {
-    return `<div class="mermaid">${code.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&")}</div>`;
+    return `<div class="mermaid">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/&/g, "&amp;")}</div>`;
   });
   html = html.replace(/```mermaid\s*([\s\S]*?)```/g, function(_, code) {
     return `<div class="mermaid">${code}</div>`;
   });
 
-  document.getElementById('markdown-viewer').innerHTML = html;
+  const markdownViewer = document.getElementById('markdown-viewer');
+  if (markdownViewer) {
+    markdownViewer.innerHTML = html;
+  }
 
   // MathJax and Mermaid rendering
   if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise();
@@ -277,6 +223,8 @@ function renderMarkdown(md) {
  * Shows links from/to this page.
  */
 function renderContext() {
+  if (!contextContent) {
+  
   const fromLinks = links.filter(l => l.from === currentPage);
   const toLinks = links.filter(l => l.to === currentPage);
   let html = '';
@@ -298,6 +246,8 @@ function renderContext() {
  * Render the list of all cross-page links and add remove buttons.
  */
 function renderLinks() {
+  if (!linkList) {
+  
   linkList.innerHTML = '';
   links.forEach((l, idx) => {
     const li = document.createElement('li');
@@ -317,68 +267,84 @@ function renderLinks() {
 /**
  * Setup download link for raw response
  */
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
 function setupDownload(raw) {
+  const downloadLink = document.getElementById('download-raw');
+  if (!downloadLink) {
+  
   const blob = new Blob([raw], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
-  const link = document.getElementById('download-raw');
-  link.href = url;
-  link.style.display = '';
-<<<<<<< HEAD
-=======
+  downloadLink.href = url;
+  downloadLink.style.display = '';
 }
 
 // --- Navigation event handlers ---
 if (pageNav) {
-  prevPageBtn.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
+  if (prevPageBtn) {
+    prevPageBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderCurrentPage();
+      }
+    };
+  }
+  
+  if (nextPageBtn) {
+    nextPageBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderCurrentPage();
+      }
+    };
+  }
+  
+  if (pageNumInput) {
+    pageNumInput.onchange = () => {
+      let val = parseInt(pageNumInput.value, 10);
+      if (isNaN(val) || val < 1) {
+      if (val > totalPages) {
+      currentPage = val;
       renderCurrentPage();
-    }
-  };
-  nextPageBtn.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderCurrentPage();
-    }
-  };
-  pageNumInput.onchange = () => {
-    let val = parseInt(pageNumInput.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > totalPages) val = totalPages;
-    currentPage = val;
-    renderCurrentPage();
-  };
+    };
+  }
 }
 
 // --- Manual linking controls ---
 if (linkControls) {
-  addLinkBtn.onclick = () => {
-    addLinkPanel.style.display = '';
-    linkFromInput.value = currentPage;
-    linkToInput.value = '';
-    linkDescInput.value = '';
-  };
-  cancelLinkBtn.onclick = () => {
-    addLinkPanel.style.display = 'none';
-  };
-  saveLinkBtn.onclick = () => {
-    const from = parseInt(linkFromInput.value, 10);
-    const to = parseInt(linkToInput.value, 10);
-    const desc = linkDescInput.value.trim();
-    if (
-      isNaN(from) || isNaN(to) ||
-      from < 1 || from > totalPages ||
-      to < 1 || to > totalPages ||
-      from === to
-    ) {
-      showError('Invalid link: check page numbers.');
-      return;
-    }
-    links.push({ from, to, desc });
-    addLinkPanel.style.display = 'none';
-    showError('');
-    renderCurrentPage();
-  };
->>>>>>> 7346ed0e841e457fc90535deb5c7f15b9f31aa48
+  if (addLinkBtn) {
+    addLinkBtn.onclick = () => {
+      if (addLinkPanel) {
+        addLinkPanel.style.display = '';
+        if (linkFromInput) {
+        if (linkToInput) {
+        if (linkDescInput) {
+      }
+    };
+  }
+  
+  if (cancelLinkBtn) {
+    cancelLinkBtn.onclick = () => {
+      if (addLinkPanel) {
+    };
+  }
+  
+  if (saveLinkBtn) {
+    saveLinkBtn.onclick = () => {
+      const from = parseInt(linkFromInput.value, 10);
+      const to = parseInt(linkToInput.value, 10);
+      const desc = linkDescInput.value.trim();
+      if (
+        isNaN(from) || isNaN(to) ||
+        from < 1 || from > totalPages ||
+        to < 1 || to > totalPages ||
+        from === to
+      ) {
+        showError('Invalid link: check page numbers.');
+        return;
+      }
+      links.push({ from, to, desc });
+      if (addLinkPanel) {
+      showError('');
+      renderCurrentPage();
+    };
+  }
 }
