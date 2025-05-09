@@ -1,10 +1,15 @@
 import os
 import pytest
 import subprocess
+import time
+import logging
 from unittest.mock import MagicMock, patch
 from tempfile import NamedTemporaryFile
 
+logger = logging.getLogger(__name__)
+
 from inklink.services.document_service import DocumentService
+from inklink.utils.rcu import convert_markdown_to_rm
 
 
 @pytest.fixture
@@ -361,10 +366,14 @@ def test_handle_mixed_content(document_service, tmp_path):
                         f.write(f"# {item_content}\n\n")
                     elif item_type == "h2":
                         f.write(f"## {item_content}\n\n")
-                    elif item_type == "h3" or item_type in ["h4", "h5", "h6"]:
-                        f.write(
-                            f"#{' ' * (4 - len(str(item_type)))} {item_content}\n\n"
-                        )
+                    elif item_type == "h3":
+                        f.write(f"### {item_content}\n\n")
+                    elif item_type == "h4":
+                        f.write(f"#### {item_content}\n\n")
+                    elif item_type == "h5":
+                        f.write(f"##### {item_content}\n\n")
+                    elif item_type == "h6":
+                        f.write(f"###### {item_content}\n\n")
                     elif item_type == "code":
                         f.write(f"```\n{item_content}\n```\n\n")
                     elif item_type == "list" and "items" in item:
@@ -452,6 +461,16 @@ def test_handle_mixed_content(document_service, tmp_path):
 
                 if item_type == "h1" or item_type == "heading":
                     f.write(f"# {item_content}\n\n")
+                elif item_type == "h2":
+                    f.write(f"## {item_content}\n\n")
+                elif item_type == "h3":
+                    f.write(f"### {item_content}\n\n")
+                elif item_type == "h4":
+                    f.write(f"#### {item_content}\n\n")
+                elif item_type == "h5":
+                    f.write(f"##### {item_content}\n\n")
+                elif item_type == "h6":
+                    f.write(f"###### {item_content}\n\n")
                 elif item_type == "code":
                     f.write(f"```\n{item_content}\n```\n\n")
                 else:  # Default to paragraph
