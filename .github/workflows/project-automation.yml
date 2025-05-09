@@ -10,33 +10,38 @@ on:
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+    # Removed job-level env for GH_TOKEN; set it in the relevant steps instead
     permissions:
       contents: read
       issues: write
       pull-requests: write
-      projects: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install GitHub CLI
-        uses: cli/cli@v1
-        with:
-          token: ${{ env.GH_TOKEN }}
-
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt-get update
+          sudo apt-get install gh -y
+        # No 'token' input; authentication is handled via GH_TOKEN env in later steps
       - name: Ensure gh-projects extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! gh extension list | grep -q 'github/gh-projects'; then
             gh extension install github/gh-projects
           fi
       - name: Bootstrap Kanban project
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/manage_project.sh
 
       - name: Add new issue/PR to InkLink Kanban
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: rmulligan/remarkable-ink-link
           PROJECT_NAME: InkLink Kanban
         run: |
