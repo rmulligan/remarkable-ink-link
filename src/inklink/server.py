@@ -47,9 +47,7 @@ class URLHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests."""
         try:
-            controller = self.router.route(self, "GET", self.path)
-            
-            if controller:
+            if controller := self.router.route(self, "GET", self.path):
                 controller.handle("GET", self.path)
             else:
                 self._send_error("Invalid endpoint")
