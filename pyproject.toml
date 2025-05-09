@@ -28,7 +28,7 @@ fastapi = "^0.115.12"
 uvicorn = { version = "^0.34.2", extras = ["standard"] }
 python-multipart = "^0.0.18"
 httpx = "^0.24.1"
-rmscene = "^0.4.0"
+rmscene = "^0.7.0"
 cryptography = "^44.0.3"
 openai = "^0.27.8"
 
