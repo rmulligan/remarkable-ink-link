@@ -1891,14 +1891,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rmscene"
-version = "0.4.0"
+version = "0.7.0"
 description = "Read v6 .rm files from the reMarkable tablet"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "rmscene-0.4.0-py3-none-any.whl", hash = "sha256:d821de053939e0d20eeb99315ea05b5a547e6780f088a6f14b82ea4444c97692"},
-    {file = "rmscene-0.4.0.tar.gz", hash = "sha256:ec37150a2c0d601c8f3f4e694d06872a5bbb413c6646e806ecdf4b28ba7ca10f"},
+    {file = "rmscene-0.7.0-py3-none-any.whl", hash = "sha256:10a271ddda9d407ae0c33e8c91e7269e51d5e34a6861f6cf98dca608bffdbbe1"},
+    {file = "rmscene-0.7.0.tar.gz", hash = "sha256:1e321f197b4a79b946bba1c17532f9fe7bd3f7343c216a8db8a8197925a5b9d1"},
 ]
 
 [package.dependencies]
@@ -2428,4 +2428,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "4445e046597d7cbf2777bb0bf0323445b9986bc8b127c7bab37f22c7de7afe0b"
+content-hash = "824c3a806ecc348013b12d5bd6bc73fdd13c7b731047802caf75d959ff2ece10"
