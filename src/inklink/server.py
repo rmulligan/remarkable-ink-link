@@ -74,7 +74,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _send_error(self, message: str):
         """Send error response."""
-        self.send_response(404)
+        self.send_response(500)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         response = f'{{"success": false, "message": "{message}"}}'
