@@ -17,7 +17,7 @@ from typing import Dict, Optional, Tuple, Any, List, cast, IO, TypeVar
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-from inklink.config import CONFIG
+from inklink.config import CONFIG, setup_logging
 from inklink.utils import is_safe_url
 from inklink.services.qr_service import QRCodeService
 from inklink.services.pdf_service import PDFService
@@ -30,16 +30,8 @@ from inklink.services.ai_service import AIService
 ServerType = TypeVar("ServerType", bound="CustomHTTPServer")
 
 
-def setup_logging():
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=logging.INFO,
-    )
-    return logging.getLogger("inklink.server")
-
-
 # Set up logging
-logger = setup_logging()
+logger = logging.getLogger("inklink.server")
 
 
 class URLHandler(BaseHTTPRequestHandler):

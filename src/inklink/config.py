@@ -10,7 +10,6 @@ class HCLResourceConfig(BaseModel):
     resource_name: str = Field(..., description="Name of the HCL resource")
     attributes: dict = Field(default_factory=dict, description="Resource attributes")
 
-
 # Default configuration dictionary for InkLink
 
 
