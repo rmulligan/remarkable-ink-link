@@ -320,7 +320,6 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 content_type = self.classify_region(strokes)
 
             iink_data = self.convert_to_iink_format(strokes)
-
             # Support both direct API call and adapter patterns
             if self.myscript is not None and hasattr(self.myscript, "recognize"):
                 # Use adapter if provided

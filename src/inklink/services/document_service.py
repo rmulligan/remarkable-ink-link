@@ -10,6 +10,7 @@ import json
 import logging
 import tempfile
 import markdown
+import subprocess
 from typing import Dict, Any, Optional, List
 
 # Import utility functions for error handling and RCU integration
@@ -160,22 +161,6 @@ class DocumentService:
                     if not raw_markdown.endswith("\n"):
                         f.write("\n")
                 else:
-
-                    # Render cross-page links section if present
-                    if cross_page_links:
-                        f.write("## Cross-Page Links\n\n")
-                        for link in cross_page_links:
-                            from_page = link.get("from_page")
-                            to_page = link.get("to_page")
-                            label = link.get(
-                                "label", f"Link from page {from_page} to {to_page}"
-                            )
-                            link_type = link.get("type", "")
-                            f.write(
-                                f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n"
-                            )
-                        f.write("\n---\n\n")
-
                     # Process pages (multi-page aware)
                     for idx, page in enumerate(pages):
                         page_number = page.get("page_number", idx + 1)
@@ -251,67 +236,6 @@ class DocumentService:
                                 f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n"
                             )
                         f.write("\n---\n\n")
-
-                    # Process pages (multi-page aware)
-                    for idx, page in enumerate(pages):
-                        page_number = page.get("page_number", idx + 1)
-                        items = page.get("items", [])
-                        metadata = page.get("metadata", {})
-
-                        # Write page break except for first page
-                        if page_number and page_number > 1:
-                            f.write("\n---\n\n")
-
-                        # Optionally, write page header/footer using metadata
-                        # Annotate references if present in metadata
-                        references = metadata.get("references", [])
-                        if references:
-                            f.write("**References on this page:**\n")
-                            for ref in references:
-                                ref_label = ref.get("label", "")
-                                ref_to = ref.get("to_page", "")
-                                ref_type = ref.get("type", "")
-                                f.write(
-                                    f"- {ref_label} (to page {ref_to}, type: {ref_type})\n"
-                                )
-                            f.write("\n")
-
-                        for item in items:
-                            item_type = item.get("type", "paragraph")
-                            item_content = item.get("content", "")
-
-                            if not item_content:
-                                continue
-
-                            if item_type == "h1" or item_type == "heading":
-                                f.write(f"# {item_content}\n\n")
-                            elif item_type == "h2":
-                                f.write(f"## {item_content}\n\n")
-                            elif item_type == "h3":
-                                f.write(f"### {item_content}\n\n")
-                            elif item_type in ["h4", "h5", "h6"]:
-                                f.write(f"#### {item_content}\n\n")
-                            elif item_type == "code":
-                                f.write(f"```\n{item_content}\n```\n\n")
-                            elif item_type == "math":
-                                f.write(f"$$\n{item_content}\n$$\n\n")
-                            elif item_type == "diagram":
-                                f.write(f"```mermaid\n{item_content}\n```\n\n")
-                            elif item_type == "list" and "items" in item:
-                                for list_item in item["items"]:
-                                    f.write(f"* {list_item}\n")
-                                f.write("\n")
-                            elif item_type == "bullet":
-                                f.write(f"* {item_content}\n\n")
-                            elif item_type == "image" and "url" in item:
-                                caption = item.get("caption", "")
-                                if caption:
-                                    f.write(f"![{caption}]({item['url']})\n\n")
-                                else:
-                                    f.write(f"![]({item['url']})\n\n")
-                            else:
-                                # Default to paragraph
-                                f.write(f"{item_content}\n\n")
 
                 # Add timestamp
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -367,11 +291,12 @@ class DocumentService:
                         }
                     ]
                     output_path = os.path.join(self.temp_dir, "index_notebook.pdf")
-                    self.pdf_service.generate_index_notebook(
-                        pages=pages,
-                        output_path=output_path,
-                        graph_title="Index Node Graph",
-                    )
+                    if self.pdf_service:
+                        self.pdf_service.generate_index_notebook(
+                            pages=pages,
+                            output_path=output_path,
+                            graph_title="Index Node Graph",
+                        )
                     logger.info(f"Index notebook PDF updated at {output_path}")
                 except Exception as e:
                     logger.error(f"Failed to update index notebook: {e}")

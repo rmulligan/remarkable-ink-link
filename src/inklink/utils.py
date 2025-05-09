@@ -1,8 +1,8 @@
 """Utility functions for Pi Share Receiver."""
 
-import time
 import logging
 import re
+import time
 from typing import Any, Callable, TypeVar, Optional, Tuple, List, Dict
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup, Tag

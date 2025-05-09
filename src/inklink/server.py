@@ -4,11 +4,11 @@ InkLink Server
 
 Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 """
-import logging
 import json
-import traceback
+import logging
 import os
 import time
+import traceback
 import uuid
 import cgi
 import subprocess
@@ -122,7 +122,8 @@ class URLHandler(BaseHTTPRequestHandler):
                 content_type = data.get("type")
                 title = data.get("title")
                 content = data.get("content")
-                metadata = data.get("metadata", {})
+                # metadata not used yet, but will be in future implementation
+                # metadata = data.get("metadata", {})
                 if not content_type or not title or not content:
                     self._send_json({"error": "Missing required fields"}, status=400)
                     return
@@ -283,7 +284,11 @@ class URLHandler(BaseHTTPRequestHandler):
         if self.path == "/upload":
             # Minimal multipart parser for .rm file
             env = {"REQUEST_METHOD": "POST"}
-            fs = cgi.FieldStorage(fp=self.rfile, environ=env, keep_blank_values=True)
+            # Headers dictionary for potential future use
+            # headers = {k: v for k, v in self.headers.items()}
+            fs = cgi.FieldStorage(
+                fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True
+            )
             fileitem = fs["file"] if "file" in fs else None
             if not fileitem or not fileitem.file:
                 self._send_json({"error": "No file uploaded"}, status=400)

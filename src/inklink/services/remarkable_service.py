@@ -3,6 +3,7 @@ import subprocess
 import logging
 import uuid
 import tempfile
+import shutil
 from typing import Optional, Tuple, Any
 from .interfaces import IRemarkableService
 
@@ -294,6 +295,7 @@ class RemarkableService(IRemarkableService):
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
             filename = filename.replace(char, "_")
+        return filename
 
 
 def get_notebook(self, notebook_id: str, export_format: str = "pdf") -> Optional[bytes]:
