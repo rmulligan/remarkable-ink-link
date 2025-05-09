@@ -22,3 +22,7 @@ node_modules/
 .vscode/
 .idea/
 .DS_Store
+# Log files
+*.log
+
+**/.claude/settings.local.json

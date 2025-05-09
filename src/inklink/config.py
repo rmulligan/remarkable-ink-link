@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field
 import os
+import logging
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class HCLResourceConfig(BaseModel):
@@ -9,13 +12,15 @@ class HCLResourceConfig(BaseModel):
 
 
 # Default configuration dictionary for InkLink
+
+
 CONFIG = {
     # Server settings
     "HOST": os.environ.get("INKLINK_HOST", "0.0.0.0"),
     "PORT": int(os.environ.get("INKLINK_PORT", 9999)),
     # File paths
-    "TEMP_DIR": os.environ.get("INKLINK_TEMP", "/tmp/inklink"),
-    "OUTPUT_DIR": os.environ.get("INKLINK_OUTPUT", "/tmp/inklink/output"),
+    "TEMP_DIR": os.environ.get("INKLINK_TEMP", os.path.join(BASE_DIR, "temp")),
+    "OUTPUT_DIR": os.environ.get("INKLINK_OUTPUT", os.path.join(BASE_DIR, "output")),
     # External tools
     "RMAPI_PATH": os.environ.get("INKLINK_RMAPI", "/usr/local/bin/rmapi"),
     "DRAWJ2D_PATH": os.environ.get("INKLINK_DRAWJ2D", "/usr/local/bin/drawj2d"),
@@ -26,9 +31,9 @@ CONFIG = {
     # Can be overridden via INKLINK_RM_MODEL env var
     "REMARKABLE_MODEL": os.environ.get("INKLINK_RM_MODEL", "pro").lower(),
     # Remarkable Pro page dimensions (portrait mode)
-    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 2160)),
-    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 1620)),
-    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 120)),
+    "PAGE_WIDTH": int(os.environ.get("INKLINK_PAGE_WIDTH", 1872)),
+    "PAGE_HEIGHT": int(os.environ.get("INKLINK_PAGE_HEIGHT", 2404)),
+    "PAGE_MARGIN": int(os.environ.get("INKLINK_PAGE_MARGIN", 100)),
     # Font configuration
     "HEADING_FONT": os.environ.get("INKLINK_HEADING_FONT", "Liberation Sans"),
     "BODY_FONT": os.environ.get("INKLINK_BODY_FONT", "Liberation Sans"),
@@ -39,8 +44,15 @@ CONFIG = {
     # Logging
     "LOG_LEVEL": os.environ.get("INKLINK_LOG_LEVEL", "INFO"),
     "LOG_FILE": os.environ.get("INKLINK_LOG_FILE", "inklink.log"),
-    # PDF rendering mode: "outline" for vector outlines via drawj2d or "raster" for PNG rasterization
-    "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "outline"),
+    # PDF rendering mode:
+    # - "outline": Uses vector outlines via drawj2d (more accurate but may fail with complex PDFs)
+    # - "raster": Uses PNG rasterization (more reliable but lower quality)
+    # NOTE: Default changed from "outline" to "raster" in v1.2 for better reliability.
+    # Set INKLINK_PDF_RENDER_MODE=outline to use the previous default.
+    "PDF_RENDER_MODE": os.environ.get("INKLINK_PDF_RENDER_MODE", "raster"),
+    # Default PDF page number and scale for outline embedding (only used when PDF_RENDER_MODE="outline")
+    "PDF_PAGE": int(os.environ.get("INKLINK_PDF_PAGE", 1)),
+    "PDF_SCALE": float(os.environ.get("INKLINK_PDF_SCALE", 1.0)),
     # MyScript iink SDK configuration
     "MYSCRIPT_APP_KEY": os.environ.get("MYSCRIPT_APP_KEY", ""),
     "MYSCRIPT_HMAC_KEY": os.environ.get("MYSCRIPT_HMAC_KEY", ""),

@@ -1,7 +1,7 @@
 """AI Service for interacting with OpenAI models."""
 
-import os
 import logging
+import os
 import requests
 from typing import Optional, Dict, Any, List, Union
 
@@ -53,7 +53,7 @@ class AIService:
     def process_query(
         self,
         query_text: str,
-        context: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
         structured_content: Optional[
             Union[List[Dict[str, Any]], Dict[str, Any]]
         ] = None,
@@ -65,7 +65,7 @@ class AIService:
 
         Parameters:
             query_text (str): The user's query.
-            context (str, optional): Flat context string for backward compatibility.
+            context (dict, optional): Additional context as a dictionary.
             structured_content (list[dict] or dict, optional): Structured document content, e.g., list of pages with links.
             context_window (int, optional): Number of most recent pages to include as context.
             selected_pages (list[int] or list[str], optional): Specific pages to include as context.
@@ -118,8 +118,8 @@ class AIService:
                     if links:
                         link_str = "Links: " + ", ".join(
                             [
-                                f"{l.get('label', l.get('target', ''))} (to page {l.get('target', '')})"
-                                for l in links
+                                f"{link.get('label', link.get('target', ''))} (to page {link.get('target', '')})"
+                                for link in links
                             ]
                         )
                     context_snippets.append(f"{title}:\n{content}\n{link_str}".strip())
@@ -129,9 +129,10 @@ class AIService:
                 )
                 messages.append({"role": "system", "content": system_prompt})
             elif context:
-                # Fallback to flat context string
+                # Fallback to context object
+                context_str = ", ".join([f"{k}: {v}" for k, v in context.items() if v])
                 messages.append(
-                    {"role": "system", "content": f"Document context: {context}"}
+                    {"role": "system", "content": f"Document context: {context_str}"}
                 )
             else:
                 # Use default system prompt if no context provided
