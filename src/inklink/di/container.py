@@ -61,14 +61,17 @@ class Container:
         # Register services that don't have interfaces yet
         provider.register_factory(AIService, lambda: AIService())
         
-        # Register configuration values as services
-        provider.register_instance("config", config)
+        # Normalize configuration keys to lowercase
+        normalized_config = {key.lower(): value for key, value in config.items()}
         
-        # Populate any values directly from config
-        provider.register_instance("temp_dir", config.get("TEMP_DIR"))
-        provider.register_instance("output_dir", config.get("OUTPUT_DIR"))
-        provider.register_instance("drawj2d_path", config.get("DRAWJ2D_PATH"))
-        provider.register_instance("rmapi_path", config.get("RMAPI_PATH"))
-        provider.register_instance("rm_folder", config.get("RM_FOLDER"))
+        # Register configuration values as services
+        provider.register_instance("config", normalized_config)
+        
+        # Populate any values directly from normalized config
+        provider.register_instance("temp_dir", normalized_config.get("temp_dir"))
+        provider.register_instance("output_dir", normalized_config.get("output_dir"))
+        provider.register_instance("drawj2d_path", normalized_config.get("drawj2d_path"))
+        provider.register_instance("rmapi_path", normalized_config.get("rmapi_path"))
+        provider.register_instance("rm_folder", normalized_config.get("rm_folder"))
         
         return provider
