@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from typing import Dict, Any, List, Tuple, Optional, Union
+from urllib.parse import urlparse
 
 from inklink.services.ai_service import AIService
 from inklink.adapters.ai_adapter import AIAdapter
@@ -236,7 +237,10 @@ def test_adapter_initialization():
         assert adapter.provider == "openai"
         assert adapter.api_key == "test_key"
         assert adapter.model == "gpt-3.5-turbo"
-        assert "api.openai.com" in adapter.api_base
+
+        # Parse the API base URL to check domain properly
+        parsed_url = urlparse(adapter.api_base)
+        assert parsed_url.netloc == "api.openai.com" or parsed_url.netloc.endswith(".api.openai.com")
 
     # Test with Anthropic provider
     with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test_anthropic_key"}):
@@ -244,7 +248,10 @@ def test_adapter_initialization():
         assert adapter.provider == "anthropic"
         assert adapter.api_key == "test_anthropic_key"
         assert "claude" in adapter.model
-        assert "api.anthropic.com" in adapter.api_base
+
+        # Parse the API base URL to check domain properly
+        parsed_url = urlparse(adapter.api_base)
+        assert parsed_url.netloc == "api.anthropic.com" or parsed_url.netloc.endswith(".api.anthropic.com")
 
 
 def test_build_system_prompt_with_context(mock_adapter):
