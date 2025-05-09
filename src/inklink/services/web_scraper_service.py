@@ -5,6 +5,8 @@ from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup
 
+from inklink.services.interfaces import IWebScraperService
+
 try:
     from readability import Document
 except ImportError:
@@ -21,15 +23,12 @@ from inklink.utils import (
 logger = logging.getLogger(__name__)
 
 
-class WebScraperService:
+class WebScraperService(IWebScraperService):
     """Web scraping service to extract structured content from URLs."""
 
-    def __init__(self):
-        """Initialize scraper."""
-        pass
-
     def scrape(self, url: str) -> Dict[str, Any]:
-        """Fetch URL and extract title and structured content.
+        """
+        Fetch URL and extract title and structured content.
 
         This method attempts to extract structured content in the following order:
         1. Try Mozilla Readability for reader-mode extraction if available
@@ -42,9 +41,6 @@ class WebScraperService:
         Returns:
             Dict with title, structured_content, and images
         """
-        import logging
-
-        logger = logging.getLogger("inklink.web_scraper_service")
         logger.info(f"Scraping URL: {url}")
 
         # Fetch the URL content
@@ -110,7 +106,8 @@ class WebScraperService:
             }
 
     def _fetch_url(self, url: str) -> str:
-        """Fetch URL and return its HTML content.
+        """
+        Fetch URL and return its HTML content.
 
         Uses retry logic for resilience against temporary network failures.
 

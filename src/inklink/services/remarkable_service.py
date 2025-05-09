@@ -1,3 +1,5 @@
+"""Service for interacting with reMarkable Cloud."""
+
 import os
 import subprocess
 import logging
@@ -5,7 +7,8 @@ import uuid
 import tempfile
 import shutil
 from typing import Optional, Tuple, Any
-from .interfaces import IRemarkableService
+
+from inklink.services.interfaces import IRemarkableService
 
 # Import utility functions for error handling
 from inklink.utils import retry_operation, format_error
@@ -15,14 +18,25 @@ logger = logging.getLogger(__name__)
 
 
 class RemarkableService(IRemarkableService):
-    def __init__(self, rmapi_path: str, upload_folder: str = "/"):
+    """Service for interacting with reMarkable Cloud."""
+    
+    def __init__(self, rmapi_path: str, rm_folder: str = "/"):
+        """
+        Initialize with paths and folder.
+        
+        Args:
+            rmapi_path: Path to rmapi executable
+            rm_folder: Folder on reMarkable to upload to
+        """
         self.rmapi_path = rmapi_path
-        self.upload_folder = upload_folder
+        self.upload_folder = rm_folder
 
-    def test_connection(self) -> Tuple[bool, str]:  # noqa: D102
+    def test_connection(self) -> Tuple[bool, str]:
         """
         Test connectivity and authentication to reMarkable cloud via rmapi.
-        Returns (True, message) if authenticated, (False, error_message) otherwise.
+        
+        Returns:
+            Tuple of (success, message)
         """
         try:
             # Attempt to list files in the target folder as an auth test
@@ -38,12 +52,17 @@ class RemarkableService(IRemarkableService):
         except Exception as e:
             return False, str(e)
 
-    # First implementation removed - keeping only the version with retry functionality
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
-        """Upload document to Remarkable Cloud"""
-        import logging
-
-        logger = logging.getLogger("inklink.remarkable_service")
+        """
+        Upload document to Remarkable Cloud.
+        
+        Args:
+            doc_path: Path to document file
+            title: Document title
+            
+        Returns:
+            Tuple of (success, message)
+        """
         try:
             logger.debug(f"Starting upload: doc_path={doc_path}, title={title}")
             # Validate inputs
@@ -93,16 +112,16 @@ class RemarkableService(IRemarkableService):
             return False, error_msg
 
     def _upload_with_n_flag(self, doc_path: str, title: str) -> Tuple[bool, str]:
-        """Upload document to Remarkable Cloud with custom title
-
+        """
+        Upload document to Remarkable Cloud with custom title.
+        
         Args:
             doc_path: Path to the document file
             title: Custom title for the document on Remarkable
-
+            
         Returns:
             Tuple of (success, message)
         """
-        import json
         # Get file extension to handle the file correctly
         file_ext = os.path.splitext(doc_path)[1].lower()
         safe_path = doc_path
@@ -157,7 +176,15 @@ class RemarkableService(IRemarkableService):
             return False, f"Upload preparation error: {str(e)}"
 
     def _sanitize_filename(self, filename: str) -> str:
-        """Sanitize filename for Remarkable"""
+        """
+        Sanitize filename for Remarkable.
+        
+        Args:
+            filename: Original filename
+            
+        Returns:
+            Sanitized filename
+        """
         # Remove or replace invalid characters
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
@@ -167,14 +194,14 @@ class RemarkableService(IRemarkableService):
     def get_notebook(self, notebook_id: str, export_format: str = "pdf") -> Optional[bytes]:
         """
         Retrieve a notebook from the reMarkable cloud using rmapi.
+        
         Args:
-            notebook_id: The unique identifier of the notebook.
-            export_format: The format to export (e.g., "pdf", "zip", "raw").
+            notebook_id: The unique identifier of the notebook
+            export_format: The format to export (e.g., "pdf", "zip", "raw")
+            
         Returns:
-            The notebook data as bytes, or None if retrieval failed.
+            The notebook data as bytes, or None if retrieval failed
         """
-        import tempfile
-
         if not os.path.exists(self.rmapi_path):
             logger.error(f"rmapi executable not found at {self.rmapi_path}")
             return None

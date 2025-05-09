@@ -1,24 +1,28 @@
-"""QR code generation service for Pi Share Receiver."""
+"""QR code generation service for InkLink."""
 
 import os
 import qrcode
 from typing import Tuple
 
+from inklink.services.interfaces import IQRCodeService
 
-class QRCodeService:
+
+class QRCodeService(IQRCodeService):
     """Generates QR codes for URLs."""
 
-    def __init__(self, output_path: str):
-        """Initialize with output path for QR codes.
+    def __init__(self, temp_dir: str):
+        """
+        Initialize with output path for QR codes.
 
         Args:
-            output_path: Directory to save QR codes
+            temp_dir: Directory to save QR codes
         """
-        self.output_path = output_path
-        os.makedirs(output_path, exist_ok=True)
+        self.output_path = temp_dir
+        os.makedirs(temp_dir, exist_ok=True)
 
     def generate_qr(self, url: str) -> Tuple[str, str]:
-        """Generate QR code for URL and return filepath and filename.
+        """
+        Generate QR code for URL and return filepath and filename.
 
         Args:
             url: The URL to encode in the QR code
