@@ -15,7 +15,7 @@ from inklink.utils import (
     retry_operation,
     format_error,
     extract_structured_content,
-    validate_and_fix_content
+    validate_and_fix_content,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,23 +30,28 @@ class WebScraperService:
 
     def scrape(self, url: str) -> Dict[str, Any]:
         """Fetch URL and extract title and structured content.
-        
+
         This method attempts to extract structured content in the following order:
         1. Try Mozilla Readability for reader-mode extraction if available
         2. Fall back to direct BeautifulSoup processing of raw HTML
         3. Return a standardized content structure with title and content
-        
+
         Args:
             url: The URL to scrape
-            
+
         Returns:
             Dict with title, structured_content, and images
         """
+        import logging
+
+        logger = logging.getLogger("inklink.web_scraper_service")
         logger.info(f"Scraping URL: {url}")
-        
+
         # Fetch the URL content
+        logger.debug("Calling _fetch_url")
         try:
             html_content = self._fetch_url(url)
+            logger.debug("_fetch_url completed")
         except Exception as e:
             error_msg = format_error("network", f"Failed to fetch URL {url}", e)
             logger.error(error_msg)
@@ -60,28 +65,32 @@ class WebScraperService:
                 ],
                 "images": [],
             }
-        
+
         # Try different extraction methods
         if Document:
             try:
+                logger.debug("Using Mozilla Readability for extraction")
                 # Use Mozilla Readability to get clean article content
                 doc = Document(html_content)
                 content_html = doc.summary()
-                
+                logger.debug("Mozilla Readability extraction completed")
+
                 # Extract structured content from the cleaned HTML
                 content = extract_structured_content(content_html, url)
-                
+
                 # If Readability found a title, use it
                 doc_title = doc.short_title()
                 if doc_title and doc_title.strip():
                     content["title"] = doc_title.strip()
-                
+
                 # Validate and fix content
                 return validate_and_fix_content(content, url)
             except Exception as e:
-                logger.warning(f"Readability extraction failed: {e}, falling back to direct parsing")
+                logger.warning(
+                    f"Readability extraction failed: {e}, falling back to direct parsing"
+                )
                 # Fall through to direct parsing
-        
+
         # Direct parsing of raw HTML
         try:
             content = extract_structured_content(html_content, url)
@@ -102,18 +111,19 @@ class WebScraperService:
 
     def _fetch_url(self, url: str) -> str:
         """Fetch URL and return its HTML content.
-        
+
         Uses retry logic for resilience against temporary network failures.
-        
+
         Args:
             url: The URL to fetch
-            
+
         Returns:
             HTML content as a string
-            
+
         Raises:
             Exception: If fetching fails after retries
         """
+
         def fetch_with_headers(url_to_fetch):
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -125,10 +135,7 @@ class WebScraperService:
             response = requests.get(url_to_fetch, headers=headers, timeout=10)
             response.raise_for_status()
             return response.text
-        
+
         return retry_operation(
-            fetch_with_headers, 
-            url, 
-            operation_name="URL fetching",
-            max_retries=3
+            fetch_with_headers, url, operation_name="URL fetching", max_retries=3
         )

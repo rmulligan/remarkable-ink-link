@@ -1,381 +1,317 @@
-# InkLink Project Developer Briefing
-**April 2025**
+# InkLink Round-Trip Functionality: Developer Guide
+May 5th, 2025
 
-## Project Overview
+This guide provides detailed instructions and documentation for developers to continue working on the InkLink round-trip functionality. It covers architecture, setup, implementation details, testing strategies, and future enhancement opportunities.
 
-InkLink is an open-source toolkit designed to transform reMarkable tablets into AI-augmented thought partners. The project aims to bridge paper-like thinking with intelligent workflows, providing features like AI-augmented notes, web-to-ink sharing, handwriting recognition, task management, and knowledge graph generation - all without the distractions of browser tabs.
+## 1. Architecture Overview
 
-## Current Implementation Status
+The round-trip functionality consists of three primary components:
 
-### Completed Features
-- Web-to-ink sharing endpoint for converting web content to reMarkable-compatible format
-- PDF processing for downloading and converting PDFs to editable ink format
-- QR code generation linking back to original content
-- Authentication UI for reMarkable Cloud
-- Docker environment with required dependencies
-- CI/CD workflow for linting, testing, and building Docker images
+1. **HandwritingRecognitionService**: Responsible for extracting strokes from .rm files and converting handwriting to text via MyScript's iink SDK.
 
-### Core Architecture
-- Backend built with Python
-- FastAPI for the authentication UI
-- Custom HTTP server for the main sharing endpoint
-- Conversion pipeline utilizing drawj2d for native .rm file generation
-- Integration with the ddvk fork of rmapi for reMarkable Cloud connectivity
+2. **RoundTripService**: Orchestrates the entire workflow, connecting handwriting recognition, AI processing, document creation, and uploading back to reMarkable.
 
-## User Notes System Context
+3. **CLI Integration**: Provides a user-friendly command line interface for triggering the round-trip process.
 
-The user employs a sophisticated note-taking system that combines:
-- Digital Zettelkasten principles 
-- Bullet journaling techniques
-- Daily task scheduling
-- Freeform notes on a PDF planner
-
-### Symbol System
-- **Empty circle**: Incomplete task
-- **Circle with horizontal line**: Task moved forward one day
-- **Circle with vertical line**: Task moved to future date
-- **Filled circle**: Completed task
-- **Chevron/dash**: Note or context for a heading
-- **Thicker pen stroke**: Headings
-- **Dashed line**: Separator for entries ("settles")
-- **Vertical dashed line**: Content grouping for broader topics
-- **Margin identifiers**: Cross-references to other pages
-
-This system leverages the reMarkable's unique capability to move ink content around, using a forever-scrolling page that can be expanded as needed.
-
-## Desired AI Features
-
-The user specifically wants InkLink to:
-
-1. **Digest Individual Entries**: Process note content for meaning and context
-2. **Knowledge Graph Integration**: Incorporate notes into a broader knowledge system
-3. **Index Page Management**: Update index pages automatically
-4. **Cross-References**: Maintain references between related content
-5. **Task Automation**: Perform actions based on note content and tags
-6. **Content Organization**: Help structure and organize accumulated notes
-
-## Technology Stack Decisions
-
-### 1. AI Processing Strategy - Hybrid Approach
-
-We will implement a hybrid approach combining MyScript's specialized handwriting recognition with local Ollama models:
-
-#### MyScript for Primary Handwriting Transcription
-- MyScript excels at converting handwriting to text with high accuracy
-- Purpose-built for handwriting recognition with years of specialized development
-- Handles different handwriting styles effectively
-
-#### Local Ollama Models for Verification and Enhancement
-- Use vision-capable models to verify MyScript outputs
-- Handle symbol recognition that MyScript might not specialize in
-- Perform semantic understanding of content
-
-#### Two-Stage Recognition Pipeline
-```
-Handwritten Content → MyScript OCR → Ollama Vision Model Verification → Final Output
-```
-
-### 2. Recommended Local Models via Ollama
-
-For your RTX 4090 setup with 64GB RAM, we recommend:
-
-#### Primary Models for Tool Calling
-- **Llama 3.1 (8B)** - Officially supported by Ollama's tool-calling API
-- **Dolphin 3.0 Llama 3.1 (8B)** - Specifically designed for function calling capabilities 
-- **DeepSeek-R1 Models** - Excellent for reasoning tasks
-
-#### For Vision Tasks (Symbol Recognition)
-- **LLaVA 1.5 (7B or 13B)** - Good balance of performance and resource usage
-- **Phi-3-Vision** - Excellent balance of size and capability (if available on Ollama)
-
-#### For Knowledge Graph and Semantic Understanding
-- **Llama 3 8B** - Good at entity extraction and relationship identification
-- **Mistral 7B Instruct** - Strong reasoning capabilities for relationship mapping
-
-### 3. Knowledge Graph with Neo4j
-
-Neo4j is confirmed as our graph database of choice with these integration approaches:
-
-#### LLM Knowledge Graph Builder
-- Neo4j's tool for turning unstructured text into a knowledge graph
-- Supports multiple LLM providers including open-source models via Ollama
-- Ideal for initial knowledge graph construction from notes
-
-#### LangChain + Neo4j Integration
-- Provides direct Neo4j integration with natural language interface
-- Enables querying knowledge graph in natural language
-- Supports task tracking and relationship discovery
-
-#### Graph Schema Design
-- **Nodes**: Notes, Tasks, Concepts, References
-- **Relationships**: CONTAINS, REFERENCES, EXTENDS, PART_OF
-- **Properties**: Task states, timestamps, positions
-
-## Implementation Architecture
-
-### 1. Core Components
+### Component Interactions
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  Handwriting    │────▶│ Symbol & Entity │────▶│  Knowledge      │
-│  Recognition    │     │  Understanding  │     │  Graph Builder  │
-│  (MyScript)     │     │  (Ollama)       │     │  (Neo4j)        │
-│                 │     │                 │     │                 │
+│  Handwritten    │     │ Handwriting     │     │  AI Processing  │
+│  .rm File       │────▶│ Recognition     │────▶│  (Placeholder)  │
+│                 │     │ Service         │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
-         │                      │                       │
-         │                      │                       │
-         ▼                      ▼                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│                 InkLink Orchestration Layer                     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-         │                      │                       │
-         │                      │                       │
-         ▼                      ▼                       ▼
+                                                        │
+                                                        ▼
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│   Task & Tag    │     │  Index & Ref    │     │  Retrieval      │
-│   Processor     │     │  Generator      │     │  Interface      │
+│  reMarkable     │     │  Document       │     │  Response       │
+│  Cloud          │◀────│  Service        │◀────│  Generation     │
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### 2. Data Flow
+## 2. Development Environment Setup
 
-1. **Input Processing**:
-   - Handwritten notes captured via reMarkable
-   - Notes synced to processing server
-   - Initial conversion via MyScript API
+### Prerequisites
 
-2. **Symbol and Structure Recognition**:
-   - Vision-capable models detect symbols and spatial relationships
-   - Task symbols identified and classified
-   - Text content associated with relevant symbols
+- Python 3.10+
+- Poetry for dependency management
+- reMarkable Cloud account
+- MyScript Developer account with iink SDK access
 
-3. **Knowledge Graph Construction**:
-   - Entities extracted and added to Neo4j
-   - Relationships established between entities
-   - Tasks tracked with state information
-   - Cross-references mapped to establish connections
+### Environment Configuration
 
-4. **Application Features**:
-   - Task management based on symbol states
-   - Index pages auto-generated from knowledge graph
-   - References maintained and updated
-   - Content organized based on structure
+1. **Clone the repository and install dependencies**:
+   ```bash
+   git clone https://github.com/rmulligan/remarkable-ink-link.git
+   cd remarkable-ink-link
+   poetry install
+   ```
 
-## LLM Tool Calling Implementation
+2. **Set up environment variables**:
+   ```bash
+   # MyScript API credentials
+   export MYSCRIPT_APP_KEY="your_app_key"
+   export MYSCRIPT_HMAC_KEY="your_hmac_key"
+   
+   # Optional: custom paths
+   export INKLINK_RMAPI="/path/to/rmapi"
+   export INKLINK_TEMP="/path/to/temp/dir"
+   export INKLINK_OUTPUT="/path/to/output/dir"
+   ```
 
-### 1. Tool Definitions
+3. **Configure reMarkable authentication**:
+   ```bash
+   poetry run inklink auth
+   ```
+   This will open a web interface at http://127.0.0.1:8000/auth to set up reMarkable Cloud access.
 
-We will implement tool definitions for these core functions:
+4. **Test installation**:
+   ```bash
+   poetry run inklink roundtrip --help
+   ```
 
-```python
-SYMBOL_DETECTION_TOOL = {
-    'type': 'function',
-    'function': {
-        'name': 'detect_symbols',
-        'description': 'Detect symbols and their meanings in a note',
-        'parameters': {
-            'type': 'object',
-            'properties': {
-                'symbols': {
-                    'type': 'array',
-                    'items': {
-                        'type': 'object',
-                        'properties': {
-                            'type': {'type': 'string'},
-                            'position': {'type': 'object'},
-                            'associated_text': {'type': 'string'},
-                            'state': {'type': 'string'}
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+## 3. Implementation Details
 
-KNOWLEDGE_GRAPH_TOOL = {
-    'type': 'function',
-    'function': {
-        'name': 'update_knowledge_graph',
-        'description': 'Update knowledge graph with entities and relationships',
-        'parameters': {
-            'type': 'object',
-            'properties': {
-                'entities': {
-                    'type': 'array',
-                    'items': {
-                        'type': 'object',
-                        'properties': {
-                            'id': {'type': 'string'},
-                            'type': {'type': 'string'},
-                            'content': {'type': 'string'},
-                            'metadata': {'type': 'object'}
-                        }
-                    }
-                },
-                'relationships': {
-                    'type': 'array',
-                    'items': {
-                        'type': 'object',
-                        'properties': {
-                            'source': {'type': 'string'},
-                            'target': {'type': 'string'},
-                            'type': {'type': 'string'},
-                            'properties': {'type': 'object'}
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-```
+### HandwritingRecognitionService
 
-### 2. Tool Calling Integration with Ollama
+The `HandwritingRecognitionService` in `src/inklink/services/handwriting_recognition_service.py` handles:
+
+- Extracting strokes from `.rm` files using `rmscene`
+- Converting strokes to MyScript iink format
+- Authentication with MyScript APIs using HMAC signatures
+- Submitting ink data for recognition
+- Retrieving recognized text
+
+Key methods:
+- `extract_strokes(rm_file_path)`: Extracts stroke data from a .rm file
+- `convert_to_iink_format(strokes)`: Formats strokes for iink SDK
+- `recognize_handwriting(iink_data)`: Submits data to MyScript API
+- `export_content(content_id)`: Retrieves recognized text
+
+### RoundTripService
+
+The `RoundTripService` in `src/inklink/services/round_trip_service.py` orchestrates:
+
+- Calling the handwriting recognition service
+- Processing the recognized text (currently a placeholder for AI integration)
+- Generating a response document
+- Converting to reMarkable format
+- Uploading to reMarkable Cloud
+
+Key method:
+- `process_handwritten_query(rm_file_path)`: Processes a handwritten query and returns the result
+
+### AI Integration Placeholder
+
+The current implementation includes a placeholder for AI processing:
 
 ```python
-import ollama
-
-class SymbolDetector:
-    def __init__(self, model_name="llama3.1"):
-        self.model_name = model_name
-        
-    def detect_symbols(self, image_data, text_content):
-        response = ollama.chat(
-            model=self.model_name,
-            messages=[
-                {
-                    'role': 'system', 
-                    'content': 'You are an expert at identifying symbols in handwritten notes.'
-                },
-                {
-                    'role': 'user', 
-                    'content': f'Analyze this note and identify all symbols: {text_content}'
-                }
-            ],
-            tools=[SYMBOL_DETECTION_TOOL]
-        )
-        
-        return response['message']['tool_calls']
+# In a real implementation, this is where you would send the text to an AI service
+# and get a response. For testing purposes, we generate a simple response.
+response_text = f"Response to: {recognized_text}\n\nThis is a simulated AI response."
 ```
 
-### 3. Neo4j Integration
+This is the primary integration point for connecting to LLM providers.
 
-```python
-from neo4j import GraphDatabase
+## 4. Testing Strategy
 
-class KnowledgeGraph:
-    def __init__(self, uri, user, password):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
-        
-    def create_entity(self, entity_id, entity_type, content, metadata={}):
-        with self.driver.session() as session:
-            session.run(
-                """
-                CREATE (e:Entity {id: $id, type: $type, content: $content, metadata: $metadata})
-                """, 
-                id=entity_id, 
-                type=entity_type, 
-                content=content,
-                metadata=metadata
-            )
-            
-    def create_relationship(self, source_id, target_id, rel_type, properties={}):
-        with self.driver.session() as session:
-            session.run(
-                """
-                MATCH (source:Entity {id: $source_id})
-                MATCH (target:Entity {id: $target_id})
-                CREATE (source)-[r:RELATIONSHIP {type: $rel_type, properties: $properties}]->(target)
-                """,
-                source_id=source_id,
-                target_id=target_id,
-                rel_type=rel_type,
-                properties=properties
-            )
+### Unit Tests
+
+Unit tests are located in:
+- `tests/test_handwriting_recognition.py`: Tests for the handwriting recognition service
+- `tests/test_round_trip.py`: Tests for the round-trip service
+
+These tests use mocks to avoid external dependencies and focus on the logic of each component.
+
+### Manual Testing
+
+For manual testing, you need:
+1. A sample `.rm` file containing handwritten text
+2. Valid MyScript API credentials
+3. Valid reMarkable Cloud credentials
+
+Execute:
+```bash
+poetry run inklink roundtrip /path/to/sample.rm
 ```
 
-## Development Roadmap
+### Test Data
 
-### Phase 1: Core Infrastructure (1-2 Weeks)
-- Set up Ollama with selected models
-- Implement MyScript integration
-- Configure Neo4j database and schema
-- Build basic orchestration layer
+Create a directory for test data:
+```bash
+mkdir -p tests/data
+```
 
-### Phase 2: Symbol Recognition System (2-3 Weeks)
-- Develop symbol recognition pipeline
-- Implement verification system between MyScript and Ollama models
-- Create spatial relationship detection
-- Build symbol-to-meaning mapping
+Sample `.rm` files can be obtained from a reMarkable tablet or created using the `rmscene` library.
 
-### Phase 3: Knowledge Graph Construction (3-4 Weeks)
-- Implement entity extraction
-- Build relationship mapping system
-- Create graph population algorithm
-- Develop task tracking system
+## 5. Extension Points
 
-### Phase 4: User-Facing Features (3-4 Weeks)
-- Implement index page generation
-- Build cross-reference system
-- Create task management interface
-- Develop content organization tools
+### Integrating with LLM Providers
 
-### Phase 5: Testing and Refinement (2-3 Weeks)
-- Conduct performance testing
-- Optimize model usage
-- Refine graph queries
-- Improve accuracy of symbol detection
+The primary extension point is AI integration. To integrate with an LLM provider:
 
-## Outstanding Issues to Address
+1. Create a new service in `src/inklink/services/ai_service.py`:
+   ```python
+   class AIService:
+       """Service for AI text processing."""
+       
+       def __init__(self, api_key=None):
+           self.api_key = api_key or os.environ.get("AI_API_KEY")
+           
+       def process_query(self, query_text):
+           """Process a text query and return an AI response."""
+           # Implement API calls to your preferred LLM provider
+           # Example with a hypothetical API
+           response = requests.post(
+               "https://api.example-ai.com/v1/completions",
+               headers={"Authorization": f"Bearer {self.api_key}"},
+               json={"prompt": query_text, "max_tokens": 1000}
+           )
+           
+           return response.json()["text"]
+   ```
 
-### High Priority
-- Missing test for plain text input with mixed valid/invalid content (#21)
+2. Update `RoundTripService` to use the AI service:
+   ```python
+   def __init__(self, 
+               handwriting_service=None,
+               document_service=None,
+               remarkable_service=None,
+               ai_service=None):
+       # Add AI service
+       self.ai_service = ai_service or AIService()
+       
+   def process_handwritten_query(self, rm_file_path):
+       # ...existing code...
+       
+       # Replace placeholder with actual AI service call
+       response_text = self.ai_service.process_query(recognized_text)
+       
+       # ...rest of the method...
+   ```
 
-### Medium Priority
-- Code quality issues requiring attention (#31, #27)
-- Need to refactor complex methods including:
-  - `_upload_with_n_flag` method in RemarkableService (#22)
-  - HTML parsing logic in GoogleDocsService and WebScraperService (#23)
-  - Long content loops in `create_hcl` method (#36, #38)
+### Supporting Additional Content Types
 
-### Low Priority
-- Multiple code quality issues like:
-  - Extracting duplicate code into functions (#34, #42)
-  - Avoiding conditionals in tests (#25, #24, #41)
-  - Using named expressions to simplify assignment and conditionals (#26, #30, #39)
+To support math expressions, diagrams, or other content types:
 
-## Next Steps for Development Team
+1. Extend recognition parameters in `HandwritingRecognitionService.recognize_handwriting()`:
+   ```python
+   def recognize_handwriting(self, iink_data, content_type="Text", language="en_US"):
+       # Allow content_type to be "Text", "Math", "Diagram", etc.
+       request_data = {
+           "configuration": {
+               "lang": language,
+               "contentType": content_type,
+               # Content-specific configuration
+               content_type.lower(): {
+                   # Content-specific parameters
+               }
+           },
+           **iink_data
+       }
+       # ...rest of the method...
+   ```
 
-1. **Environment Setup**
-   - Install Ollama and configure selected models
-   - Set up Neo4j database instance
-   - Configure MyScript API access
+2. Add content-specific export formats in `export_content()`:
+   ```python
+   def export_content(self, content_id, format_type="text"):
+       # For math, you might want LaTex or MathML
+       # For diagrams, you might want SVG
+       request_data = {
+           "format": format_type
+       }
+       # ...rest of the method...
+   ```
 
-2. **Model Evaluation**
-   - Test recommended models on sample handwritten notes
-   - Benchmark performance on symbol recognition tasks
-   - Evaluate tool calling capabilities
+## 6. Known Limitations
 
-3. **Prototype Development**
-   - Build MVP of the hybrid recognition pipeline
-   - Implement basic Neo4j integration
-   - Create test suite for accuracy validation
+1. **Handwriting Recognition Quality**: Recognition accuracy depends on handwriting clarity and the capabilities of MyScript's API.
 
-4. **Documentation**
-   - Update API documentation
-   - Create detailed environment setup guide
-   - Document model configuration options
+2. **AI Processing**: Currently implemented as a placeholder without actual AI connection.
 
-## Resources and References
+3. **Content Types**: Currently optimized for text content. Math, diagrams, and drawings require further implementation.
 
-- [Ollama Tool Support Documentation](https://ollama.com/blog/tool-support)
-- [Neo4j LLM Knowledge Graph Builder](https://neo4j.com/labs/genai-ecosystem/llm-graph-builder/)
-- [LangChain Ollama Integration](https://js.langchain.com/docs/integrations/chat/ollama_functions/)
-- [MyScript Developer Portal](https://developer.myscript.com/)
-- Project GitHub Repository
+4. **Error Handling**: While basic error handling is implemented, complex error recovery might need enhancement.
+
+5. **Performance**: Large `.rm` files with many strokes may cause performance issues.
+
+## 7. Future Development Roadmap
+
+### Short-term Tasks
+
+1. **AI Integration**: Connect to a production LLM API (OpenAI, Anthropic, etc.)
+2. **Content Context**: Add support for including document context in AI queries
+3. **Response Formatting**: Enhance response formatting with markdown support
+4. **User Interface**: Add a simple web UI for managing the round-trip process
+
+### Medium-term Tasks
+
+1. **Math and Diagram Support**: Add support for mathematical expressions and diagrams
+2. **Multi-page Processing**: Process multi-page documents and maintain context
+3. **Template System**: Create templates for different types of queries/responses
+4. **Local Models**: Support local LLMs for privacy-focused deployments
+
+### Long-term Vision
+
+1. **Bidirectional Synchronization**: Real-time sync between edits on tablet and AI processing
+2. **Knowledge Graph Integration**: Connect document content to a knowledge graph
+3. **Multi-modal Processing**: Combine text, images, and diagrams in processing
+4. **Collaborative Workflows**: Support multi-user collaboration with shared AI context
+
+## 8. Troubleshooting Common Issues
+
+### MyScript API Authentication
+
+If you encounter authentication errors with MyScript:
+
+1. Verify API key environment variables are correctly set
+2. Check that HMAC signatures are correctly generated
+3. Ensure your MyScript account has API access enabled
+4. Check for usage limits or quotas
+
+### reMarkable Cloud Access
+
+If uploads to reMarkable cloud fail:
+
+1. Verify authentication via `inklink auth` was successful
+2. Check that the `rmapi` tool is properly installed
+3. Ensure target folders exist in your reMarkable account
+4. Check for space limitations on your reMarkable account
+
+### Stroke Extraction
+
+If stroke extraction fails:
+
+1. Verify the `.rm` file is valid and not corrupted
+2. Check that `rmscene` library is correctly installed
+3. Test with a simple file containing minimal strokes
+
+## 9. Development Best Practices
+
+1. **Version Control**:
+   - Create feature branches for new functionality
+   - Write meaningful commit messages
+   - Create pull requests for code review
+
+2. **Testing**:
+   - Write tests for new functionality
+   - Update existing tests when modifying code
+   - Ensure CI passes before merging
+
+3. **Documentation**:
+   - Update docstrings for new methods
+   - Keep the developer documentation up-to-date
+   - Document integration points with external services
+
+4. **Error Handling**:
+   - Use consistent error handling patterns
+   - Log errors with appropriate level and context
+   - Return meaningful error messages to users
+
+5. **Configuration**:
+   - Use environment variables for sensitive data
+   - Add new configuration options to `config.py`
+   - Document configuration requirements
+
+By following this guide, developers should be able to understand, maintain, and extend the round-trip functionality within the InkLink project.

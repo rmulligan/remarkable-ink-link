@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Python dependencies managed by pip/poetry
+  - package-ecosystem: "pip" 
+    directory: "/" 
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+    assignees:
+      - "rmulligan"  # Assuming the repository owner is the assignee
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      # Removed the "ci" label that was causing issues
+    
+  # JavaScript dependencies (if applicable)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    # If you need to ignore dependencies, uncomment and modify this section:
+    # ignore:
+    #   - dependency-name: "example-dependency"
+    #     versions: [">=1.0.0"]

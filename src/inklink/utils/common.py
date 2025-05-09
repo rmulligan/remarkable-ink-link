@@ -1,11 +1,11 @@
-"""Utility functions for Pi Share Receiver."""
+"""Common utility functions moved from utils.py to avoid naming conflicts."""
 
-import logging
-import re
 import time
+import logging
 from typing import Any, Callable, TypeVar, Optional, Tuple, List, Dict
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup, Tag
+import re
 
 # Import configuration with proper relative import
 try:
@@ -32,7 +32,6 @@ def is_safe_url(url: str) -> bool:
     return bool(SAFE_URL_REGEX.fullmatch(url))
 
 
-# Generic type for function return
 T = TypeVar("T")
 
 
@@ -63,7 +62,6 @@ def retry_operation(
     retries = 0
     last_error = None
 
-    # Use provided values or defaults from config
     max_retries = max_retries if max_retries is not None else MAX_RETRIES
     retry_delay = retry_delay if retry_delay is not None else RETRY_DELAY
 
@@ -173,51 +171,6 @@ def extract_title_from_html(
         title = generate_title_from_url(url)
 
     return title or "Untitled Document"
-
-
-def generate_title_from_url(url: str) -> str:
-    """Generate a title from URL if no title can be extracted.
-
-    Args:
-        url: The URL to generate title from
-
-    Returns:
-        Generated title
-    """
-    try:
-        parsed_url = urlparse(url)
-
-        # Use domain as base
-        domain = parsed_url.netloc.replace("www.", "")
-
-        # Try to use path segments
-        path = parsed_url.path
-        if path and path not in ("/", ""):
-            # Remove trailing slash
-            if path.endswith("/"):
-                path = path[:-1]
-
-            # Get last path segment
-            segments = path.split("/")
-            page = segments[-1] if segments else ""
-
-            if page:
-                # Convert slug to title
-                page = page.replace("-", " ").replace("_", " ")
-                page = " ".join(word.capitalize() for word in page.split())
-
-                # Remove file extension if present
-                if "." in page:
-                    page = page.split(".")[0]
-
-                return f"{page} - {domain}"
-
-        # Fallback to just the domain
-        return f"Page from {domain}"
-
-    except Exception as e:
-        logger.warning(f"Error generating title from URL: {e}")
-        return "Web Page"
 
 
 def find_main_content_container(soup: BeautifulSoup) -> Tag:
@@ -404,39 +357,82 @@ def validate_and_fix_content(content: Dict[str, Any], url: str) -> Dict[str, Any
         content = {}
 
     # Ensure title exists and is not empty
-    if not content.get("title") or len(content.get("title", "").strip()) < 2:
+    title = content.get("title", "")
+    if not title or len(title.strip()) < 2:
         content["title"] = generate_title_from_url(url)
 
-    # Ensure content is not empty
-    if (
-        not content.get("structured_content")
-        or len(content.get("structured_content", [])) == 0
-    ):
+    # Ensure structured_content exists and is not empty
+    structured = content.get("structured_content") or []
+    if not isinstance(structured, list) or len(structured) == 0:
         content["structured_content"] = [
             {
                 "type": "paragraph",
                 "content": f"This is a page from {url}. Content could not be properly extracted.",
             }
         ]
-
-    # Convert legacy formats
-    structured_content = content.get("structured_content", [])
-    i = 0
-    while i < len(structured_content):
-        item = structured_content[i]
-        # Handle list items format conversion
-        if item.get("type") == "list" and "items" in item:
-            list_items = item.pop("items", [])
-            # Remove the original list item
-            structured_content.pop(i)
-            # Insert individual bullet items
-            for list_item in reversed(list_items):
-                structured_content.insert(i, {"type": "bullet", "content": list_item})
-        else:
-            i += 1
+    else:
+        # Convert legacy list items
+        i = 0
+        while i < len(content["structured_content"]):
+            item = content["structured_content"][i]
+            if item.get("type") == "list" and "items" in item:
+                items = item.pop("items")
+                content["structured_content"].pop(i)
+                for entry in reversed(items):
+                    content["structured_content"].insert(
+                        i, {"type": "bullet", "content": entry}
+                    )
+                # continue at next index
+            else:
+                i += 1
 
     # Ensure images list exists
-    if "images" not in content:
+    if "images" not in content or not isinstance(content["images"], list):
         content["images"] = []
 
     return content
+
+
+def generate_title_from_url(url: str) -> str:
+    """Generate a title from URL if no title can be extracted.
+
+    Args:
+        url: The URL to generate title from
+
+    Returns:
+        Generated title
+    """
+    try:
+        parsed_url = urlparse(url)
+
+        # Use domain as base
+        domain = parsed_url.netloc.replace("www.", "")
+
+        # Try to use path segments
+        path = parsed_url.path
+        if path and path not in ("/", ""):
+            # Remove trailing slash
+            if path.endswith("/"):
+                path = path[:-1]
+
+            # Get last path segment
+            segments = path.split("/")
+            page = segments[-1] if segments else ""
+
+            if page:
+                # Convert slug to title
+                page = page.replace("-", " ").replace("_", " ")
+                page = " ".join(word.capitalize() for word in page.split())
+
+                # Remove file extension if present
+                if "." in page:
+                    page = page.split(".")[0]
+
+                return f"{page} - {domain}"
+
+        # Fallback to just the domain
+        return f"Page from {domain}"
+
+    except Exception as e:
+        logger.warning(f"Error generating title from URL: {e}")
+        return "Web Page"
