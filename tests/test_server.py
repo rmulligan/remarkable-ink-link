@@ -15,16 +15,17 @@ def call_extract(payload: bytes):
         Extracted URL string if valid, None otherwise
     """
     # Convert bytes to string
-    payload_str = payload.decode('utf-8')
+    payload_str = payload.decode("utf-8")
 
     # Handle JSON payload
-    if payload_str.startswith('{') and '"url":' in payload_str:
+    if payload_str.startswith("{") and '"url":' in payload_str:
         import json
+
         try:
             data = json.loads(payload_str)
-            if 'url' in data:
-                payload_str = data['url']
-        except:
+            if "url" in data:
+                payload_str = data["url"]
+        except Exception:
             return None
 
     # Check if URL matches the valid pattern
@@ -33,7 +34,7 @@ def call_extract(payload: bytes):
         return None
 
     # Handle special characters that make the URL unsafe
-    unsafe_chars = ['<', '^', '|', '\'', '"', '`']
+    unsafe_chars = ["<", "^", "|", "'", '"', "`"]
     for char in unsafe_chars:
         if char in url:
             # Get URL prefix up to the unsafe character
