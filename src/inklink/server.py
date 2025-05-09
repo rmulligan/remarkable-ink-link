@@ -112,6 +112,11 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
         "ai_service": provider.resolve(AIService),
     }
     
+    # Validate dependency injection configuration
+    for key, value in services.items():
+        if value is None:
+            raise ValueError("DI configuration error: '{}' service is not configured properly.".format(key))
+
     # Create router
     router = Router(services)
     
