@@ -24,7 +24,7 @@ readability-lxml = "^0.8.1"
 PyPDF2 = "^3.0.0"
 pdf2image = "^1.16.0"
 markdown = "^3.4.1"
-fastapi = "^0.95.2"
+fastapi = "^0.115.12"
 uvicorn = { version = "^0.34.2", extras = ["standard"] }
 python-multipart = "^0.0.18"
 httpx = "^0.24.1"
