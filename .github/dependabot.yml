@@ -20,6 +20,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      # Keeping ci label, but adding comment about potential issues
       - "ci"
     
   # JavaScript dependencies (if applicable)

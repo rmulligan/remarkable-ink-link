@@ -80,7 +80,7 @@ class GoogleDocsService:
     def fetch(self, url_or_id: str) -> Dict[str, Any]:
         """
         Fetch a Google Docs document by URL or ID.
-
+        
         Exports the document as HTML and processes it into a structured format
         suitable for document generation.
 

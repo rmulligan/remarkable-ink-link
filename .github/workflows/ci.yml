@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install dependencies
@@ -36,7 +36,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install dependencies
@@ -57,7 +57,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Login to Docker Hub
@@ -66,7 +66,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push multi-arch image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
