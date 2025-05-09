@@ -30,8 +30,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-    # Skip certain dependency updates
-    ignore:
-      # Optional: skip specific dependency updates
-      # - dependency-name: "example-dependency"
-      #   versions: [">=1.0.0"]
+    # If you need to ignore dependencies, uncomment and modify this section:
+    # ignore:
+    #   - dependency-name: "example-dependency"
+    #     versions: [">=1.0.0"]
