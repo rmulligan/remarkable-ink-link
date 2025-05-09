@@ -1077,12 +1077,30 @@ files = [
     {file = "lxml-5.3.2.tar.gz", hash = "sha256:773947d0ed809ddad824b7b14467e1a481b8976e87278ac4a730c2f7c7fcddc1"},
 ]
 
+[package.dependencies]
+lxml_html_clean = {version = "*", optional = true, markers = "extra == \"html-clean\""}
+
 [package.extras]
 cssselect = ["cssselect (>=0.7)"]
 html-clean = ["lxml_html_clean"]
 html5 = ["html5lib"]
 htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (>=3.0.11,<3.1.0)"]
+
+[[package]]
+name = "lxml-html-clean"
+version = "0.4.2"
+description = "HTML cleaner from lxml project"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "lxml_html_clean-0.4.2-py3-none-any.whl", hash = "sha256:74ccfba277adcfea87a1e9294f47dd86b05d65b4da7c5b07966e3d5f3be8a505"},
+    {file = "lxml_html_clean-0.4.2.tar.gz", hash = "sha256:91291e7b5db95430abf461bc53440964d58e06cc468950f9e47db64976cebcb3"},
+]
+
+[package.dependencies]
+lxml = "*"
 
 [[package]]
 name = "markdown"
@@ -1849,23 +1867,24 @@ test = ["coverage", "pytest"]
 
 [[package]]
 name = "readability-lxml"
-version = "0.8.1"
+version = "0.8.4.1"
 description = "fast html to text parser (article readability tool) with python 3 support"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "readability-lxml-0.8.1.tar.gz", hash = "sha256:e51fea56b5909aaf886d307d48e79e096293255afa567b7d08bca94d25b1a4e1"},
-    {file = "readability_lxml-0.8.1-py3-none-any.whl", hash = "sha256:e0d366a21b1bd6cca17de71a4e6ea16fcfaa8b0a5b4004e39e2c7eff884e6305"},
+    {file = "readability_lxml-0.8.4.1-py3-none-any.whl", hash = "sha256:874c0cea22c3bf2b78c7f8df831bfaad3c0a89b7301d45a188db581652b4b465"},
+    {file = "readability_lxml-0.8.4.1.tar.gz", hash = "sha256:9d2924f5942dd7f37fb4da353263b22a3e877ccf922d0e45e348e4177b035a53"},
 ]
 
 [package.dependencies]
 chardet = "*"
 cssselect = "*"
-lxml = "*"
+lxml = {version = "*", extras = ["html-clean"]}
+lxml-html-clean = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
-test = ["timeout-decorator"]
+speed = ["cchardet"]
 
 [[package]]
 name = "requests"
@@ -2428,4 +2447,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "dc9b93246dee096247cf01a85825283523be7b6bc1d43a40d80f0e278c43a7a8"
+content-hash = "7120f26f6570d51b4952d67c06605eb17c9523970d5d36290fa93a381ff220ce"
