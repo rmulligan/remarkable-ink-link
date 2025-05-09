@@ -16,6 +16,25 @@ class IWebScraperService(ABC):
         pass
 
 
+class IContentConverter(ABC):
+    @abstractmethod
+    def can_convert(self, content_type: str) -> bool:
+        """Check if this converter can handle the given content type"""
+        pass
+    
+    @abstractmethod
+    def convert(self, content: Dict[str, Any], output_path: str) -> Optional[str]:
+        """Convert content to the target format and return the output path"""
+        pass
+
+
+class IDocumentRenderer(ABC):
+    @abstractmethod
+    def render(self, content: Dict[str, Any], output_path: str) -> Optional[str]:
+        """Render content to the output path and return the path on success"""
+        pass
+
+
 class IDocumentService(ABC):
     @abstractmethod
     def create_hcl(self, url: str, qr_path: str, content: Dict) -> Optional[str]:
@@ -25,6 +44,16 @@ class IDocumentService(ABC):
     @abstractmethod
     def create_rmdoc(self, hcl_path: str, url: str) -> Optional[str]:
         """Convert HCL to Remarkable document"""
+        pass
+    
+    @abstractmethod
+    def create_rmdoc_from_content(self, url: str, qr_path: str, content: Dict[str, Any]) -> Optional[str]:
+        """Create reMarkable document from structured content"""
+        pass
+    
+    @abstractmethod
+    def create_rmdoc_from_html(self, url: str, qr_path: str, html_content: str, title: Optional[str] = None) -> Optional[str]:
+        """Create reMarkable document directly from HTML content"""
         pass
 
 
