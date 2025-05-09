@@ -298,7 +298,7 @@ class DocumentService(IDocumentService):
         # For now, we'll keep the original implementation to avoid breaking changes
         from inklink.utils.hcl_render import create_hcl_from_content
 
-        return create_hcl_from_content(url, qr_path, content, self.temp_dir)
+        return create_hcl_from_content(url, qr_path, content, self.temp_dir, None)
 
     def create_rmdoc(self, hcl_path: str, url: str) -> Optional[str]:
         """

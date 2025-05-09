@@ -15,8 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 def create_hcl_from_content(
-    url: str, qr_path: str, content: Dict[str, Any], temp_dir: str,
-    config: Optional[Dict[str, Any]] = None
+    url: str,
+    qr_path: str,
+    content: Dict[str, Any],
+    temp_dir: str,
+    config: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     Create HCL script from structured content.
