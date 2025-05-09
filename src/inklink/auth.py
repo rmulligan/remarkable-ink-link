@@ -11,15 +11,22 @@ app = FastAPI()
 
 @app.get("/auth", response_class=HTMLResponse)
 def auth_form():
+    # Display instructions for pairing code authentication
     return HTMLResponse(
         """
         <html>
-          <head><title>InkLink reMarkable Authentication</title></head>
+          <head><title>InkLink reMarkable Pairing</title></head>
           <body>
-            <h1>InkLink reMarkable Cloud Authentication</h1>
+            <h1>Pair InkLink with your reMarkable</h1>
+            <p>To authenticate InkLink with your reMarkable Cloud account, get your one-time pairing code.</p>
+            <p><strong>Note:</strong> rmapi currently only accepts the 8-digit pairing codes from device pairing.</p>
+            <ol>
+              <li>Navigate to <a href="https://my.remarkable.com/device/remarkable?showOtp=true" target="_blank">https://my.remarkable.com/device/remarkable?showOtp=true</a></li>
+              <li>Copy the 8-digit code shown on the remarkable device pairing page.</li>
+              <li>Paste it below and click Connect.</li>
+            </ol>
             <form action="/auth" method="post">
-              <label>Email: <input type="email" name="username" required></label><br/>
-              <label>Password: <input type="password" name="password" required></label><br/>
+              <label>Pairing Code: <input type="text" name="code" required></label><br/>
               <button type="submit">Connect</button>
             </form>
           </body>
@@ -30,10 +37,12 @@ def auth_form():
 
 
 @app.post("/auth", response_class=HTMLResponse)
-def auth_submit(username: str = Form(...), password: str = Form(...)):
-    # Run ddvk rmapi config using configured path
-    rmapi = CONFIG.get("RMAPI_PATH", os.getenv("RMAPI_PATH", "rmapi"))
-    cmd = [rmapi, "config", "--username", username, "--password", password]
+def auth_submit(code: str = Form(...)):
+    # Run ddvk rmapi pairing using the provided pairing code
+    # Path to rmapi executable
+    rmapi = CONFIG.get("RMAPI_PATH", "rmapi")
+    # Use pairing code authentication; adjust flag as per rmapi version
+    cmd = [rmapi, "config", "--pairing-code", code]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
@@ -41,14 +50,15 @@ def auth_submit(username: str = Form(...), password: str = Form(...)):
                 """
                 <html><body>
                   <h2>Authentication successful!</h2>
-                  <p>You can close this window.</p>
+                  <p>You may now close this window and restart the server.</p>
                 </body></html>
                 """,
                 status_code=200,
             )
         else:
+            err = result.stderr or result.stdout
             return HTMLResponse(
-                f"<html><body><h2>Authentication failed</h2><pre>{result.stderr}</pre></body></html>",
+                f"<html><body><h2>Authentication failed</h2><pre>{err}</pre></body></html>",
                 status_code=400,
             )
     except Exception as e:

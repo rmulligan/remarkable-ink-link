@@ -1,9 +1,9 @@
 import os
 import subprocess
 import logging
-import shutil
 import uuid
 import tempfile
+import shutil
 from typing import Optional, Tuple, Any
 from .interfaces import IRemarkableService
 
@@ -18,6 +18,25 @@ class RemarkableService(IRemarkableService):
     def __init__(self, rmapi_path: str, upload_folder: str = "/"):
         self.rmapi_path = rmapi_path
         self.upload_folder = upload_folder
+
+    def test_connection(self) -> Tuple[bool, str]:  # noqa: D102
+        """
+        Test connectivity and authentication to reMarkable cloud via rmapi.
+        Returns (True, message) if authenticated, (False, error_message) otherwise.
+        """
+        try:
+            # Attempt to list files in the target folder as an auth test
+            cmd = [self.rmapi_path, "ls", self.upload_folder]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                # Authentication or connectivity failed
+                err = (
+                    result.stderr or result.stdout or f"Exit code {result.returncode}"
+                ).strip()
+                return False, err
+            return True, "OK"
+        except Exception as e:
+            return False, str(e)
 
     # First implementation removed - keeping only the version with retry functionality
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
@@ -276,65 +295,64 @@ class RemarkableService(IRemarkableService):
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
             filename = filename.replace(char, "_")
+        return filename
 
+    def get_notebook(self, notebook_id: str, export_format: str = "pdf") -> Optional[bytes]:
+        """
+        Retrieve a notebook from the reMarkable cloud using rmapi.
+        Args:
+            notebook_id: The unique identifier of the notebook.
+            export_format: The format to export (e.g., "pdf", "zip", "raw").
+        Returns:
+            The notebook data as bytes, or None if retrieval failed.
+        """
+        import tempfile
 
-def get_notebook(self, notebook_id: str, export_format: str = "pdf") -> Optional[bytes]:
-    """
-    Retrieve a notebook from the reMarkable cloud using rmapi.
-    Args:
-        notebook_id: The unique identifier of the notebook.
-        export_format: The format to export (e.g., "pdf", "zip", "raw").
-    Returns:
-        The notebook data as bytes, or None if retrieval failed.
-    """
-    import tempfile
-
-    if not os.path.exists(self.rmapi_path):
-        logger.error(f"rmapi executable not found at {self.rmapi_path}")
-        return None
-
-    with tempfile.NamedTemporaryFile(
-        suffix=f".{export_format}", delete=True
-    ) as tmpfile:
-        output_path = tmpfile.name
-
-        def _retrieve():
-            cmd = [
-                self.rmapi_path,
-                "get",
-                notebook_id,
-                output_path,
-                "--format",
-                export_format,
-            ]
-            logger.info(f"Running rmapi command: {' '.join(cmd)}")
-            result = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-            )
-            if result.returncode != 0:
-                raise RuntimeError(
-                    f"rmapi get failed: {result.stderr.decode().strip()}"
-                )
-            if not os.path.exists(output_path):
-                raise FileNotFoundError("Output file not created by rmapi.")
-            return True
-
-        try:
-            success = retry_operation(
-                _retrieve,
-                operation_name="Remarkable get_notebook",
-            )
-            if not success:
-                logger.error("Failed to retrieve notebook after retries.")
-                return None
-            tmpfile.seek(0)
-            data = tmpfile.read()
-            logger.info(f"Notebook {notebook_id} retrieved successfully.")
-            return data
-        except Exception as e:
-            logger.error(format_error("get_notebook", "Failed to retrieve notebook", e))
+        if not os.path.exists(self.rmapi_path):
+            logger.error(f"rmapi executable not found at {self.rmapi_path}")
             return None
-    return filename.strip()
+
+        with tempfile.NamedTemporaryFile(
+            suffix=f".{export_format}", delete=True
+        ) as tmpfile:
+            output_path = tmpfile.name
+
+            def _retrieve():
+                cmd = [
+                    self.rmapi_path,
+                    "get",
+                    notebook_id,
+                    output_path,
+                    "--format",
+                    export_format,
+                ]
+                logger.info(f"Running rmapi command: {' '.join(cmd)}")
+                result = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                if result.returncode != 0:
+                    raise RuntimeError(
+                        f"rmapi get failed: {result.stderr.decode().strip()}"
+                    )
+                if not os.path.exists(output_path):
+                    raise FileNotFoundError("Output file not created by rmapi.")
+                return True
+
+            try:
+                success = retry_operation(
+                    _retrieve,
+                    operation_name="Remarkable get_notebook",
+                )
+                if not success:
+                    logger.error("Failed to retrieve notebook after retries.")
+                    return None
+                tmpfile.seek(0)
+                data = tmpfile.read()
+                logger.info(f"Notebook {notebook_id} retrieved successfully.")
+                return data
+            except Exception as e:
+                logger.error(format_error("get_notebook", "Failed to retrieve notebook", e))
+                return None
