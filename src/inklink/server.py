@@ -72,12 +72,259 @@ class URLHandler(BaseHTTPRequestHandler):
 
     # _is_safe_url removed; use is_safe_url from utils instead
 
+    def do_GET(self):
+        """Handle GET requests for auth, download, and response endpoints."""
+        # Authentication form
+        if self.path == "/auth":
+            self._send_auth_form()
+        # File download
+        elif self.path.startswith("/download/"):
+            self._handle_download()
+        # Response endpoint
+        elif self.path.startswith("/response"):
+            self._handle_response()
+        else:
+            self._send_error("Invalid endpoint. Use /auth, /download/<file>, /response, or /share")
+
+    def _handle_download(self):
+        """Handle download requests for generated documents."""
+        from urllib.parse import unquote
+        import os.path
+        import re
+
+        # Get the filename from the path and sanitize it
+        fname = unquote(self.path[len("/download/") :])
+
+        # Prevent path traversal by removing directory components and only allowing specific characters
+        safe_fname = re.sub(r"[^a-zA-Z0-9._-]", "", os.path.basename(fname))
+
+        if not safe_fname:
+            self.send_response(400)
+            self.end_headers()
+            return
+
+        temp_dir = CONFIG.get("TEMP_DIR")
+        file_path = os.path.join(temp_dir, safe_fname)
+
+        # Verify the file exists and is within the temp directory
+        real_path = os.path.realpath(file_path)
+        if not real_path.startswith(
+            os.path.realpath(temp_dir)
+        ) or not os.path.isfile(real_path):
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header(
+            "Content-Disposition", f'attachment; filename="{safe_fname}"'
+        )
+        self.end_headers()
+
+        with open(real_path, "rb") as f:
+            while True:
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+
+    def _handle_response(self):
+        """Handle requests for /response endpoint."""
+        query = urlparse(self.path).query
+        params = parse_qs(query)
+        response_id = params.get("response_id", [None])[0]
+        if (
+            not response_id
+            or response_id not in cast(ServerType, self.server).responses
+        ):
+            self._send_json({"error": "Invalid response_id"}, status=400)
+            return
+        resp = cast(ServerType, self.server).responses[response_id]
+        self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
+
+    def _send_auth_form(self):
+        """Serve the authentication HTML form."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+        html = """<html><body>
+        <h1>reMarkable Authentication</h1>
+        <p>Go to <a href="https://my.remarkable.com/device/browser/connect" target="_blank">my.remarkable.com/device/browser/connect</a> and get your one-time code.</p>
+        <form method="post" action="/auth">
+          <label>One-time code: <input type="text" name="code"/></label>
+          <button type="submit">Authenticate</button>
+        </form>
+        </body></html>"""
+        self.wfile.write(html.encode("utf-8"))
+
+    def _handle_auth(self):
+        """Process authentication code and run rmapi login."""
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        from urllib.parse import parse_qs
+
+        params = parse_qs(post_data.decode("utf-8"))
+        code = params.get("code", [""])[0].strip()
+        if not code:
+            self.send_response(400)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(
+                b"<html><body><h1>Error: No code provided.</h1><a href='/auth'>Try again</a></body></html>"
+            )
+            return
+
+        rmapi = CONFIG["RMAPI_PATH"]
+        logger.info("Starting rmapi authentication with one-time code")
+
+        # First, try to authenticate using the more direct approach with expect script
+        try:
+            import tempfile
+
+            # Create a temporary expect script file
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".exp", delete=False
+            ) as expect_file:
+                expect_path = expect_file.name
+                expect_file.write(
+                    f"""#!/usr/bin/expect -f
+                set timeout 30
+                set code "{code}"
+
+                spawn {rmapi} ls
+                expect {{
+                    "Enter one-time code:" {{
+                        send "$code\\r"
+                        exp_continue
+                    }}
+                    "Permanent token stored" {{
+                        exit 0
+                    }}
+                    eof {{
+                        exit 1
+                    }}
+                    timeout {{
+                        exit 2
+                    }}
+                }}
+                """
+                )
+
+            # Make the script executable
+            os.chmod(expect_path, 0o755)
+
+            # Run the expect script
+            process = subprocess.run(
+                [expect_path], capture_output=True, text=True, timeout=45
+            )
+
+            # Remove the temporary script
+            try:
+                os.unlink(expect_path)
+            except Exception:
+                pass
+
+            # Check if authentication was successful
+            if process.returncode == 0:
+                logger.info("Authentication successful using expect script")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                self.wfile.write(
+                    b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>"
+                )
+                return
+
+            # If expect script failed, fall back to alternative method
+            logger.warning(
+                f"Expect script failed with code {process.returncode}, output: {process.stdout}"
+            )
+
+        except Exception as e:
+            logger.warning(f"Expect script approach failed: {str(e)}")
+            # Continue to fallback method
+
+        # Fallback: Try using named pipe approach which is more reliable than PTY
+        try:
+            import tempfile
+            from time import time as get_time
+
+            # Create a named pipe (FIFO)
+            pipe_path = os.path.join(
+                tempfile.gettempdir(), f"rmapi_auth_{int(get_time())}.pipe"
+            )
+            try:
+                os.mkfifo(pipe_path)
+            except Exception as e:
+                logger.error(f"Failed to create named pipe: {str(e)}")
+                raise
+
+            # Start a process that will write the code to the pipe
+            with open(pipe_path, "w") as fifo:
+                # Write the code with a newline
+                fifo.write(f"{code}\n")
+                fifo.flush()
+
+                # Run rmapi with stdin from the pipe
+                process = subprocess.run(
+                    [rmapi, "ls"],
+                    stdin=open(pipe_path, "r"),
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+
+            # Remove the pipe
+            try:
+                os.unlink(pipe_path)
+            except Exception:
+                pass
+
+            # Check the result
+            if process.returncode == 0:
+                logger.info("Authentication successful using named pipe")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                self.wfile.write(
+                    b"<html><body><h1>Authentication Successful!</h1><p>You can now use the /share endpoint.</p></body></html>"
+                )
+            else:
+                logger.error(f"Authentication failed: {process.stderr}")
+                self.send_response(400)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                msg = f"""<html><body>
+                    <h1>Authentication Failed</h1>
+                    <pre>{process.stderr}</pre>
+                    <a href='/auth'>Try again</a>
+                    </body></html>"""
+                self.wfile.write(msg.encode("utf-8"))
+
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            self.send_response(500)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            err = str(e)
+            msg = f"""<html><body>
+                <h1>Error running rmapi login</h1>
+                <pre>{err}</pre>
+                <p>Please try again or check server logs.</p>
+                <a href='/auth'>Try again</a>
+                </body></html>"""
+            self.wfile.write(msg.encode("utf-8"))
+
     def do_POST(self):
         """Handle POST requests for multiple endpoints."""
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length) if content_length > 0 else b""
 
-        if self.path == "/auth/remarkable":
+        if self.path == "/auth":
+            self._handle_auth()
+            return
+        elif self.path == "/auth/remarkable":
             try:
                 data = json.loads(post_data.decode("utf-8"))
                 token = data.get("token")
@@ -414,10 +661,16 @@ class URLHandler(BaseHTTPRequestHandler):
                 self._send_error("Failed to process PDF")
                 return
 
-            # Use new RCU-based conversion method
+            # First try RCU-based conversion method if available
             rm_path = self.document_service.create_pdf_rmdoc(
                 result["pdf_path"], result["title"], qr_path
             )
+
+            # If RCU conversion failed, try HCL-based method with image support
+            if not rm_path:
+                hcl_path = self.document_service.create_pdf_hcl(
+                    result["pdf_path"], result["title"], qr_path, result.get("images")
+                )
 
             # If RCU conversion failed, try legacy conversion
             if not rm_path:
@@ -443,9 +696,31 @@ class URLHandler(BaseHTTPRequestHandler):
             success, message = self.remarkable_service.upload(rm_path, result["title"])
 
             if success:
-                self._send_success(
-                    f"PDF uploaded to Remarkable as native ink: {result['title']}"
-                )
+                # Provide optional download link for the converted PDF ink document
+                from urllib.parse import quote
+                import os
+
+                # Create response message
+                message = f"PDF uploaded to Remarkable as native ink: {result['title']}"
+
+                # Check if client accepts JSON (modern client)
+                accept_header = self.headers.get("Accept", "")
+                if "application/json" in accept_header:
+                    # Return JSON response with download link for new clients
+                    fname = os.path.basename(rm_path)
+                    download_url = f"/download/{quote(fname)}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    resp = {
+                        "success": True,
+                        "message": message,
+                        "download": download_url,
+                    }
+                    self.wfile.write(json.dumps(resp).encode("utf-8"))
+                else:
+                    # Return plain text response for backward compatibility
+                    self._send_success(message)
             else:
                 self._send_error(f"Failed to upload PDF: {message}")
 
@@ -512,10 +787,32 @@ class URLHandler(BaseHTTPRequestHandler):
             )
 
             if success:
+                # Provide optional download link for the converted document
+                from urllib.parse import quote
+                import os
+
+                # Create response message
+                message = f"Webpage uploaded to Remarkable: {content['title']}"
+
+                # Check if client accepts JSON (modern client)
+                accept_header = self.headers.get("Accept", "")
+                if "application/json" in accept_header:
+                    # Return JSON response with download link for new clients
+                    fname = os.path.basename(rm_path)
+                    download_url = f"/download/{quote(fname)}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    resp = {
+                        "success": True,
+                        "message": message,
+                        "download": download_url,
+                    }
+                    self.wfile.write(json.dumps(resp).encode("utf-8"))
+                else:
+                    # Return plain text response for backward compatibility
+                    self._send_success(message)
                 logger.info(f"Webpage uploaded to Remarkable: {content['title']}")
-                self._send_success(
-                    f"Webpage uploaded to Remarkable: {content['title']}"
-                )
             else:
                 logger.error(f"Failed to upload document: {message}")
                 self._send_error(f"Failed to upload document: {message}")
@@ -542,24 +839,6 @@ class URLHandler(BaseHTTPRequestHandler):
         self.end_headers()
         response = json.dumps({"success": False, "message": message})
         self.wfile.write(response.encode("utf-8"))
-
-    def do_GET(self):
-        """Handle GET requests for /response."""
-
-        if self.path.startswith("/response"):
-            query = urlparse(self.path).query
-            params = parse_qs(query)
-            response_id = params.get("response_id", [None])[0]
-            if (
-                not response_id
-                or response_id not in cast(ServerType, self.server).responses
-            ):
-                self._send_json({"error": "Invalid response_id"}, status=400)
-                return
-            resp = cast(ServerType, self.server).responses[response_id]
-            self._send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
-        else:
-            self._send_json({"error": "Invalid endpoint"}, status=404)
 
     def _send_json(self, obj, status=200):
         self.send_response(status)
