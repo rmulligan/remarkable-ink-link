@@ -1,12 +1,15 @@
 import os
 import pytest
 import subprocess
+import time
+import logging
 from unittest.mock import MagicMock, patch
 from tempfile import NamedTemporaryFile
 from inklink.config import CONFIG
 from inklink.utils.hcl_render import create_hcl_from_content, escape_hcl
-
 from inklink.services.document_service import DocumentService
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -393,6 +396,39 @@ def test_handle_mixed_content(document_service, tmp_path, monkeypatch):
     # Test with mixed content
     result = document_service.create_rmdoc_from_content(
         url="https://example.com/test", qr_path="", content=url_test_content
+    )
+
+    # Verify result
+    assert result is not None
+    assert os.path.exists(result)
+
+    # Test case 3: Mixed content types
+    mixed_content = {
+        "title": "Mixed Content Types",
+        "structured_content": [
+            {"type": "h1", "content": "Valid heading"},
+            {
+                "type": "paragraph",
+                "content": "Text with special characters: &lt;script&gt;alert('xss')&lt;/script&gt;\nAnd invalid HTML: <div>broken</div>",
+            },
+            {
+                "type": "code",
+                "content": "valid code\nif x:\n    print(x)\ninvalid indentation",
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Valid item",
+                    "<b>Invalid HTML in list</b>",
+                    "Another valid item",
+                ],
+            },
+        ],
+    }
+
+    # Test with mixed content
+    result = document_service.create_rmdoc_from_content(
+        url="https://example.com/test", qr_path="", content=mixed_content
     )
 
     # Verify result
