@@ -45,15 +45,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: rmulligan/remarkable-ink-link
+          OWNER: rmulligan
           PROJECT_NAME: InkLink Kanban
         run: |
-          # Determine the URL of the new item (issue or PR)
+          # Determine the URL and node ID of the new item (issue or PR)
           if [ "${{ github.event_name }}" = "issues" ]; then
             ITEM_URL="${{ github.event.issue.html_url }}"
+            ITEM_ID="${{ github.event.issue.node_id }}"
           else
             ITEM_URL="${{ github.event.pull_request.html_url }}"
+            ITEM_ID="${{ github.event.pull_request.node_id }}"
           fi
           # Find the project number
-          PROJ_NUM=$(gh projects list --repo "$REPO" --json number,name --jq '.[] | select(.name=="'"$PROJECT_NAME"'").number')
+          PROJ_NUM=$(gh project list --owner "$OWNER" --format json | jq -r --arg name "$PROJECT_NAME" '.projects[] | select(.title==$name) | .number')
           echo "Adding $ITEM_URL to project '$PROJECT_NAME' (number $PROJ_NUM)"
-          gh projects item-add "$PROJ_NUM" --repo "$REPO" --url "$ITEM_URL"
+          gh project item-add --owner "$OWNER" --project-number "$PROJ_NUM" --id "$ITEM_ID"
