@@ -81,5 +81,5 @@ class BaseConverter(IContentConverter, ABC):
             Path to the temporary file
         """
         timestamp = int(time.time())
-        filename = f"{prefix}_{hash(url_or_id)}_{timestamp}.{extension}"
+        filename = f"{prefix}_{abs(hash(url_or_id))}_{timestamp}.{extension}"
         return os.path.join(self.temp_dir, filename)
