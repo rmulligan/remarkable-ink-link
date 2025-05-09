@@ -15,6 +15,7 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
+      # Note: Additional project-related permissions are granted via PAT_TOKEN
 
     steps:
       - name: Checkout code
@@ -38,12 +39,12 @@ jobs:
           fi
       - name: Bootstrap Kanban project
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: bash scripts/manage_project.sh
 
       - name: Add new issue/PR to InkLink Kanban
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           REPO: rmulligan/remarkable-ink-link
           OWNER: rmulligan
           PROJECT_NAME: InkLink Kanban
