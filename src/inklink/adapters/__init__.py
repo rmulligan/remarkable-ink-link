@@ -8,7 +8,7 @@ from inklink.adapters.handwriting_adapter import HandwritingAdapter
 from inklink.adapters.http_adapter import HTTPAdapter
 
 __all__ = [
-    'RemarkableAdapter',
-    'HandwritingAdapter',
-    'HTTPAdapter',
+    "RemarkableAdapter",
+    "HandwritingAdapter",
+    "HTTPAdapter",
 ]

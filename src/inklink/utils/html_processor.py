@@ -1,175 +1,313 @@
 """HTML processing utilities for InkLink.
 
-This module provides utilities for extracting structured content from HTML.
+This module provides functions for processing HTML content into structured
+data suitable for document generation.
 """
 
-import logging
 import re
-from typing import Dict, Any, List
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import logging
+from typing import Dict, Any, List, Tuple, Optional
+from urllib.parse import urlparse
+
+from bs4 import BeautifulSoup, Tag
 
 logger = logging.getLogger(__name__)
+
+
+def extract_title_from_html(soup: BeautifulSoup) -> str:
+    """
+    Extract title from HTML using various methods.
+
+    Tries:
+    1. OpenGraph meta tag
+    2. Twitter meta tag
+    3. Traditional title tag
+    4. First h1 tag
+
+    Args:
+        soup: BeautifulSoup object of HTML document
+
+    Returns:
+        Best available title or empty string
+    """
+    # Try OpenGraph title
+    og_title = soup.find("meta", property="og:title")
+    if og_title and og_title.get("content"):
+        return og_title["content"].strip()
+
+    # Try Twitter Card title
+    twitter_title = soup.find("meta", property="twitter:title")
+    if twitter_title and twitter_title.get("content"):
+        return twitter_title["content"].strip()
+
+    # Try traditional title
+    if soup.title and soup.title.string:
+        return soup.title.string.strip()
+
+    # Try first h1
+    h1 = soup.find("h1")
+    if h1 and h1.text:
+        return h1.text.strip()
+
+    return ""
+
+
+def generate_title_from_url(url: str) -> str:
+    """
+    Generate a readable title from a URL.
+
+    Args:
+        url: URL to extract title from
+
+    Returns:
+        Human-readable title derived from URL
+    """
+    try:
+        # Parse URL
+        parsed = urlparse(url)
+
+        # Get domain without www.
+        domain = parsed.netloc
+        if domain.startswith("www."):
+            domain = domain[4:]
+
+        # Get path without trailing slash
+        path = parsed.path
+        if path.endswith("/"):
+            path = path[:-1]
+
+        # If path is empty, return domain-based title
+        if not path:
+            return f"Page from {domain}"
+
+        # Get last path segment
+        segments = path.strip("/").split("/")
+        last_segment = segments[-1]
+
+        # Convert hyphens, underscores to spaces
+        last_segment = re.sub(r"[-_]", " ", last_segment)
+
+        # Title case and remove file extension
+        title = " ".join(word.capitalize() for word in last_segment.split())
+        title = re.sub(r"\.[a-zA-Z0-9]+$", "", title)
+
+        return f"{title} - {domain}"
+
+    except Exception as e:
+        logger.error(f"Error generating title from URL: {e}")
+        return "Document"
+
+
+def find_main_content_container(soup: BeautifulSoup) -> Tag:
+    """
+    Find the main content container in HTML.
+
+    Looks for content in this priority:
+    1. <main>
+    2. <article>
+    3. <div id="content">
+    4. <div class="content">
+    5. <body>
+
+    Args:
+        soup: BeautifulSoup object
+
+    Returns:
+        BeautifulSoup Tag containing main content
+    """
+    # Look for <main> (HTML5 semantic element)
+    main_element = soup.find("main")
+    if main_element:
+        return main_element
+
+    # Look for <article>
+    article = soup.find("article")
+    if article:
+        return article
+
+    # Look for div with id="content"
+    content_div = soup.find("div", id="content")
+    if content_div:
+        return content_div
+
+    # Look for div with class containing "content"
+    content_class = soup.find("div", class_=lambda c: c and "content" in c.lower())
+    if content_class:
+        return content_class
+
+    # Fallback to <body>
+    return soup.body or soup
+
+
+def parse_html_container(
+    container: Tag, base_url: str
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """
+    Parse an HTML container into structured content and images.
+
+    Args:
+        container: BeautifulSoup Tag to parse
+        base_url: Base URL for resolving relative links
+
+    Returns:
+        Tuple of (structured_content, images)
+    """
+    structured_content = []
+    images = []
+
+    if not container:
+        return structured_content, images
+
+    # Process all elements
+    for element in container.children:
+        if not isinstance(element, Tag):
+            continue
+
+        # Handle different element types
+        if element.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+            structured_content.append(
+                {"type": element.name, "content": element.get_text().strip()}
+            )
+
+        elif element.name == "p":
+            structured_content.append(
+                {"type": "paragraph", "content": element.get_text().strip()}
+            )
+
+        elif element.name in ["ul", "ol"]:
+            items = [li.get_text().strip() for li in element.find_all("li")]
+            if items:
+                structured_content.append(
+                    {
+                        "type": "list",
+                        "content": f"{'Numbered' if element.name == 'ol' else 'Bullet'} List",
+                        "items": items,
+                    }
+                )
+
+        elif element.name == "pre":
+            # Handle code blocks
+            structured_content.append(
+                {"type": "code", "content": element.get_text().strip()}
+            )
+
+        elif element.name == "img":
+            # Process image
+            src = element.get("src", "")
+            alt = element.get("alt", "")
+
+            # Make relative URLs absolute
+            if src and not (src.startswith("http://") or src.startswith("https://")):
+                src = f"{base_url.rstrip('/')}/{src.lstrip('/')}"
+
+            if src:
+                image_data = {
+                    "url": src,
+                    "caption": alt,
+                }
+                images.append(image_data)
+
+                # Add image reference to content
+                structured_content.append(
+                    {"type": "image", "content": alt or "Image", "url": src}
+                )
+
+        elif element.name == "blockquote":
+            structured_content.append(
+                {"type": "quote", "content": element.get_text().strip()}
+            )
+
+        # Recursively process div, article, section, etc.
+        elif element.name in ["div", "article", "section", "main", "aside"]:
+            sub_content, sub_images = parse_html_container(element, base_url)
+            structured_content.extend(sub_content)
+            images.extend(sub_images)
+
+    return structured_content, images
 
 
 def extract_structured_content(html_content: str, url: str) -> Dict[str, Any]:
     """
     Extract structured content from HTML.
-    
+
     Args:
-        html_content: HTML content to extract from
-        url: Source URL for resolving relative links
-        
+        html_content: HTML content string
+        url: Source URL
+
     Returns:
         Dictionary with title, structured_content, and images
     """
     try:
         soup = BeautifulSoup(html_content, "html.parser")
-        
-        # Extract title (try meta tags first, then title tag)
-        title = extract_title(soup) or url
-        
-        # Extract content
-        structured_content = []
-        images = []
-        
-        # Process body content
-        body = soup.body or soup
-        for element in body.find_all(recursive=True):
-            # Skip hidden elements
-            if element.get("hidden") or element.get("style") == "display:none":
-                continue
-                
-            # Process based on element type
-            if element.name == "h1":
-                structured_content.append({"type": "h1", "content": element.get_text().strip()})
-            elif element.name == "h2":
-                structured_content.append({"type": "h2", "content": element.get_text().strip()})
-            elif element.name == "h3":
-                structured_content.append({"type": "h3", "content": element.get_text().strip()})
-            elif element.name == "p" and element.get_text().strip():
-                structured_content.append({"type": "paragraph", "content": element.get_text().strip()})
-            elif element.name == "ul" or element.name == "ol":
-                items = [li.get_text().strip() for li in element.find_all("li") if li.get_text().strip()]
-                if items:
-                    structured_content.append({"type": "list", "items": items})
-            elif element.name == "pre" or element.name == "code":
-                structured_content.append({"type": "code", "content": element.get_text().strip()})
-            elif element.name == "blockquote":
-                structured_content.append({"type": "quote", "content": element.get_text().strip()})
-            elif element.name == "img" and element.get("src"):
-                image_url = urljoin(url, element.get("src"))
-                alt_text = element.get("alt", "")
-                images.append({"url": image_url, "alt": alt_text})
-                structured_content.append({"type": "image", "url": image_url, "alt": alt_text})
-                
-        # Handle empty content
-        if not structured_content:
-            main_text = body.get_text().strip()
-            if main_text:
-                # Split text into paragraphs
-                paragraphs = [p.strip() for p in re.split(r'\n\s*\n', main_text) if p.strip()]
-                for p in paragraphs:
-                    structured_content.append({"type": "paragraph", "content": p})
-            else:
-                structured_content.append({"type": "paragraph", "content": "No content extracted"})
-                
+
+        # Extract title
+        title = extract_title_from_html(soup)
+        if not title:
+            title = generate_title_from_url(url)
+
+        # Find main content
+        main_container = find_main_content_container(soup)
+
+        # Parse content
+        structured_content, images = parse_html_container(main_container, url)
+
         return {
             "title": title,
             "structured_content": structured_content,
             "images": images,
         }
-        
+
     except Exception as e:
         logger.error(f"Error extracting structured content: {e}")
         return {
-            "title": url,
-            "structured_content": [{"type": "paragraph", "content": f"Error extracting content: {e}"}],
+            "title": generate_title_from_url(url),
+            "structured_content": [
+                {
+                    "type": "paragraph",
+                    "content": f"Failed to extract content from {url}: {e}",
+                }
+            ],
             "images": [],
         }
 
 
-def extract_title(soup: BeautifulSoup) -> str:
-    """
-    Extract title from HTML using various methods.
-    
-    Args:
-        soup: BeautifulSoup object
-        
-    Returns:
-        Title string, or empty string if no title found
-    """
-    # Try OpenGraph title (both property and meta with name)
-    og_title = soup.find("meta", attrs={"property": "og:title"})
-    if not og_title:
-        og_title = soup.find("meta", attrs={"name": "og:title"})
-    
-    if og_title and og_title.get("content"):
-        return og_title["content"].strip()
-        
-    # Try Twitter title
-    twitter_title = soup.find("meta", attrs={"property": "twitter:title"})
-    if not twitter_title:
-        twitter_title = soup.find("meta", attrs={"name": "twitter:title"})
-    
-    if twitter_title and twitter_title.get("content"):
-        return twitter_title["content"].strip()
-        
-    # Try main heading
-    h1 = soup.find("h1")
-    if h1 and h1.get_text().strip():
-        return h1.get_text().strip()
-        
-    # Try title tag
-    title_tag = soup.find("title")
-    if title_tag and title_tag.get_text().strip():
-        return title_tag.get_text().strip()
-        
-    return ""
-
-
 def validate_and_fix_content(content: Dict[str, Any], url: str) -> Dict[str, Any]:
     """
-    Validate and fix structured content.
-    
+    Validate and fix content structure, ensuring all required keys exist.
+
     Args:
-        content: Structured content to validate
-        url: Source URL
-        
+        content: Structured content dictionary
+        url: Fallback URL for generating title
+
     Returns:
-        Validated and fixed content
+        Validated and fixed content dictionary
     """
+    # Initialize with defaults if empty
+    if not content:
+        content = {}
+
     # Ensure title exists
-    if not content.get("title"):
-        content["title"] = url
-        
-    # Ensure structured_content exists and is a list
-    if not content.get("structured_content") or not isinstance(content["structured_content"], list):
-        content["structured_content"] = [{"type": "paragraph", "content": "No content extracted"}]
-        
-    # Ensure images exists and is a list
-    if not content.get("images") or not isinstance(content["images"], list):
+    if "title" not in content or not content["title"]:
+        content["title"] = generate_title_from_url(url)
+
+    # Ensure structured_content exists
+    if "structured_content" not in content:
+        content["structured_content"] = []
+
+    # Ensure images exists
+    if "images" not in content:
         content["images"] = []
-        
-    # Validate each content item
-    for i, item in enumerate(content["structured_content"]):
-        # Ensure each item has a type
-        if not item.get("type"):
-            item["type"] = "paragraph"
-            
-        # Ensure text content exists
-        if item["type"] in ["paragraph", "h1", "h2", "h3", "code", "quote"]:
-            if not item.get("content") or not isinstance(item["content"], str):
-                item["content"] = ""
-                
-        # Ensure list items exist
-        if item["type"] == "list":
-            if not item.get("items") or not isinstance(item["items"], list):
-                item["items"] = []
-                
-        # Ensure image URLs exist
-        if item["type"] == "image":
-            if not item.get("url"):
-                content["structured_content"][i] = {"type": "paragraph", "content": "Invalid image"}
-                
+
+    # Convert legacy list format to bullet items
+    structured = []
+    for item in content["structured_content"]:
+        if item.get("type") == "list" and "items" in item:
+            # Convert list to bullet items
+            for list_item in item["items"]:
+                structured.append({"type": "bullet", "content": list_item})
+        else:
+            structured.append(item)
+
+    content["structured_content"] = structured
+
     return content

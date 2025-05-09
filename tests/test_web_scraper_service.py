@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from inklink.services.web_scraper_service import WebScraperService
 from inklink.adapters.http_adapter import HTTPAdapter
-from inklink.utils.html_processor import extract_title, extract_structured_content
+from inklink.utils.html_processor import extract_title_from_html, extract_structured_content
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_extract_title_directly():
     )
     
     soup = BeautifulSoup(html, "html.parser")
-    title = extract_title(soup)
+    title = extract_title_from_html(soup)
     assert title == "OG Title", f"Expected 'OG Title' but got '{title}'"
 
 

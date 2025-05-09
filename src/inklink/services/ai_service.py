@@ -31,13 +31,15 @@ class AIService(IAIService):
             ai_adapter: Optional pre-configured AIAdapter
         """
         self.provider = provider or CONFIG.get("AI_PROVIDER", "openai")
-        
+
         # Use provided adapter or create a new one
         self.adapter = ai_adapter or AIAdapter(
             api_key=api_key,
             model=model or CONFIG.get(f"{self.provider.upper()}_MODEL"),
-            system_prompt=CONFIG.get(f"{self.provider.upper()}_SYSTEM_PROMPT", "You are a helpful assistant."),
-            provider=self.provider
+            system_prompt=CONFIG.get(
+                f"{self.provider.upper()}_SYSTEM_PROMPT", "You are a helpful assistant."
+            ),
+            provider=self.provider,
         )
 
     def ask(self, prompt: str) -> str:
@@ -85,9 +87,9 @@ class AIService(IAIService):
             context=context,
             structured_content=structured_content,
             context_window=context_window,
-            selected_pages=selected_pages
+            selected_pages=selected_pages,
         )
-        
+
         if not success:
             logger.error(f"AI structured query failed: {response}")
             return ""

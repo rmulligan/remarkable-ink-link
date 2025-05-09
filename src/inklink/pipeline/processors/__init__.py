@@ -12,11 +12,11 @@ from inklink.pipeline.processors.ai_processor import AIProcessor
 from inklink.pipeline.processors.ingest_processor import IngestProcessor
 
 __all__ = [
-    'URLProcessor',
-    'QRProcessor',
-    'WebContentProcessor',
-    'DocumentProcessor',
-    'UploadProcessor',
-    'AIProcessor',
-    'IngestProcessor',
+    "URLProcessor",
+    "QRProcessor",
+    "WebContentProcessor",
+    "DocumentProcessor",
+    "UploadProcessor",
+    "AIProcessor",
+    "IngestProcessor",
 ]

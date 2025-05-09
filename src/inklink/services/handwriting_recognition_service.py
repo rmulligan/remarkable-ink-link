@@ -28,7 +28,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     ):
         """
         Initialize the handwriting recognition service.
-        
+
         Args:
             application_key: Optional application key for MyScript API
             hmac_key: Optional HMAC key for MyScript API
@@ -48,8 +48,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
         # Use provided adapter or create a new one
         self.adapter = handwriting_adapter or HandwritingAdapter(
-            application_key=self.application_key,
-            hmac_key=self.hmac_key
+            application_key=self.application_key, hmac_key=self.hmac_key
         )
 
         if not self.application_key or not self.hmac_key:
@@ -61,10 +60,10 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         """
         Classify a region as 'text', 'math', or 'diagram' based on stroke features.
         Uses simple heuristics (to be replaced with ML or SDK logic).
-        
+
         Args:
             strokes: List of stroke dictionaries
-            
+
         Returns:
             Content type classification ("Text", "Math", or "Diagram")
         """
@@ -81,28 +80,28 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     def initialize_iink_sdk(self, application_key: str, hmac_key: str) -> bool:
         """
         Initialize the MyScript iink SDK with authentication keys.
-        
+
         Args:
             application_key: Application key for MyScript API
             hmac_key: HMAC key for MyScript API
-            
+
         Returns:
             True if initialized successfully, False otherwise
         """
         try:
             self.application_key = application_key
             self.hmac_key = hmac_key
-            
+
             # Use the adapter to initialize the SDK
             success = self.adapter.initialize_sdk(application_key, hmac_key)
-            
+
             if success:
                 logger.info("MyScript iink SDK initialized successfully")
             else:
                 logger.error("Failed to initialize MyScript iink SDK")
-                
+
             return success
-            
+
         except Exception as e:
             logger.error(f"Error initializing MyScript iink SDK: {e}")
             return False
@@ -110,24 +109,24 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     def extract_strokes(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
-        
+
         Args:
             rm_file_path: Path to .rm file
-            
+
         Returns:
             List of stroke dictionaries
         """
         try:
             # Use the adapter to extract strokes
             strokes = self.adapter.extract_strokes_from_rm_file(rm_file_path)
-            
+
             if strokes:
                 logger.info(f"Extracted {len(strokes)} strokes from {rm_file_path}")
             else:
                 logger.warning(f"No strokes extracted from {rm_file_path}")
-                
+
             return strokes
-            
+
         except Exception as e:
             logger.error(f"Error extracting strokes from {rm_file_path}: {e}")
             return []
@@ -135,17 +134,17 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Convert reMarkable strokes to iink SDK compatible format.
-        
+
         Args:
             strokes: List of stroke dictionaries
-            
+
         Returns:
             Formatted data for iink SDK
         """
         try:
             # Use the adapter to convert strokes to iink format
             iink_data = self.adapter.convert_to_iink_format(strokes)
-            
+
             # If the adapter didn't return strokes in the right format,
             # fall back to a simple format that works with the API
             if not iink_data or not iink_data.get("strokes"):
@@ -155,9 +154,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                     "height": CONFIG.get("PAGE_HEIGHT", 2404),
                     "strokes": strokes,
                 }
-                
+
             return iink_data
-            
+
         except Exception as e:
             logger.error(f"Error converting strokes to iink format: {e}")
             return {"type": "inkData", "strokes": []}
@@ -170,12 +169,12 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     ) -> Dict[str, Any]:
         """
         Process ink data through the iink SDK and return recognition results.
-        
+
         Args:
             iink_data: Ink data in iink format
             content_type: Content type (Text, Diagram, Math, etc.)
             language: Language code
-            
+
         Returns:
             Recognition results
         """
@@ -184,10 +183,12 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 raise ValueError(
                     "MyScript keys not available; cannot recognize handwriting"
                 )
-                
+
             # Use the adapter to recognize handwriting
-            result = self.adapter.recognize_handwriting(iink_data, content_type, language)
-            
+            result = self.adapter.recognize_handwriting(
+                iink_data, content_type, language
+            )
+
             # Handle error cases
             if "error" in result:
                 logger.error(f"Recognition failed: {result['error']}")
@@ -195,14 +196,14 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                     "success": False,
                     "error": result["error"],
                 }
-                
+
             # Format the result for consistency
             return {
                 "success": True,
                 "content_id": result.get("id", ""),
                 "raw_result": result,
             }
-            
+
         except Exception as e:
             error_msg = format_error("recognition", "Handwriting recognition failed", e)
             logger.error(error_msg)
@@ -213,29 +214,29 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
     ) -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
-        
+
         Args:
             content_id: Content ID from recognition result
             format_type: Format type (text, JIIX, etc.)
-            
+
         Returns:
             Exported content
         """
         try:
             if not self.application_key or not self.hmac_key:
                 raise ValueError("MyScript keys not available; cannot export content")
-                
+
             # Use the adapter to export content
             result = self.adapter.export_content(content_id, format_type)
-            
+
             # Handle error cases
             if "error" in result:
                 logger.error(f"Export failed: {result['error']}")
                 return {"success": False, "error": result["error"]}
-                
+
             logger.info(f"Export successful: {format_type}")
             return {"success": True, "content": result}
-            
+
         except Exception as e:
             error_msg = format_error("export", "Content export failed", e)
             logger.error(error_msg)
@@ -249,16 +250,16 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
-        High-level method: Accepts ink data or file path, extracts strokes, classifies region, 
+        High-level method: Accepts ink data or file path, extracts strokes, classifies region,
         recognizes handwriting, and returns result.
         If content_type is None or 'auto', classify region automatically.
-        
+
         Args:
             ink_data: Binary ink data
             file_path: Path to .rm file
             content_type: Content type (Text, Diagram, Math) or 'auto'
             language: Language code
-            
+
         Returns:
             Recognition results
         """
@@ -280,6 +281,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                     # Clean up the temporary file
                     try:
                         import os
+
                         os.unlink(temp_path)
                     except Exception:
                         pass
@@ -295,11 +297,11 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
             # Convert strokes to iink format
             iink_data = self.convert_to_iink_format(strokes)
-            
+
             # Use the adapter to recognize handwriting
             result = self.recognize_handwriting(iink_data, content_type, language)
             return result
-            
+
         except Exception as e:
             logger.error(f"Handwriting recognition pipeline failed: {e}")
             return {"success": False, "error": str(e)}
@@ -332,16 +334,16 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         for i, file_path in enumerate(page_files):
             # Extract strokes from file
             strokes = self.extract_strokes(rm_file_path=file_path)
-            
+
             # Classify content type
             content_type = self.classify_region(strokes)
-            
+
             # Convert to iink format
             iink_data = self.convert_to_iink_format(strokes)
-            
+
             # Recognize handwriting
             result = self.recognize_handwriting(iink_data, content_type, language)
-            
+
             if result.get("success"):
                 # Extract from API format
                 result = result.get("raw_result", {})

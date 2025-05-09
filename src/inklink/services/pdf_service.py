@@ -17,11 +17,11 @@ class PDFService(IPDFService):
     """Handles PDF processing operations."""
 
     def __init__(
-        self, 
-        temp_dir: str, 
+        self,
+        temp_dir: str,
         extract_dir: str,
         pdf_adapter: Optional[PDFAdapter] = None,
-        http_adapter: Optional[HTTPAdapter] = None
+        http_adapter: Optional[HTTPAdapter] = None,
     ):
         """
         Initialize with directories for temporary and extracted files.
@@ -36,7 +36,7 @@ class PDFService(IPDFService):
         self.extract_dir = extract_dir
         os.makedirs(temp_dir, exist_ok=True)
         os.makedirs(extract_dir, exist_ok=True)
-        
+
         # Create adapters if not provided
         self.pdf_adapter = pdf_adapter or PDFAdapter(temp_dir=temp_dir)
         self.http_adapter = http_adapter or HTTPAdapter(timeout=30)
@@ -58,18 +58,17 @@ class PDFService(IPDFService):
         # Check content type from headers
         try:
             success, headers = self.http_adapter.get(
-                url, 
-                headers={"Range": "bytes=0-0"}  # Only request header, not content
+                url, headers={"Range": "bytes=0-0"}  # Only request header, not content
             )
-            
+
             if not success:
                 return False
-                
+
             # If the response is a dict (JSON), check Content-Type header
             if isinstance(headers, dict) and "Content-Type" in headers:
                 content_type = headers.get("Content-Type", "").lower()
                 return "application/pdf" in content_type
-                
+
             return False
         except Exception as e:
             logger.error(f"Error checking if URL is PDF: {e}")
@@ -100,7 +99,7 @@ class PDFService(IPDFService):
             # Download PDF using HTTP adapter
             logger.debug(f"Downloading PDF from {url} to {pdf_path}")
             download_success = self.http_adapter.download_file(url, pdf_path)
-            
+
             if not download_success:
                 logger.error(f"Failed to download PDF from {url}")
                 return None
@@ -111,7 +110,7 @@ class PDFService(IPDFService):
 
             # For now, we only support 'outline' mode (vector processing)
             # If raster mode is needed, it can be re-enabled later
-            
+
             # Return PDF information
             return {"title": title, "pdf_path": pdf_path}
 
@@ -119,15 +118,17 @@ class PDFService(IPDFService):
             logger.error(f"Error processing PDF URL: {e}", exc_info=True)
             return None
 
-    def add_watermark(self, pdf_path: str, watermark_path: str, output_path: str) -> bool:
+    def add_watermark(
+        self, pdf_path: str, watermark_path: str, output_path: str
+    ) -> bool:
         """
         Add watermark (like a QR code) to each page of a PDF.
-        
+
         Args:
             pdf_path: Path to PDF file
             watermark_path: Path to watermark PDF
             output_path: Path to save watermarked PDF
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -136,35 +137,37 @@ class PDFService(IPDFService):
     def extract_text(self, pdf_path: str) -> List[str]:
         """
         Extract text from each page of a PDF.
-        
+
         Args:
             pdf_path: Path to PDF file
-            
+
         Returns:
             List of extracted text strings, one per page
         """
         return self.pdf_adapter.extract_text(pdf_path)
 
-    def convert_to_images(self, 
-                       pdf_path: str,
-                       output_dir: Optional[str] = None) -> List[str]:
+    def convert_to_images(
+        self, pdf_path: str, output_dir: Optional[str] = None
+    ) -> List[str]:
         """
         Convert PDF to images.
-        
+
         Args:
             pdf_path: Path to PDF file
             output_dir: Directory to save images (defaults to extract_dir)
-            
+
         Returns:
             List of paths to generated images
         """
         return self.pdf_adapter.convert_to_images(
-            pdf_path,
-            output_dir=output_dir or self.extract_dir
+            pdf_path, output_dir=output_dir or self.extract_dir
         )
 
     def generate_index_notebook(
-        self, pages: List[Dict[str, Any]], output_path: str, graph_title: str = "Index Node Graph"
+        self,
+        pages: List[Dict[str, Any]],
+        output_path: str,
+        graph_title: str = "Index Node Graph",
     ) -> bool:
         """
         Generate an index notebook as a PDF containing a node graph with cross-references.
@@ -190,28 +193,28 @@ class PDFService(IPDFService):
             for page in pages:
                 # Create node with all the page information
                 node = {
-                    'id': page['page_number'],
-                    'label': f"{page['page_number']}: {page['title']}",
-                    'title': page['title'],
-                    'summary': page.get('summary', ''),
-                    'device_location': page.get('device_location', '')
+                    "id": page["page_number"],
+                    "label": f"{page['page_number']}: {page['title']}",
+                    "title": page["title"],
+                    "summary": page.get("summary", ""),
+                    "device_location": page.get("device_location", ""),
                 }
                 nodes.append(node)
-                
+
                 # Add edges for links
-                if 'links' in page:
-                    for link_to in page['links']:
-                        edges.append((str(page['page_number']), str(link_to)))
-            
+                if "links" in page:
+                    for link_to in page["links"]:
+                        edges.append((str(page["page_number"]), str(link_to)))
+
             # Generate the PDF using the adapter
             return self.pdf_adapter.generate_graph_pdf(
                 nodes=nodes,
                 edges=edges,
                 output_path=output_path,
                 title=graph_title,
-                include_table=True
+                include_table=True,
             )
-            
+
         except Exception as e:
             logger.error(f"Error generating index notebook: {e}", exc_info=True)
             return False

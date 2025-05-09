@@ -27,24 +27,23 @@ class WebScraperService(IWebScraperService):
     def __init__(self, http_adapter: Optional[HTTPAdapter] = None):
         """
         Initialize web scraper service.
-        
+
         Args:
             http_adapter: Optional HTTP adapter for making requests
         """
         # Create a new HTTP adapter if one wasn't provided
-        self.adapter = http_adapter or HTTPAdapter(
-            timeout=15,
-            retries=3
-        )
-        
+        self.adapter = http_adapter or HTTPAdapter(timeout=15, retries=3)
+
         # Configure standard browser headers for the adapter
-        self.adapter.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        })
+        self.adapter.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
 
     def scrape(self, url: str) -> Dict[str, Any]:
         """
@@ -67,14 +66,16 @@ class WebScraperService(IWebScraperService):
         logger.debug("Fetching URL content")
         try:
             success, html_content = self._fetch_url(url)
-            
+
             if not success:
                 error_msg = f"Failed to fetch URL: {html_content}"
                 logger.error(error_msg)
-                return self._build_error_response(url, f"Could not fetch content: {html_content}")
-                
+                return self._build_error_response(
+                    url, f"Could not fetch content: {html_content}"
+                )
+
             logger.debug("URL content fetched successfully")
-            
+
         except Exception as e:
             error_msg = format_error("network", f"Failed to fetch URL {url}", e)
             logger.error(error_msg)
@@ -112,7 +113,9 @@ class WebScraperService(IWebScraperService):
         except Exception as e:
             error_msg = format_error("parsing", f"Failed to parse HTML from {url}", e)
             logger.error(error_msg)
-            return self._build_error_response(url, f"Could not extract content: {str(e)}")
+            return self._build_error_response(
+                url, f"Could not extract content: {str(e)}"
+            )
 
     def _fetch_url(self, url: str) -> tuple[bool, str]:
         """
@@ -127,17 +130,17 @@ class WebScraperService(IWebScraperService):
         # Use the HTTP adapter to get the content
         # The adapter handles retries, timeouts, and error handling
         success, response = self.adapter.get(url)
-        
+
         return success, response
-    
+
     def _build_error_response(self, url: str, error_message: str) -> Dict[str, Any]:
         """
         Build a standardized error response.
-        
+
         Args:
             url: The URL that was being scraped
             error_message: The error message
-            
+
         Returns:
             Structured content dictionary with error information
         """

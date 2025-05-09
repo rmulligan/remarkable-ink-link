@@ -13,12 +13,12 @@ from inklink.controllers.upload_controller import UploadController
 from inklink.controllers.process_controller import ProcessController
 
 __all__ = [
-    'BaseController',
-    'AuthController',
-    'DownloadController',
-    'ResponseController',
-    'ShareController',
-    'IngestController',
-    'UploadController',
-    'ProcessController',
+    "BaseController",
+    "AuthController",
+    "DownloadController",
+    "ResponseController",
+    "ShareController",
+    "IngestController",
+    "UploadController",
+    "ProcessController",
 ]

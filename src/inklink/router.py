@@ -23,32 +23,33 @@ logger = logging.getLogger(__name__)
 
 class Router:
     """Router for HTTP requests."""
-    
+
     def __init__(self, services: Dict[str, Any]):
         """
         Initialize with services.
-        
+
         Args:
             services: Dictionary of service instances
         """
         self.services = services
-    
-    def route(self, handler: BaseHTTPRequestHandler, method: str, path: str) -> Optional[BaseController]:
+
+    def route(
+        self, handler: BaseHTTPRequestHandler, method: str, path: str
+    ) -> Optional[BaseController]:
         """
         Route HTTP request to the appropriate controller.
-        
+
         Args:
             handler: BaseHTTPRequestHandler instance
             method: HTTP method
             path: Request path
-            
+
         Returns:
             Controller or None if no route matches
         """
         # Parse the path
         route, query = self._parse_path(path)
-        route_parts = route.split("/")
-        
+
         # Route GET requests
         if method == "GET":
             if route == "/auth":
@@ -57,7 +58,7 @@ class Router:
                 return DownloadController(handler)
             elif route.startswith("/response"):
                 return ResponseController(handler)
-        
+
         # Route POST requests
         elif method == "POST":
             if route == "/auth":
@@ -74,17 +75,17 @@ class Router:
                 return ProcessController(handler)
             elif route == "/share":
                 return ShareController(handler, self.services)
-        
+
         # If no route matches, return None
         return None
-    
+
     def _parse_path(self, path: str) -> Tuple[str, str]:
         """
         Parse path into route and query string.
-        
+
         Args:
             path: Request path
-            
+
         Returns:
             Tuple containing the route and query string
         """
@@ -92,5 +93,5 @@ class Router:
         parts = path.split("?", 1)
         route = parts[0]
         query = parts[1] if len(parts) > 1 else ""
-        
+
         return route, query
