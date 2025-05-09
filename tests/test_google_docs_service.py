@@ -190,7 +190,7 @@ def test_fetch_success(google_docs_service, mock_adapter):
     assert "bullet" in content_types
     
     # Check image extraction
-    assert len(result["images"]) > 0
+    assert len(result["images"]) == 1
     assert result["images"][0]["url"] == "https://example.com/image.jpg"
 
 
