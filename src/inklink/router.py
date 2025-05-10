@@ -59,14 +59,16 @@ class Router:
                 return AuthController(handler)
             elif route == "/auth/myscript":
                 return AuthController(handler)
-            elif route == "/download":
+            elif route.startswith("/download/"):
                 return DownloadController(handler, self.services)
-            elif route == "/response":
+            elif route.startswith("/response"):
                 return ResponseController(handler, self.services)
 
         # Route POST requests
         elif method == "POST":
-            if route == "/share":
+            if route == "/auth":
+                return AuthController(handler)
+            elif route == "/share":
                 return ShareController(handler, self.services)
             elif route == "/ingest":
                 return IngestController(handler, self.services)
@@ -77,3 +79,20 @@ class Router:
 
         # No route matched
         return None
+
+    def _parse_path(self, path: str) -> Tuple[str, str]:
+        """
+        Parse path into route and query string.
+
+        Args:
+            path: Request path
+
+        Returns:
+            Tuple containing the route and query string
+        """
+        # Split the path into route and query string
+        parts = path.split("?", 1)
+        route = parts[0]
+        query = parts[1] if len(parts) > 1 else ""
+
+        return route, query

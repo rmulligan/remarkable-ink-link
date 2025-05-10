@@ -7,7 +7,6 @@ into reMarkable-compatible formats.
 import os
 import subprocess
 import logging
-
 from typing import Dict, Any, Optional, List, Union, Tuple
 
 from inklink.services.converters.base_converter import BaseConverter
@@ -19,7 +18,9 @@ logger = logging.getLogger(__name__)
 class PDFConverter(BaseConverter):
     """Converts PDF files to reMarkable format."""
 
-    def __init__(self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize the PDF converter.
 
@@ -147,7 +148,6 @@ class PDFConverter(BaseConverter):
         except Exception as e:
             logger.error(f"Error in legacy PDF conversion: {str(e)}")
             return None
-
 
     def get_image_dimensions(self, image_path: str) -> Tuple[int, int]:
         """

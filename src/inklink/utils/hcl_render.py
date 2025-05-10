@@ -19,19 +19,26 @@ logger = logging.getLogger(__name__)
 def escape_hcl(text: str) -> str:
     """
     Escape special characters in text for HCL script.
-    
+
     Args:
         text: String to escape
-        
+
     Returns:
         Escaped string safe for use in HCL
     """
-    return (
-        text.replace("\\", "\\\\")
-        .replace('"', '\\"')
-        .replace("\n", "\\n")
-        .replace("\t", "\\t")
-    )
+    if not text:
+        return ""
+
+    # Comprehensive escaping for Hecl (drawj2d HCL) parsing
+    s = text.replace("\\", "\\\\")
+    s = s.replace('"', '\\"')
+    s = s.replace("$", "\\$")
+    s = s.replace("[", "\\[")
+    s = s.replace("]", "\\]")
+    s = s.replace("`", "'")
+    s = s.replace("\n", "\\n")
+    s = s.replace("\t", "\\t")
+    return s
 
 
 def create_hcl_from_content(
@@ -39,7 +46,7 @@ def create_hcl_from_content(
     qr_path: str,
     content: Dict[str, Any],
     temp_dir: str,
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     Create HCL script from structured content.
@@ -80,21 +87,20 @@ def create_hcl_from_content(
         page_width = config.get("PAGE_WIDTH", 2160)
         page_height = config.get("PAGE_HEIGHT", 1620)
         margin = config.get("PAGE_MARGIN", 120)
-
-        line_height = config.get("LINE_HEIGHT", 40)
+        config.get("LINE_HEIGHT", 40)  # Used in more complex implementations
 
         # Get fonts from config
         heading_font = config.get("HEADING_FONT", "Liberation Sans")
-        body_font = config.get("BODY_FONT", "Liberation Sans")
-        code_font = config.get("CODE_FONT", "DejaVu Sans Mono")
+        config.get("BODY_FONT", "Liberation Sans")  # Used in more complex implementations
+        config.get("CODE_FONT", "DejaVu Sans Mono")  # Used in more complex implementations
 
         # Create the HCL script
-        with open(hcl_path, "w") as f:
+        with open(hcl_path, "w", encoding="utf-8") as f:
             # Write header with page setup
             f.write(f"page_width: {page_width}\n")
             f.write(f"page_height: {page_height}\n")
             f.write(f"margin: {margin}\n\n")
-            
+
             # Add QR code for source URL
             f.write(f"# QR Code for original source\n")
             f.write(f"image\n")
@@ -103,7 +109,7 @@ def create_hcl_from_content(
             f.write(f"  y: {50}\n")
             f.write(f"  width: 150\n")
             f.write(f"  height: 150\n\n")
-            
+
             # Add title
             f.write(f"# Document title\n")
             f.write(f"text\n")
@@ -112,17 +118,17 @@ def create_hcl_from_content(
             f.write(f"  size: 24\n")
             f.write(f"  x: {margin}\n")
             f.write(f"  y: {margin}\n\n")
-            
-            # Add structured content - in a real implementation, this would 
+
+            # Add structured content - in a real implementation, this would
             # iterate through the structured content items
-            
+
             # Placeholder for content rendering
             if content.get("structured_content"):
                 # This would be replaced with actual content rendering code
                 f.write(f"# Structured content would be rendered here\n")
-        
+
         return hcl_path
-        
+
     except Exception as e:
         logger.error(f"Error creating HCL file: {str(e)}")
         return None
@@ -133,47 +139,74 @@ def render_hcl_resource(
 ) -> bool:
     """
     Render HCL file to a reMarkable lines file using drawj2d.
-    
+
     Args:
         hcl_path: Path to the HCL file
         output_path: Path where the output .rm file should be saved
         config: Optional configuration dictionary
-        
+
     Returns:
         True if rendering was successful, False otherwise
     """
     try:
         # Use provided config or fall back to global CONFIG
         config = config or CONFIG
-        
+
         # Get drawj2d path from config
         drawj2d_path = config.get("DRAWJ2D_PATH", "drawj2d")
-        
+
         # Run drawj2d to render the HCL file
         logger.info(f"Rendering HCL file {hcl_path} to {output_path}")
         cmd = [drawj2d_path, hcl_path, "-o", output_path]
-        
+
         result = subprocess.run(
-            cmd, 
-            capture_output=True, 
+            cmd,
+            capture_output=True,
             text=True,
-            check=False  # Don't raise an exception on non-zero return code
+            check=False,  # Don't raise an exception on non-zero return code
         )
-        
+
         if result.returncode != 0:
             logger.error(
                 f"drawj2d failed with code {result.returncode}: {result.stderr}"
             )
             return False
-        
+
         if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
             logger.error(
                 f"Output file {output_path} does not exist or is empty after rendering"
             )
             return False
-            
+
         logger.info(f"Successfully rendered HCL to {output_path}")
         return True
     except Exception as e:
         logger.error(f"Error rendering HCL file: {str(e)}")
         return False
+
+
+def render_hcl_resource_block(config: HCLResourceConfig) -> str:
+    """
+    Render HCL resource block from configuration.
+
+    Args:
+        config: HCL resource configuration
+
+    Returns:
+        HCL resource block as string
+    """
+    result = f'resource "{config.resource_type}" "{config.resource_name}" {{\n'
+
+    # Add attributes
+    for key, value in config.attributes.items():
+        if isinstance(value, str):
+            value_str = f'"{value}"'
+        elif isinstance(value, bool):
+            value_str = str(value).lower()
+        else:
+            value_str = str(value)
+
+        result += f"  {key} = {value_str}\n"
+
+    result += "}\n"
+    return result
