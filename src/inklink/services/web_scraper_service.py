@@ -1,11 +1,10 @@
 """Web scraping service that tries multiple methods."""
 
 import logging
-from typing import Dict, Any
-import requests
-from bs4 import BeautifulSoup
+from typing import Dict, Any, Optional
 
 from inklink.services.interfaces import IWebScraperService
+from inklink.adapters.http_adapter import HTTPAdapter
 
 try:
     from readability import Document
@@ -14,7 +13,6 @@ except ImportError:
 
 # Import utility functions for HTML parsing and error handling
 from inklink.utils import (
-    retry_operation,
     format_error,
     extract_structured_content,
     validate_and_fix_content,
@@ -25,6 +23,27 @@ logger = logging.getLogger(__name__)
 
 class WebScraperService(IWebScraperService):
     """Web scraping service to extract structured content from URLs."""
+
+    def __init__(self, http_adapter: Optional[HTTPAdapter] = None):
+        """
+        Initialize web scraper service.
+
+        Args:
+            http_adapter: Optional HTTP adapter for making requests
+        """
+        # Create a new HTTP adapter if one wasn't provided
+        self.adapter = http_adapter or HTTPAdapter(timeout=15, retries=3)
+
+        # Configure standard browser headers for the adapter
+        self.adapter.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
 
     def scrape(self, url: str) -> Dict[str, Any]:
         """
@@ -44,23 +63,23 @@ class WebScraperService(IWebScraperService):
         logger.info(f"Scraping URL: {url}")
 
         # Fetch the URL content
-        logger.debug("Calling _fetch_url")
+        logger.debug("Fetching URL content")
         try:
-            html_content = self._fetch_url(url)
-            logger.debug("_fetch_url completed")
+            success, html_content = self._fetch_url(url)
+
+            if not success:
+                error_msg = f"Failed to fetch URL: {html_content}"
+                logger.error(error_msg)
+                return self._build_error_response(
+                    url, f"Could not fetch content: {html_content}"
+                )
+
+            logger.debug("URL content fetched successfully")
+
         except Exception as e:
             error_msg = format_error("network", f"Failed to fetch URL {url}", e)
             logger.error(error_msg)
-            return {
-                "title": url,
-                "structured_content": [
-                    {
-                        "type": "paragraph",
-                        "content": f"Could not fetch content from {url}: {e}",
-                    }
-                ],
-                "images": [],
-            }
+            return self._build_error_response(url, f"Could not fetch content: {str(e)}")
 
         # Try different extraction methods
         if Document:
@@ -94,45 +113,44 @@ class WebScraperService(IWebScraperService):
         except Exception as e:
             error_msg = format_error("parsing", f"Failed to parse HTML from {url}", e)
             logger.error(error_msg)
-            return {
-                "title": url,
-                "structured_content": [
-                    {
-                        "type": "paragraph",
-                        "content": f"Could not extract content from {url}: {e}",
-                    }
-                ],
-                "images": [],
-            }
+            return self._build_error_response(
+                url, f"Could not extract content: {str(e)}"
+            )
 
-    def _fetch_url(self, url: str) -> str:
+    def _fetch_url(self, url: str) -> tuple[bool, str]:
         """
-        Fetch URL and return its HTML content.
-
-        Uses retry logic for resilience against temporary network failures.
+        Fetch URL and return its HTML content using the HTTP adapter.
 
         Args:
             url: The URL to fetch
 
         Returns:
-            HTML content as a string
-
-        Raises:
-            Exception: If fetching fails after retries
+            Tuple of (success, content_or_error)
         """
+        # Use the HTTP adapter to get the content
+        # The adapter handles retries, timeouts, and error handling
+        success, response = self.adapter.get(url)
 
-        def fetch_with_headers(url_to_fetch):
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Connection": "keep-alive",
-                "Upgrade-Insecure-Requests": "1",
-            }
-            response = requests.get(url_to_fetch, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.text
+        return success, response
 
-        return retry_operation(
-            fetch_with_headers, url, operation_name="URL fetching", max_retries=3
-        )
+    def _build_error_response(self, url: str, error_message: str) -> Dict[str, Any]:
+        """
+        Build a standardized error response.
+
+        Args:
+            url: The URL that was being scraped
+            error_message: The error message
+
+        Returns:
+            Structured content dictionary with error information
+        """
+        return {
+            "title": url,
+            "structured_content": [
+                {
+                    "type": "paragraph",
+                    "content": f"{error_message}",
+                }
+            ],
+            "images": [],
+        }

@@ -13,7 +13,7 @@ class DummyResult:
 def test_upload_missing_doc(monkeypatch, tmp_path):
     # Setup service with fake rmapi path
     rmapi = str(tmp_path / "rmapi")
-    service = RemarkableService(rmapi, upload_folder="/")
+    service = RemarkableService(rmapi_path=rmapi, rm_folder="/")
     # doc_path does not exist
     success, message = service.upload(str(tmp_path / "noexist.rm"), "Title")
     assert not success
@@ -24,7 +24,7 @@ def test_upload_missing_rmapi(monkeypatch, tmp_path):
     # Create dummy doc file
     doc_path = tmp_path / "file.rm"
     doc_path.write_text("data")
-    service = RemarkableService(str(tmp_path / "noapi"), upload_folder="/")
+    service = RemarkableService(rmapi_path=str(tmp_path / "noapi"), rm_folder="/")
     success, message = service.upload(str(doc_path), "Title")
     assert not success
     assert "rmapi executable not found" in message
@@ -37,7 +37,7 @@ def test_upload_success_and_rename(monkeypatch, tmp_path):
     os.chmod(str(rmapi), 0o755)
     doc_path = tmp_path / "file.rm"
     doc_path.write_text("data")
-    service = RemarkableService(str(rmapi), upload_folder="/")
+    service = RemarkableService(rmapi_path=str(rmapi), rm_folder="/")
 
     # Mock subprocess.run to simulate success and ID in stdout
     def fake_run(cmd, capture_output, text, check):

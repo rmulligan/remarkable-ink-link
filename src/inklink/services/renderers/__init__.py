@@ -6,4 +6,4 @@ documents from intermediate formats.
 
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 
-__all__ = ['HCLRenderer']
+__all__ = ["HCLRenderer"]
