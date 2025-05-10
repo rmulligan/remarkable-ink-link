@@ -30,7 +30,6 @@ def mock_handwriting_adapter():
     adapter = MagicMock(spec=HandwritingAdapter)
     adapter.ping.return_value = True
     adapter.initialize_sdk.return_value = True
-
     # Mock extract_strokes_from_rm_file to return test strokes
     adapter.extract_strokes_from_rm_file.return_value = [
         {
@@ -41,7 +40,6 @@ def mock_handwriting_adapter():
             "timestamp": 1614556800000,
         }
     ]
-
     # Mock convert_to_iink_format to return a valid iink data structure
     adapter.convert_to_iink_format.return_value = {
         "type": "inkData",
@@ -57,7 +55,6 @@ def mock_handwriting_adapter():
             }
         ],
     }
-
     # Mock recognize_handwriting to return a successful result
     adapter.recognize_handwriting.return_value = {
         "id": "test_content_id",
@@ -66,7 +63,6 @@ def mock_handwriting_adapter():
 
     # Mock export_content to return exported content
     adapter.export_content.return_value = {"text": "Recognized text"}
-
     return adapter
 
 
@@ -228,10 +224,7 @@ def test_recognize_handwriting(mock_handwriting_adapter, mock_strokes):
 def test_recognize_handwriting_error(mock_handwriting_adapter, mock_strokes):
     """Test handwriting recognition with error."""
     # Configure adapter to return an error
-    mock_handwriting_adapter.recognize_handwriting.return_value = {
-        "error": "Test error"
-    }
-
+    mock_handwriting_adapter.recognize_handwriting.return_value = {"error": "Test error"}
     service = HandwritingRecognitionService(
         application_key="test_app_key",
         hmac_key="test_hmac_key",
