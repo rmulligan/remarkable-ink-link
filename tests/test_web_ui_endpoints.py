@@ -40,7 +40,7 @@ def handler():
 
     # Manually set necessary attributes without calling parent init
     h.request = req
-    h.client_address = ("127.0.0.1", 8000)
+    h.client_address = ('127.0.0.1', 8000)
     h.server = DummyServer()
     h.router = None  # Router is initialized in the constructor
 

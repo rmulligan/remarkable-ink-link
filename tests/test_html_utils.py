@@ -107,9 +107,7 @@ def test_generate_title_from_url():
     )
 
 
-@pytest.mark.skip(
-    reason="Test needs to be updated for changes in find_main_content_container"
-)
+@pytest.mark.skip(reason="Test needs to be updated for changes in find_main_content_container")
 def test_find_main_content_container(complex_html):
     """Test finding the main content container in HTML."""
     soup = BeautifulSoup(complex_html, "html.parser")

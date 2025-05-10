@@ -30,6 +30,7 @@ def mock_handwriting_adapter():
     adapter = MagicMock(spec=HandwritingAdapter)
     adapter.ping.return_value = True
     adapter.initialize_sdk.return_value = True
+
     # Mock extract_strokes_from_rm_file to return test strokes
     adapter.extract_strokes_from_rm_file.return_value = [
         {
@@ -40,6 +41,7 @@ def mock_handwriting_adapter():
             "timestamp": 1614556800000,
         }
     ]
+
     # Mock convert_to_iink_format to return a valid iink data structure
     adapter.convert_to_iink_format.return_value = {
         "type": "inkData",
@@ -55,6 +57,7 @@ def mock_handwriting_adapter():
             }
         ],
     }
+
     # Mock recognize_handwriting to return a successful result
     adapter.recognize_handwriting.return_value = {
         "id": "test_content_id",
@@ -63,6 +66,7 @@ def mock_handwriting_adapter():
 
     # Mock export_content to return exported content
     adapter.export_content.return_value = {"text": "Recognized text"}
+
     return adapter
 
 
