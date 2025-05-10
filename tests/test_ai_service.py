@@ -253,8 +253,8 @@ def test_adapter_initialization():
 
         # Parse the API base URL to check domain properly
         parsed_url = urlparse(adapter.api_base)
-        assert parsed_url.netloc == "api.anthropic.com" or parsed_url.netloc.endswith(
-            ".api.anthropic.com"
+        assert parsed_url.netloc == "api.openai.com" or parsed_url.netloc.endswith(
+            ".api.openai.com"
         )
 
 

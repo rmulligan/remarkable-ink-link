@@ -120,7 +120,6 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
                     key
                 )
             )
-
     # Create router
     router = Router(services)
 
