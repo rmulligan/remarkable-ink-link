@@ -5,11 +5,10 @@ import time
 import logging
 from unittest.mock import MagicMock, patch
 from tempfile import NamedTemporaryFile
-
-logger = logging.getLogger(__name__)
-
 from inklink.services.document_service import DocumentService
 from inklink.utils.rcu import convert_markdown_to_rm
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture

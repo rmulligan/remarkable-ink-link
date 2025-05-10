@@ -31,11 +31,11 @@ logger = logging.getLogger("inklink.server")
 
 class URLHandler(BaseHTTPRequestHandler):
     """Handler for URL sharing requests."""
-    
+
     def __init__(self, *args, router=None, **kwargs):
         """
         Initialize with router.
-        
+
         Args:
             *args: Variable positional arguments
             router: Router instance
@@ -43,7 +43,7 @@ class URLHandler(BaseHTTPRequestHandler):
         """
         self.router = router
         super().__init__(*args, **kwargs)
-    
+
     def do_GET(self):
         """Handle GET requests."""
         try:
@@ -55,7 +55,7 @@ class URLHandler(BaseHTTPRequestHandler):
             logger.error(f"Error handling GET request: {str(e)}")
             logger.error(traceback.format_exc())
             self._send_error(f"Error handling request: {str(e)}")
-    
+
     def do_POST(self):
         """Handle POST requests."""
         try:
@@ -67,7 +67,7 @@ class URLHandler(BaseHTTPRequestHandler):
             logger.error(f"Error handling POST request: {str(e)}")
             logger.error(traceback.format_exc())
             self._send_error(f"Error handling request: {str(e)}")
-    
+
     def _send_error(self, message: str):
         """Send error response."""
         self.send_response(404)
@@ -79,7 +79,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
 class CustomHTTPServer(HTTPServer):
     """Custom HTTP Server with additional attributes for tokens, files, and responses."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Initialize attributes needed by controllers
@@ -94,10 +94,10 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
     host_value = host if host is not None else CONFIG.get("HOST", "0.0.0.0")
     port_value = port if port is not None else int(CONFIG.get("PORT", 9999))
     server_address = (host_value, port_value)
-    
+
     # Create service provider
     provider = Container.create_provider(CONFIG)
-    
+
     # Resolve services
     services = {
         "qr_service": provider.resolve(IQRCodeService),
@@ -107,26 +107,30 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
         "remarkable_service": provider.resolve(IRemarkableService),
         "ai_service": provider.resolve(AIService),
     }
-    
+
     # Validate dependency injection configuration
     for key, value in services.items():
         if value is None:
-            raise ValueError("DI configuration error: '{}' service is not configured properly.".format(key))
+            raise ValueError(
+                "DI configuration error: '{}' service is not configured properly.".format(
+                    key
+                )
+            )
 
     # Create router
     router = Router(services)
-    
+
     # Create handler factory
     def handler_factory(*args, **kwargs):
         return URLHandler(*args, router=router, **kwargs)
-    
+
     # Create HTTP server
     httpd = CustomHTTPServer(server_address, handler_factory)
-    
+
     # Setup logging
     logger = setup_logging()
     logger.info(f"InkLink server listening on {host_value}:{port_value}")
-    
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
