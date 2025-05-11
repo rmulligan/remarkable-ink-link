@@ -24,13 +24,13 @@ logger = logging.getLogger("test_mock_roundtrip")
 
 class MockRequest:
     """Mock HTTP request."""
-    
+
     def __init__(self, body=None):
         """Initialize with request body."""
         self.body = body or {}
         self.method = "POST"
         self.path = "/"
-        
+
     async def json(self):
         """Return request body as JSON."""
         return self.body
@@ -38,13 +38,13 @@ class MockRequest:
 
 class MockResponse:
     """Mock HTTP response."""
-    
+
     def __init__(self):
         """Initialize response capture."""
         self.status = None
         self.headers = {}
         self.body = None
-        
+
     async def text(self):
         """Return response body as text."""
         return self.body
@@ -52,11 +52,11 @@ class MockResponse:
 
 class MockQRService:
     """Mock QR service."""
-    
+
     def __init__(self, temp_dir=None):
         """Initialize with temp directory."""
         self.temp_dir = temp_dir or "/tmp"
-        
+
     def generate_qr(self, url):
         """Generate QR code for URL."""
         # Return a mock QR code path
@@ -66,11 +66,11 @@ class MockQRService:
 
 class MockDocumentService:
     """Mock document service."""
-    
+
     def __init__(self, temp_dir=None):
         """Initialize with temp directory."""
         self.temp_dir = temp_dir or "/tmp"
-        
+
     def create_rmdoc_from_content(self, url, qr_path, content):
         """Create reMarkable document from content."""
         # Return a mock document path
@@ -80,11 +80,11 @@ class MockDocumentService:
 
 class MockRemarkableService:
     """Mock reMarkable service."""
-    
+
     def __init__(self, rmapi_path=None):
         """Initialize with rmapi path."""
         self.rmapi_path = rmapi_path or "/usr/bin/rmapi"
-        
+
     def upload(self, doc_path, title):
         """Upload document to reMarkable cloud."""
         # Return success
@@ -96,13 +96,13 @@ def test_share_controller_with_mocks():
     # Create temporary directory
     tmp_dir = "/tmp/inklink_test"
     os.makedirs(tmp_dir, exist_ok=True)
-    
+
     # Create mock services
     qr_service = MockQRService(tmp_dir)
     document_service = MockDocumentService(tmp_dir)
     remarkable_service = MockRemarkableService()
     web_scraper = WebScraperService()  # Use the real web scraper for URL content
-    
+
     # Create the controller
     controller = ShareController(
         qr_service=qr_service,
@@ -110,31 +110,34 @@ def test_share_controller_with_mocks():
         remarkable_service=remarkable_service,
         web_scraper=web_scraper,
     )
-    
+
     # Create the request with a real URL
     request = MockRequest({"url": "https://example.com/"})
-    
+
     # Patch the pipeline process method
     original_process = PipelineFactory.create_pipeline_for_url
-    
+
     # Create a mock pipeline that always succeeds
     mock_pipeline = MagicMock()
     mock_pipeline.process.side_effect = lambda ctx: _mock_pipeline_process(ctx)
-    
+
     # Register our mock pipeline creator
     PipelineFactory.create_pipeline_for_url = MagicMock(return_value=mock_pipeline)
-    
+
     try:
         # Execute the controller
         import asyncio
+
         response = asyncio.run(controller.share_url(request))
-        
+
         # Verify response
-        assert response.status == 200, f"Expected 200 status code, got {response.status}"
-        
+        assert (
+            response.status == 200
+        ), f"Expected 200 status code, got {response.status}"
+
         # Verify mock pipeline was called
         mock_pipeline.process.assert_called_once()
-        
+
     finally:
         # Restore original pipeline method
         PipelineFactory.create_pipeline_for_url = original_process
@@ -146,9 +149,11 @@ def _mock_pipeline_process(context):
     context.add_artifact("document_title", "Example Domain")
     context.add_artifact("rm_path", "/tmp/mock.rm")
     context.add_artifact("upload_success", True)
-    context.add_artifact("upload_message", "Document uploaded to Remarkable: Example Domain")
+    context.add_artifact(
+        "upload_message", "Document uploaded to Remarkable: Example Domain"
+    )
     return context
-    
+
 
 def test_web_scraper_with_real_url():
     """Test the WebScraperService with a real URL."""

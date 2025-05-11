@@ -14,10 +14,9 @@ import os
 import pytest
 import logging
 import importlib.util
+import asyncio
+import json
 from typing import Dict, Any, Optional
-
-# Check if neo4j is installed
-neo4j_installed = importlib.util.find_spec("neo4j") is not None
 
 # Import required modules
 from inklink.di.container import Container
@@ -35,6 +34,9 @@ from inklink.controllers.share_controller import ShareController
 from inklink.controllers.ingest_controller import IngestController
 from inklink.controllers.process_controller import ProcessController
 
+# Check if neo4j is installed
+neo4j_installed = importlib.util.find_spec("neo4j") is not None
+
 # Only import knowledge graph related modules if neo4j is installed
 if neo4j_installed:
     from inklink.services.interfaces import IKnowledgeGraphService
@@ -51,7 +53,7 @@ class MockRequest:
     def __init__(self, body: Optional[Dict[str, Any]] = None):
         """Initialize with optional request body."""
         self.body = body or {}
-        
+
     async def json(self):
         """Return the request body as JSON."""
         return self.body
@@ -65,7 +67,7 @@ class MockResponse:
         self.status_code = None
         self.headers = {}
         self.body = None
-        
+
     async def text(self):
         """Return response body as text."""
         return self.body
@@ -118,29 +120,36 @@ class ControllerTestHelper:
         """Create service directly instead of using container."""
         if interface == IQRCodeService:
             from inklink.services.qr_service import QRCodeService
+
             return QRCodeService(temp_dir=self.temp_dir)
         elif interface == IWebScraperService:
             from inklink.services.web_scraper_service import WebScraperService
+
             return WebScraperService()
         elif interface == IDocumentService:
             from inklink.services.document_service import DocumentService
+
             return DocumentService(temp_dir=self.temp_dir)
         elif interface == IPDFService:
             from inklink.services.pdf_service import PDFService
+
             return PDFService(temp_dir=self.temp_dir, output_dir=self.output_dir)
         elif interface == IRemarkableService:
             from inklink.services.remarkable_service import RemarkableService
+
             rmapi_path = self.config.get("rmapi_path", "/usr/bin/rmapi")
             return RemarkableService(rmapi_path=rmapi_path)
         elif interface == IAIService:
             from inklink.services.ai_service import AIService
+
             return AIService()
         elif neo4j_installed and interface == IKnowledgeGraphService:
             from inklink.services.knowledge_graph_service import KnowledgeGraphService
+
             return KnowledgeGraphService(
                 uri=self.config.get("neo4j_uri"),
                 username=self.config.get("neo4j_username"),
-                password=self.config.get("neo4j_password")
+                password=self.config.get("neo4j_password"),
             )
         else:
             # Default to container resolution as fallback
@@ -187,15 +196,15 @@ def test_share_controller_roundtrip(tmp_path):
         helper.request.body = {"url": url}
 
         # Execute the controller
-        import asyncio
         try:
             response = asyncio.run(controller.share_url(helper.request))
 
             # Verify response
-            assert response.status == 200, f"Expected 200 status code, got {response.status}"
+            assert (
+                response.status == 200
+            ), f"Expected 200 status code, got {response.status}"
 
             # Check that the document was uploaded to reMarkable
-            import json
             body_text = asyncio.run(response.text())
             body = json.loads(body_text)
             assert body["success"] is True
@@ -231,24 +240,26 @@ def test_knowledge_graph_roundtrip(tmp_path):
         helper.request.body = {
             "name": entity_name,
             "type": "TestEntity",
-            "observations": ["Test observation 1", "Test observation 2"]
+            "observations": ["Test observation 1", "Test observation 2"],
         }
 
         # Execute the controller
-        import asyncio
         response = asyncio.run(controller.create_entity(helper.request))
 
         # Verify response
-        assert response.status == 201, f"Expected 201 status code, got {response.status}"
+        assert (
+            response.status == 201
+        ), f"Expected 201 status code, got {response.status}"
 
         # Get the created entity
         helper.request.match_info = {"name": entity_name}
         get_response = asyncio.run(controller.get_entity(helper.request))
 
         # Verify entity retrieval
-        assert get_response.status == 200, f"Expected 200 status code, got {get_response.status}"
+        assert (
+            get_response.status == 200
+        ), f"Expected 200 status code, got {get_response.status}"
 
-        import json
         body_text = asyncio.run(get_response.text())
         body = json.loads(body_text)
         assert body["name"] == entity_name
@@ -257,7 +268,9 @@ def test_knowledge_graph_roundtrip(tmp_path):
 
         # Clean up - Delete the entity
         delete_response = asyncio.run(controller.delete_entity(helper.request))
-        assert delete_response.status == 200, f"Expected 200 status code, got {delete_response.status}"
+        assert (
+            delete_response.status == 200
+        ), f"Expected 200 status code, got {delete_response.status}"
     except Exception as e:
         logger.error(f"Error in knowledge graph test: {e}")
         pytest.skip(f"Knowledge graph test error: {e}")
@@ -268,8 +281,10 @@ def test_full_ai_roundtrip(tmp_path):
     """Test the full AI roundtrip workflow."""
     # Skip if no AI API key
     if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
-        pytest.skip("No AI API key found in environment. Set ANTHROPIC_API_KEY or OPENAI_API_KEY to enable.")
-    
+        pytest.skip(
+            "No AI API key found in environment. Set ANTHROPIC_API_KEY or OPENAI_API_KEY to enable."
+        )
+
     # Create test helper with AI config
     ai_config = {
         "AI_PROVIDER": os.environ.get("INKLINK_AI_PROVIDER", "anthropic"),
@@ -279,50 +294,52 @@ def test_full_ai_roundtrip(tmp_path):
         "OPENAI_MODEL": os.environ.get("OPENAI_MODEL", "gpt-4-turbo"),
     }
     helper = ControllerTestHelper(tmp_path, ai_config)
-    
+
     # Get required services
     ai_service = helper.get_service(IAIService)
     document_service = helper.get_service(IDocumentService)
-    
+
     # Test AI query processing
     query = "Summarize the following content in 3 bullet points: Example Domain. This domain is for use in illustrative examples in documents."
     response = ai_service.ask(query)
-    
+
     # Verify AI response format
     assert response, "AI service returned empty response"
     assert len(response) > 10, "AI response too short"
-    
+
     # Test AI processing with document content
     content = {
         "title": "Example Domain",
         "text": "This domain is for use in illustrative examples in documents.",
         "url": "https://example.com/",
     }
-    
-    ai_response = ai_service.process_query("Summarize this content", context={"metadata": content})
-    
+
+    ai_response = ai_service.process_query(
+        "Summarize this content", context={"metadata": content}
+    )
+
     # Verify AI response
     assert ai_response, "AI service returned empty response"
     assert len(ai_response) > 10, "AI response too short"
-    
+
     # If we have document service and remarkable service, test the full roundtrip
     try:
         remarkable_service = helper.get_service(IRemarkableService)
-        
+
         # Create a simple markdown document with AI response
         md_content = f"# Example Domain\n\n{ai_response}"
-        
+
         # Save to a file
-        md_path = os.path.join(helper.config["TEMP_DIR"], "ai_response.md")
+        md_path = os.path.join(helper.temp_dir, "ai_response.md")
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(md_content)
-        
+
         # Create a remarkable document
         rm_doc = document_service.create_rmdoc(md_path, "https://example.com")
-        
+
         # Upload to remarkable (if rmapi is configured)
         remarkable_service.upload(rm_doc, "AI Response Test")
-        
+
         # If we get here, the full roundtrip worked
         logger.info("Full AI roundtrip test completed successfully")
     except Exception as e:
