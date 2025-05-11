@@ -7,11 +7,18 @@ structured content for drawj2d to render.
 import os
 import time
 import logging
-import subprocess
+from typing import Dict, Any, Optional, NamedTuple
 
-from typing import Dict, Any, Optional, List, Tuple
+from inklink.config import CONFIG
 
-from inklink.config import CONFIG, HCLResourceConfig
+
+class HCLResourceConfig(NamedTuple):
+    """Configuration for an HCL resource block."""
+
+    resource_type: str
+    resource_name: str
+    attributes: Dict[str, Any]
+
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +170,3 @@ def render_hcl_resource(config: HCLResourceConfig) -> str:
 
     result += "}\n"
     return result
-
-
-# This function has been replaced by render_hcl_resource

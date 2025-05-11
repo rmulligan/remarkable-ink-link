@@ -39,7 +39,6 @@ class HTMLConverter(BaseConverter):
                     - html_content: The raw HTML content
                     - title: Content title (optional)
             output_path: Optional explicit output path
-
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -47,27 +46,22 @@ class HTMLConverter(BaseConverter):
             url = content.get("url", "")
             html_content = content.get("html_content", "")
             title = content.get("title", f"Page from {url}")
-
             if not html_content:
                 logger.error("No HTML content provided for conversion")
                 return None
-
             # Generate temp HTML file
             with tempfile.NamedTemporaryFile(
                 suffix=".html", dir=self.temp_dir, delete=False
             ) as temp_file:
                 temp_html_path = temp_file.name
                 temp_file.write(html_content.encode("utf-8"))
-
             # Convert HTML to reMarkable format
             success, result = convert_html_to_rm(html_path=temp_html_path, title=title)
-
             # Clean up temp file
             try:
                 os.unlink(temp_html_path)
             except OSError:
                 pass
-
             if success:
                 logger.info(
                     f"Successfully converted HTML to reMarkable format: {result}"
@@ -76,7 +70,6 @@ class HTMLConverter(BaseConverter):
             else:
                 logger.error(f"HTML conversion failed: {result}")
                 return None
-
         except Exception as e:
             logger.error(f"Error converting HTML: {str(e)}")
             return None
