@@ -21,6 +21,11 @@ from inklink.utils.url_utils import (
     extract_url,
 )
 
+from inklink.utils.html_processor import (
+    extract_structured_content,
+    validate_and_fix_content,
+)
+
 __all__ = [
     "retry_operation",
     "format_error",
@@ -31,4 +36,6 @@ __all__ = [
     "escape_hcl",
     "is_safe_url",
     "extract_url",
+    "extract_structured_content",
+    "validate_and_fix_content",
 ]
