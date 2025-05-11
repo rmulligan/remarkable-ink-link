@@ -62,7 +62,7 @@ class DocumentService(IDocumentService):
         # Initialize renderer
         self.hcl_renderer = HCLRenderer(self.temp_dir, self.drawj2d_path)
 
-    def _initialize_converters(self):
+    def _initialize_converters(self) -> List[IContentConverter]:
         """Initialize the content converters."""
         return [
             MarkdownConverter(self.temp_dir),
@@ -70,7 +70,7 @@ class DocumentService(IDocumentService):
             PDFConverter(self.temp_dir),
         ]
 
-    def _get_converter_for_type(self, content_type: str):
+    def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
         """Get the appropriate converter for the content type."""
         return next(
             (
@@ -119,7 +119,7 @@ class DocumentService(IDocumentService):
             # Get the appropriate converter and convert content
             converter = self._get_converter_for_type("structured")
             if converter:
-                result = converter.convert(converter_content)
+                result = converter.convert(converter_content, None)
                 if result:
                     logger.info(
                         f"Successfully converted to reMarkable format: {result}"

@@ -19,8 +19,7 @@ class RemarkableService(IRemarkableService):
         Initialize with paths and folder.
 
         Args:
-            rmapi_path: Path to rmapi executable
-            rm_folder: Folder on reMarkable to upload to
+            adapter: RmapiAdapter for communicating with reMarkable cloud
         """
         self.adapter = adapter
 

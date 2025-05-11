@@ -1,7 +1,7 @@
 """Web scraping service that tries multiple methods."""
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 from inklink.services.interfaces import IWebScraperService
 from inklink.adapters.http_adapter import HTTPAdapter
@@ -117,7 +117,7 @@ class WebScraperService(IWebScraperService):
                 url, f"Could not extract content: {str(e)}"
             )
 
-    def _fetch_url(self, url: str) -> tuple[bool, str]:
+    def _fetch_url(self, url: str) -> Tuple[bool, str]:
         """
         Fetch URL and return its HTML content using the HTTP adapter.
 

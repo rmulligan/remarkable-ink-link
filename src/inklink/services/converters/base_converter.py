@@ -80,6 +80,7 @@ class BaseConverter(IContentConverter, ABC):
             prefix: File prefix
             url_or_id: URL or unique identifier
             extension: File extension (without dot)
+
         Returns:
             Path to the temporary file
         """

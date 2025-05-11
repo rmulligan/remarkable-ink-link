@@ -22,6 +22,7 @@ class QRCodeService(IQRCodeService):
             qr_adapter: Optional pre-configured QRCodeAdapter
         """
         self.output_path = temp_dir
+        os.makedirs(temp_dir, exist_ok=True)
 
         # Use provided adapter or create a new one
         self.adapter = qr_adapter or QRCodeAdapter(

@@ -2,8 +2,11 @@ import pytest
 import os
 import tempfile
 from typing import Dict, Any
-from inklink.config import HCLResourceConfig
-from inklink.utils.hcl_render import render_hcl_resource, create_hcl_from_content
+from inklink.utils.hcl_render import (
+    HCLResourceConfig,
+    render_hcl_resource,
+    create_hcl_from_content,
+)
 
 
 def test_render_hcl_resource_basic():
