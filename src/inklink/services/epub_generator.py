@@ -129,27 +129,41 @@ class EPUBGenerator:
         Returns:
             Enhanced markdown content with hyperlinks
         """
-        enhanced_content = markdown_content
+        # Split content into lines to process each line separately
+        lines = markdown_content.splitlines()
+        enhanced_lines = []
 
         # Sort entities by length (longest first) to avoid substring replacement issues
         sorted_entities = sorted(entity_links.keys(), key=len, reverse=True)
 
-        for entity in sorted_entities:
-            # Escape entity name for regex
-            escaped_entity = re.escape(entity)
+        # Process each line
+        for line in lines:
+            # Skip headings (lines starting with # characters)
+            if re.match(r"^#{1,6}\s+", line):
+                enhanced_lines.append(line)
+                continue
 
-            # Match entity only if not already part of a link or heading
-            # Don't match if preceded by [ or # (heading)
-            # Don't match if inside a markdown link [...]
-            pattern = rf"(?<![#\[])\b{escaped_entity}\b(?![^\[]*\])"
+            # Process normal content lines
+            current_line = line
+            for entity in sorted_entities:
+                # Escape entity name for regex
+                escaped_entity = re.escape(entity)
 
-            # Create link to the entity
-            target = f"[{entity}](#{entity_links[entity]})"
+                # Match entity only if not already part of a link
+                # Don't match if preceded by [
+                # Don't match if inside a markdown link [...]
+                pattern = rf"(?<!\[)\b{escaped_entity}\b(?![^\[]*\])"
 
-            # Replace all occurrences
-            enhanced_content = re.sub(pattern, target, enhanced_content)
+                # Create link to the entity
+                target = f"[{entity}](#{entity_links[entity]})"
 
-        return enhanced_content
+                # Replace all occurrences in this line
+                current_line = re.sub(pattern, target, current_line)
+
+            enhanced_lines.append(current_line)
+
+        # Join the enhanced lines back into a single string
+        return "\n".join(enhanced_lines)
 
     def _wrap_html_content(self, html_content: str, title: str) -> str:
         """
