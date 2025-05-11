@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import time
+import tempfile
 from typing import Dict, List, Any, Optional, Tuple
 
 from inklink.services.handwriting_recognition_service import (
@@ -555,6 +556,9 @@ class AugmentedNotebookService:
 
             if not rm_path:
                 return False, {"error": "Failed to create response document"}
+
+            # Get original page metadata
+            _ = os.path.basename(rm_file_path)  # Could be used in future for nameing
 
             # Upload to reMarkable with appropriate title
             title = f"Response {timestamp}"

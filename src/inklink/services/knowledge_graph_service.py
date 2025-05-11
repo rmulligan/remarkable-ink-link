@@ -1,159 +1,682 @@
-"""
-Knowledge Graph Service for InkLink.
-
-This service provides an interface to the Neo4j knowledge graph, allowing
-for storage and retrieval of entities, relationships, and semantic connections.
-"""
+"""Service for interacting with the knowledge graph."""
 
 import os
 import json
 import logging
-from typing import Dict, Any, List, Optional, Tuple, Set, Union
-from datetime import datetime
+import time
+from typing import Dict, List, Any, Optional, Tuple, Union
 
-import neo4j
-from neo4j import GraphDatabase
-
-from inklink.utils.common import sanitize_filename
+from inklink.config import CONFIG
+from inklink.services.ai_service import AIService
+from inklink.services.interfaces import IKnowledgeGraphService
 
 logger = logging.getLogger(__name__)
 
 
-class KnowledgeGraphService:
+class KnowledgeGraphService(IKnowledgeGraphService):
     """
-    Service for interacting with the Neo4j knowledge graph.
+    Service for creating, managing, and querying knowledge graph data.
 
-    This service provides a facade for Neo4j operations, abstracting the
-    complexity of graph database queries and enabling semantic knowledge
-    management for InkLink.
+    This service provides a unified interface for knowledge graph operations,
+    including entity extraction, relationship extraction, semantic search,
+    and knowledge graph management.
     """
 
     def __init__(
         self,
-        uri: str,
-        username: str,
-        password: str,
-        database: str = "neo4j",
+        uri: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        ai_service: Optional[AIService] = None,
     ):
         """
         Initialize the knowledge graph service.
 
         Args:
-            uri: URI of the Neo4j server
-            username: Username for Neo4j authentication
-            password: Password for Neo4j authentication
-            database: Name of the Neo4j database to use
+            uri: Neo4j URI (defaults to environment variable)
+            username: Neo4j username (defaults to environment variable)
+            password: Neo4j password (defaults to environment variable)
+            ai_service: Service for AI processing (optional)
         """
-        self.uri = uri
-        self.username = username
-        self.password = password
-        self.database = database
+        # Set Neo4j connection parameters
+        self.uri = uri or CONFIG.get("NEO4J_URI", "bolt://localhost:7687")
+        self.username = username or CONFIG.get("NEO4J_USERNAME", "neo4j")
+        self.password = password or CONFIG.get("NEO4J_PASSWORD", "password")
 
-        # Initialize driver
+        # Set up AI service for extraction and embedding tasks
+        self.ai_service = ai_service or AIService()
+
+        # Initialize connection on first access
         self._driver = None
-        self._initialize_driver()
 
-    def _initialize_driver(self):
-        """Initialize the Neo4j driver."""
-        try:
-            self._driver = GraphDatabase.driver(
-                self.uri, auth=(self.username, self.password)
-            )
-            logger.info("Neo4j driver initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Neo4j driver: {str(e)}")
-            self._driver = None
+    def get_driver(self):
+        """Get or create Neo4j driver."""
+        if self._driver is None:
+            try:
+                # Import here to avoid dependency if Neo4j is not used
+                from neo4j import GraphDatabase
 
-    @property
-    def driver(self):
-        """Get the Neo4j driver."""
+                self._driver = GraphDatabase.driver(
+                    self.uri, auth=(self.username, self.password)
+                )
+                logger.info(f"Connected to Neo4j at {self.uri}")
+            except Exception as e:
+                logger.error(f"Failed to connect to Neo4j database: {e}")
+                self._driver = None
+
         return self._driver
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """
-        Check if connected to Neo4j.
+        Check if the connection to Neo4j is working.
 
         Returns:
-            True if connected, False otherwise
+            True if connection is working, False otherwise
         """
         try:
-            if not self._driver:
-                logger.warning("Neo4j driver not initialized")
-                return False
-
-            with self._driver.session() as session:
-                result = session.run("RETURN 1 as test")
-                return result.single()["test"] == 1
+            driver = self.get_driver()
+            if driver:
+                with driver.session() as session:
+                    result = session.run("RETURN 1 as test")
+                    return result.single()["test"] == 1
+            return False
         except Exception as e:
-            logger.error(f"Neo4j connection error: {e}")
+            logger.error(f"Error checking Neo4j connection: {e}")
             return False
 
-    def close(self):
-        """Close the Neo4j driver."""
-        if self._driver:
-            self._driver.close()
-            self._driver = None
+    def extract_entities_from_text(
+        self, text: str, entity_types: Optional[List[str]] = None
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Extract entities from text using AI analysis.
+
+        Args:
+            text: The text to extract entities from
+            entity_types: Optional list of entity types to extract
+
+        Returns:
+            Tuple of (success, result dictionary)
+        """
+        try:
+            logger.info("Extracting entities from text")
+
+            # Create a prompt to extract entities using AI service
+            type_filter = ""
+            if entity_types:
+                type_filter = f"Only extract entities of the following types: {', '.join(entity_types)}."
+
+            prompt = f"""
+            Extract key entities/concepts from the following text:
+
+            {text}
+
+            {type_filter}
+
+            For each entity, provide:
+            1. The entity name
+            2. The entity type (e.g., Person, Organization, Concept, Technology, etc.)
+            3. A confidence score from 0.0 to 1.0
+            4. The context (the sentence or phrase where it appears)
+
+            Return the results as a JSON array with objects containing "name", "type", "score", and "context" fields.
+            Only include entities with a confidence score of 0.5 or higher.
+            """
+
+            response = self.ai_service.generate_text(prompt, max_tokens=1500)
+
+            # Parse the response
+            try:
+                # Clean the response to ensure it's valid JSON
+                # Find JSON array starting with [ and ending with ]
+                import re
+
+                json_match = re.search(r"\[.*\]", response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    entities = json.loads(json_str)
+                else:
+                    # Try to parse the whole response as JSON
+                    entities = json.loads(response)
+                    if not isinstance(entities, list):
+                        if isinstance(entities, dict) and "entities" in entities:
+                            entities = entities["entities"]
+                        else:
+                            return False, {
+                                "error": "Invalid response format, expected a list of entities"
+                            }
+
+                return True, {"count": len(entities), "entities": entities}
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"Failed to parse entity extraction response as JSON: {e}"
+                )
+                # As a fallback, try to extract entities with simple heuristics
+                entities = self._extract_entities_heuristic(text)
+                return True, {"count": len(entities), "entities": entities}
+
+        except Exception as e:
+            logger.error(f"Error extracting entities from text: {e}")
+            return False, {"error": f"Entity extraction failed: {str(e)}"}
+
+    def _extract_entities_heuristic(self, text: str) -> List[Dict[str, Any]]:
+        """
+        Simple heuristic-based entity extraction as fallback.
+
+        Args:
+            text: Text to extract entities from
+
+        Returns:
+            List of extracted entities
+        """
+        entities = []
+
+        # Split text into sentences
+        sentences = text.split(".")
+
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+
+            # Extract nouns that start with capitals as potential entities
+            words = sentence.split()
+            for word in words:
+                word = word.strip()
+                if len(word) > 1 and word[0].isupper():
+                    # Remove punctuation
+                    clean_word = "".join(c for c in word if c.isalnum() or c.isspace())
+                    if clean_word:
+                        entities.append(
+                            {
+                                "name": clean_word,
+                                "type": "Concept",
+                                "score": 0.6,
+                                "context": sentence,
+                            }
+                        )
+
+        # Remove duplicates
+        unique_entities = []
+        seen_names = set()
+        for entity in entities:
+            if entity["name"] not in seen_names:
+                seen_names.add(entity["name"])
+                unique_entities.append(entity)
+
+        return unique_entities
+
+    def extract_relationships_from_text(
+        self, text: str, from_entity: Optional[str] = None
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Extract relationships from text using AI analysis.
+
+        Args:
+            text: The text to extract relationships from
+            from_entity: Optional entity to focus on as the source of relationships
+
+        Returns:
+            Tuple of (success, result dictionary)
+        """
+        try:
+            logger.info("Extracting relationships from text")
+
+            # Create a prompt to extract relationships using AI service
+            entity_filter = ""
+            if from_entity:
+                entity_filter = f"Only extract relationships where '{from_entity}' is the source entity."
+
+            prompt = f"""
+            Extract semantic relationships between entities/concepts from the following text:
+
+            {text}
+
+            {entity_filter}
+
+            For each relationship, provide:
+            1. The source entity (from)
+            2. The target entity (to)
+            3. The relationship type (e.g., PART_OF, WORKS_FOR, INSTANCE_OF, etc.)
+            4. A confidence score from 0.0 to 1.0
+
+            Return the results as a JSON array with objects containing "from", "to", "type", and "score" fields.
+            Only include relationships with a confidence score of 0.5 or higher.
+            """
+
+            response = self.ai_service.generate_text(prompt, max_tokens=1500)
+
+            # Parse the response
+            try:
+                # Clean the response to ensure it's valid JSON
+                import re
+
+                json_match = re.search(r"\[.*\]", response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    relationships = json.loads(json_str)
+                else:
+                    # Try to parse the whole response as JSON
+                    relationships = json.loads(response)
+                    if not isinstance(relationships, list):
+                        if (
+                            isinstance(relationships, dict)
+                            and "relationships" in relationships
+                        ):
+                            relationships = relationships["relationships"]
+                        else:
+                            return False, {
+                                "error": "Invalid response format, expected a list of relationships"
+                            }
+
+                # Filter relationships if from_entity is specified
+                if from_entity:
+                    relationships = [
+                        r for r in relationships if r.get("from") == from_entity
+                    ]
+
+                return True, {
+                    "count": len(relationships),
+                    "relationships": relationships,
+                }
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"Failed to parse relationship extraction response as JSON: {e}"
+                )
+                # As a fallback, return an empty list
+                return True, {"count": 0, "relationships": []}
+
+        except Exception as e:
+            logger.error(f"Error extracting relationships from text: {e}")
+            return False, {"error": f"Relationship extraction failed: {str(e)}"}
 
     def create_entity(
-        self, name: str, entity_type: str, properties: Dict[str, Any] = None
+        self, name: str, entity_type: str, observations: Optional[List[str]] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Create a new entity in the knowledge graph.
 
         Args:
-            name: Name of the entity
-            entity_type: Type of the entity
-            properties: Additional properties for the entity
+            name: Entity name (must be unique)
+            entity_type: Type of entity
+            observations: List of text observations about the entity
 
         Returns:
-            Tuple of (success, entity_dict)
+            Tuple of (success, entity information)
         """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return False, {"error": "Neo4j driver not initialized"}
-
-        # Merge properties if provided
-        props = {"name": name, "type": entity_type}
-        if properties:
-            props.update(properties)
-
         try:
-            with self._driver.session(database=self.database) as session:
-                result = session.write_transaction(self._create_entity_tx, props)
+            logger.info(f"Creating entity: {name} ({entity_type})")
 
-                return True, {"id": result["id"], "name": name, "type": entity_type}
+            driver = self.get_driver()
+            if not driver:
+                return False, {"error": "Neo4j connection not available"}
+
+            # Prepare observations
+            observations = observations or []
+            properties = {"observations": observations}
+
+            # Create entity
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MERGE (e:Entity {name: $name})
+                    SET e.type = $type,
+                        e.properties = $properties,
+                        e.created = TIMESTAMP(),
+                        e.updated = TIMESTAMP()
+                    RETURN e
+                    """,
+                    name=name,
+                    type=entity_type,
+                    properties=properties,
+                )
+
+                record = result.single()
+                if not record:
+                    return False, {"error": "Failed to create entity"}
+
+                entity = record["e"]
+                return True, {
+                    "id": entity.id,
+                    "name": entity.get("name"),
+                    "type": entity.get("type"),
+                    "properties": entity.get("properties", {}),
+                }
 
         except Exception as e:
-            logger.error(f"Error creating entity: {str(e)}")
-            return False, {"error": str(e)}
+            logger.error(f"Error creating entity: {e}")
+            return False, {"error": f"Entity creation failed: {str(e)}"}
 
-    def _create_entity_tx(self, tx, properties):
+    def get_entity(self, name: str) -> Tuple[bool, Dict[str, Any]]:
         """
-        Neo4j transaction function for creating an entity.
+        Get an entity from the knowledge graph.
 
         Args:
-            tx: Neo4j transaction
-            properties: Entity properties
+            name: Entity name
 
         Returns:
-            Entity ID
+            Tuple of (success, entity information)
         """
-        query = """
-        MERGE (e:Entity {name: $name, type: $type})
-        ON CREATE SET e += $properties, e.created = datetime()
-        ON MATCH SET e += $properties, e.updated = datetime()
-        RETURN id(e) as id
+        try:
+            logger.info(f"Getting entity: {name}")
+
+            driver = self.get_driver()
+            if not driver:
+                return False, {"error": "Neo4j connection not available"}
+
+            # Get entity
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (e:Entity {name: $name})
+                    RETURN e
+                    """,
+                    name=name,
+                )
+
+                record = result.single()
+                if not record:
+                    return False, {"error": "Entity not found"}
+
+                entity = record["e"]
+                return True, {
+                    "id": entity.id,
+                    "name": entity.get("name"),
+                    "type": entity.get("type"),
+                    "properties": entity.get("properties", {}),
+                }
+
+        except Exception as e:
+            logger.error(f"Error getting entity: {e}")
+            return False, {"error": f"Entity retrieval failed: {str(e)}"}
+
+    def create_relationship(
+        self, from_entity: str, to_entity: str, relationship_type: str
+    ) -> Tuple[bool, Dict[str, Any]]:
         """
+        Create a relationship between entities.
 
-        result = tx.run(
-            query,
-            name=properties["name"],
-            type=properties["type"],
-            properties=properties,
-        )
-        record = result.single()
-        return {"id": record["id"]}
+        Args:
+            from_entity: Source entity name
+            to_entity: Target entity name
+            relationship_type: Type of relationship
 
+        Returns:
+            Tuple of (success, relationship information)
+        """
+        try:
+            logger.info(
+                f"Creating relationship: {from_entity} -{relationship_type}-> {to_entity}"
+            )
+
+            driver = self.get_driver()
+            if not driver:
+                return False, {"error": "Neo4j connection not available"}
+
+            # Create relationship
+            with driver.session() as session:
+                result = session.run(
+                    f"""
+                    MATCH (a:Entity {{name: $from_entity}})
+                    MATCH (b:Entity {{name: $to_entity}})
+                    MERGE (a)-[r:{relationship_type}]->(b)
+                    SET r.created = TIMESTAMP()
+                    RETURN r, a.name as from_name, b.name as to_name, TYPE(r) as type
+                    """,
+                    from_entity=from_entity,
+                    to_entity=to_entity,
+                )
+
+                record = result.single()
+                if not record:
+                    return False, {"error": "Failed to create relationship"}
+
+                rel = record["r"]
+                return True, {
+                    "id": rel.id,
+                    "from": record["from_name"],
+                    "to": record["to_name"],
+                    "type": record["type"],
+                }
+
+        except Exception as e:
+            logger.error(f"Error creating relationship: {e}")
+            return False, {"error": f"Relationship creation failed: {str(e)}"}
+
+    def get_entity_relationships(self, entity_name: str) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Get relationships for an entity.
+
+        Args:
+            entity_name: Entity name
+
+        Returns:
+            Tuple of (success, relationship information)
+        """
+        try:
+            logger.info(f"Getting relationships for entity: {entity_name}")
+
+            driver = self.get_driver()
+            if not driver:
+                return False, {"error": "Neo4j connection not available"}
+
+            # Get relationships
+            with driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (e:Entity {name: $name})-[r]->(target:Entity)
+                    RETURN target.name as target_name, target.type as target_type, TYPE(r) as relationship_type
+                    UNION
+                    MATCH (source:Entity)-[r]->(e:Entity {name: $name})
+                    RETURN source.name as source_name, source.type as source_type, TYPE(r) as relationship_type
+                    """,
+                    name=entity_name,
+                )
+
+                related_entities = []
+                for record in result:
+                    if "target_name" in record:
+                        related_entities.append(
+                            {
+                                "entity": record["target_name"],
+                                "type": record["target_type"],
+                                "relationship": record["relationship_type"],
+                                "direction": "outgoing",
+                            }
+                        )
+                    else:
+                        related_entities.append(
+                            {
+                                "entity": record["source_name"],
+                                "type": record["source_type"],
+                                "relationship": record["relationship_type"],
+                                "direction": "incoming",
+                            }
+                        )
+
+                return True, {
+                    "entity": entity_name,
+                    "related_entities": related_entities,
+                }
+
+        except Exception as e:
+            logger.error(f"Error getting entity relationships: {e}")
+            return False, {"error": f"Relationship retrieval failed: {str(e)}"}
+
+    def create_semantic_links(
+        self,
+        entity_name: str,
+        min_similarity: float = 0.7,
+        max_links: int = 5,
+        entity_types: Optional[List[str]] = None,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create semantic links for an entity.
+
+        Args:
+            entity_name: Entity name
+            min_similarity: Minimum similarity score (0-1)
+            max_links: Maximum number of links to create
+            entity_types: Optional list of entity types to link with
+
+        Returns:
+            Tuple of (success, result information)
+        """
+        try:
+            logger.info(f"Creating semantic links for entity: {entity_name}")
+
+            # Get entity first
+            success, entity_result = self.get_entity(entity_name)
+            if not success:
+                return False, {"error": f"Entity not found: {entity_name}"}
+
+            # Get entity text for embedding
+            entity = entity_result
+            entity_text = entity_name
+            if "properties" in entity and "observations" in entity["properties"]:
+                entity_text += ". " + ". ".join(entity["properties"]["observations"])
+
+            # Find similar entities using semantic search
+            success, search_result = self.find_semantically_similar_text(
+                text=entity_text,
+                min_similarity=min_similarity,
+                max_results=max_links,
+                entity_types=entity_types,
+                exclude_entities=[entity_name],
+            )
+
+            if not success:
+                return False, {
+                    "error": f"Semantic search failed: {search_result.get('error')}"
+                }
+
+            similar_entities = search_result.get("results", [])
+
+            # Create semantic links
+            links_created = 0
+            for similar in similar_entities:
+                similar_entity = similar.get("entity")
+                # Create SEMANTICALLY_SIMILAR_TO relationship
+                success, _ = self.create_relationship(
+                    from_entity=entity_name,
+                    to_entity=similar_entity,
+                    relationship_type="SEMANTICALLY_SIMILAR_TO",
+                )
+
+                if success:
+                    links_created += 1
+
+            return True, {
+                "entity": entity_name,
+                "similar_entities": similar_entities,
+                "links_created": links_created,
+            }
+
+        except Exception as e:
+            logger.error(f"Error creating semantic links: {e}")
+            return False, {"error": f"Semantic link creation failed: {str(e)}"}
+
+    def find_semantically_similar_text(
+        self,
+        text: str,
+        min_similarity: float = 0.6,
+        max_results: int = 10,
+        entity_types: Optional[List[str]] = None,
+        exclude_entities: Optional[List[str]] = None,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Find semantically similar entities to the given text.
+
+        Args:
+            text: Query text
+            min_similarity: Minimum similarity score (0-1)
+            max_results: Maximum number of results
+            entity_types: Optional list of entity types to filter by
+            exclude_entities: Optional list of entity names to exclude
+
+        Returns:
+            Tuple of (success, result information)
+        """
+        try:
+            logger.info(f"Finding semantically similar text: {text[:50]}...")
+
+            # Embed query text and find similar entities
+            # (Since we're mocking this, we'll create a simulated response)
+            # In a real implementation, we would use vector embeddings and similarity search
+
+            # Use AI service to generate a list of related concepts
+            type_filter = ""
+            if entity_types:
+                type_filter = f"Only include entities of the following types: {', '.join(entity_types)}."
+
+            exclude_filter = ""
+            if exclude_entities:
+                exclude_filter = f"Do not include any of these entities: {', '.join(exclude_entities)}."
+
+            prompt = f"""
+            Find concepts, ideas, or entities that are semantically similar to this text:
+
+            {text}
+
+            {type_filter}
+            {exclude_filter}
+
+            For each similar concept, provide:
+            1. The entity name
+            2. The entity type (e.g., Person, Organization, Concept, Technology, etc.)
+            3. A similarity score from 0.0 to 1.0 (where 1.0 is identical)
+
+            Return the results as a JSON array with objects containing "entity", "type", and "similarity" fields.
+            Only include entities with a similarity score of {min_similarity} or higher.
+            Sort results by similarity score in descending order.
+            Limit results to {max_results} items.
+            """
+
+            response = self.ai_service.generate_text(prompt, max_tokens=1500)
+
+            # Parse the response
+            try:
+                # Clean the response to ensure it's valid JSON
+                import re
+
+                json_match = re.search(r"\[.*\]", response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    similar_entities = json.loads(json_str)
+                else:
+                    # Try to parse the whole response as JSON
+                    similar_entities = json.loads(response)
+                    if not isinstance(similar_entities, list):
+                        if (
+                            isinstance(similar_entities, dict)
+                            and "results" in similar_entities
+                        ):
+                            similar_entities = similar_entities["results"]
+                        else:
+                            return False, {
+                                "error": "Invalid response format, expected a list of similar entities"
+                            }
+
+                # Sort by similarity and limit results
+                similar_entities = sorted(
+                    similar_entities, key=lambda x: x.get("similarity", 0), reverse=True
+                )
+                similar_entities = similar_entities[:max_results]
+
+                return True, {
+                    "query": text,
+                    "results": similar_entities,
+                    "count": len(similar_entities),
+                }
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse semantic search response as JSON: {e}")
+                # As a fallback, return an empty list
+                return True, {"query": text, "results": [], "count": 0}
+
+        except Exception as e:
+            logger.error(f"Error finding semantically similar text: {e}")
+            return False, {"error": f"Semantic search failed: {str(e)}"}
+
+    # Required methods for IKnowledgeGraphService interface
     def get_entities(
         self, types: Optional[List[str]] = None, min_references: int = 0
     ) -> List[Dict[str, Any]]:
@@ -167,88 +690,60 @@ class KnowledgeGraphService:
         Returns:
             List of entity dictionaries
         """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return []
-
         try:
-            with self._driver.session(database=self.database) as session:
-                if types:
-                    # Filter by specified types
-                    result = session.read_transaction(
-                        self._get_entities_by_types_tx, types, min_references
-                    )
-                else:
-                    # Get all entities
-                    result = session.read_transaction(
-                        self._get_all_entities_tx, min_references
-                    )
+            logger.info("Getting entities from knowledge graph")
+            driver = self.get_driver()
+            if not driver:
+                logger.error("Neo4j connection not available")
+                return []
 
-                return result
+            entities = []
+            # Get all entities from graph
+            with driver.session() as session:
+                query = "MATCH (e:Entity)"
+                if types:
+                    type_list = ", ".join([f"'{t}'" for t in types])
+                    query += f" WHERE e.type IN [{type_list}]"
+                query += " RETURN e"
+
+                result = session.run(query)
+
+                for record in result:
+                    entity = record["e"]
+                    entity_data = {
+                        "name": entity.get("name"),
+                        "type": entity.get("type"),
+                        "references": [],  # Default empty references
+                    }
+
+                    # Get metadata and properties
+                    properties = entity.get("properties", {})
+                    if (
+                        properties
+                        and isinstance(properties, dict)
+                        and "observations" in properties
+                    ):
+                        for obs in properties["observations"]:
+                            if isinstance(obs, str) and len(obs) > 0:
+                                # Create a reference from the observation
+                                entity_data["references"].append(
+                                    {
+                                        "notebook": "Unknown",
+                                        "page": "0",
+                                        "context": obs[
+                                            :100
+                                        ],  # Truncate long observations
+                                    }
+                                )
+
+                    if len(entity_data["references"]) >= min_references:
+                        entities.append(entity_data)
+
+            return entities
 
         except Exception as e:
-            logger.error(f"Error getting entities: {str(e)}")
+            logger.error(f"Error getting entities: {e}")
             return []
-
-    def _get_entities_by_types_tx(self, tx, types, min_references):
-        """
-        Neo4j transaction function for getting entities by type.
-
-        Args:
-            tx: Neo4j transaction
-            types: List of entity types to filter by
-            min_references: Minimum number of references
-
-        Returns:
-            List of entity dictionaries
-        """
-        query = """
-        MATCH (e:Entity)
-        WHERE e.type IN $types
-        WITH e, size((e)<-[:REFERS_TO]-()) as refCount
-        WHERE refCount >= $min_references
-        OPTIONAL MATCH (e)<-[r:REFERS_TO]-(ref)
-        RETURN e, collect(distinct {notebook: ref.notebook, page: ref.page, context: ref.context}) as references
-        """
-
-        result = tx.run(query, types=types, min_references=min_references)
-
-        entities = []
-        for record in result:
-            entity = dict(record["e"])
-            entity["references"] = record["references"]
-            entities.append(entity)
-
-        return entities
-
-    def _get_all_entities_tx(self, tx, min_references):
-        """
-        Neo4j transaction function for getting all entities.
-
-        Args:
-            tx: Neo4j transaction
-            min_references: Minimum number of references
-
-        Returns:
-            List of entity dictionaries
-        """
-        query = """
-        MATCH (e:Entity)
-        WITH e, size((e)<-[:REFERS_TO]-()) as refCount
-        WHERE refCount >= $min_references
-        OPTIONAL MATCH (e)<-[r:REFERS_TO]-(ref)
-        RETURN e, collect(distinct {notebook: ref.notebook, page: ref.page, context: ref.context}) as references
-        """
-
-        result = tx.run(query, min_references=min_references)
-
-        entities = []
-        for record in result:
-            entity = dict(record["e"])
-            entity["references"] = record["references"]
-            entities.append(entity)
-
-        return entities
 
     def get_topics(
         self, limit: int = 20, min_connections: int = 2
@@ -265,54 +760,49 @@ class KnowledgeGraphService:
         Returns:
             List of topic dictionaries
         """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return []
-
         try:
-            with self._driver.session(database=self.database) as session:
-                result = session.read_transaction(
-                    self._get_topics_tx, limit, min_connections
-                )
+            logger.info("Getting topics from knowledge graph")
 
-                return result
+            # For now, simulate topics by clustering entities by type
+            topics = []
+            entities = self.get_entities()
+
+            # Group entities by type
+            type_groups = {}
+            for entity in entities:
+                entity_type = entity.get("type", "Unknown")
+                if entity_type not in type_groups:
+                    type_groups[entity_type] = []
+                type_groups[entity_type].append(entity)
+
+            # Create a topic for each entity type with enough connections
+            for entity_type, entity_list in type_groups.items():
+                if len(entity_list) >= min_connections:
+                    connections = []
+                    for entity in entity_list:
+                        connections.append(
+                            {
+                                "entity": entity["name"],
+                                "entity_type": entity["type"],
+                                "strength": 0.8,  # Default strength
+                            }
+                        )
+
+                    topics.append(
+                        {
+                            "name": f"{entity_type} Concepts",
+                            "description": f"Collection of {entity_type} concepts",
+                            "connections": connections,
+                        }
+                    )
+
+            # Sort topics by number of connections and limit results
+            topics.sort(key=lambda x: len(x["connections"]), reverse=True)
+            return topics[:limit]
 
         except Exception as e:
-            logger.error(f"Error getting topics: {str(e)}")
+            logger.error(f"Error getting topics: {e}")
             return []
-
-    def _get_topics_tx(self, tx, limit, min_connections):
-        """
-        Neo4j transaction function for getting topics.
-
-        Args:
-            tx: Neo4j transaction
-            limit: Maximum number of topics to return
-            min_connections: Minimum number of connections
-
-        Returns:
-            List of topic dictionaries
-        """
-        query = """
-        MATCH (t:Topic)
-        WITH t, size((t)-[:INCLUDES]->()) as connCount
-        WHERE connCount >= $min_connections
-        OPTIONAL MATCH (t)-[r:INCLUDES]->(e:Entity)
-        RETURN t,
-               collect(distinct {entity: e.name, entity_type: e.type, strength: r.strength}) as connections
-        ORDER BY connCount DESC
-        LIMIT $limit
-        """
-
-        result = tx.run(query, limit=limit, min_connections=min_connections)
-
-        topics = []
-        for record in result:
-            topic = dict(record["t"])
-            topic["connections"] = record["connections"]
-            topics.append(topic)
-
-        return topics
 
     def get_notebooks(self) -> List[Dict[str, Any]]:
         """
@@ -321,410 +811,55 @@ class KnowledgeGraphService:
         Returns:
             List of notebook dictionaries with their entities and topics
         """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return []
-
         try:
-            with self._driver.session(database=self.database) as session:
-                result = session.read_transaction(self._get_notebooks_tx)
-                return result
+            logger.info("Getting notebooks from knowledge graph")
 
-        except Exception as e:
-            logger.error(f"Error getting notebooks: {str(e)}")
-            return []
+            # For now, simulate notebooks by collecting unique references
+            notebooks = {}
+            entities = self.get_entities()
 
-    def _get_notebooks_tx(self, tx):
-        """
-        Neo4j transaction function for getting notebooks.
-
-        Args:
-            tx: Neo4j transaction
-
-        Returns:
-            List of notebook dictionaries
-        """
-        query = """
-        MATCH (n:Notebook)
-        OPTIONAL MATCH (n)-[r:CONTAINS]->(e:Entity)
-        WITH n, collect(distinct {name: e.name, type: e.type, count: r.count}) as entities
-        OPTIONAL MATCH (n)-[rt:RELATES_TO]->(t:Topic)
-        RETURN n,
-               entities,
-               collect(distinct {name: t.name, relevance: rt.relevance}) as topics
-        """
-
-        result = tx.run(query)
-
-        notebooks = []
-        for record in result:
-            notebook = dict(record["n"])
-            notebook["entities"] = record["entities"]
-            notebook["topics"] = record["topics"]
-            notebooks.append(notebook)
-
-        return notebooks
-
-    def add_entity_reference(
-        self,
-        entity_name: str,
-        entity_type: str,
-        notebook_name: str,
-        page_number: Union[int, str],
-        context: str = None,
-    ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Add a reference to an entity from a notebook page.
-
-        Args:
-            entity_name: Name of the entity
-            entity_type: Type of the entity
-            notebook_name: Name of the notebook
-            page_number: Page number in the notebook
-            context: Context surrounding the reference
-
-        Returns:
-            Tuple of (success, reference_dict)
-        """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return False, {"error": "Neo4j driver not initialized"}
-
-        try:
-            with self._driver.session(database=self.database) as session:
-                result = session.write_transaction(
-                    self._add_entity_reference_tx,
-                    entity_name,
-                    entity_type,
-                    notebook_name,
-                    page_number,
-                    context,
-                )
-
-                return True, result
-
-        except Exception as e:
-            logger.error(f"Error adding entity reference: {str(e)}")
-            return False, {"error": str(e)}
-
-    def _add_entity_reference_tx(
-        self, tx, entity_name, entity_type, notebook_name, page_number, context
-    ):
-        """
-        Neo4j transaction function for adding an entity reference.
-
-        Args:
-            tx: Neo4j transaction
-            entity_name: Name of the entity
-            entity_type: Type of the entity
-            notebook_name: Name of the notebook
-            page_number: Page number in the notebook
-            context: Context surrounding the reference
-
-        Returns:
-            Reference dictionary
-        """
-        # Ensure entity exists
-        entity_query = """
-        MERGE (e:Entity {name: $name, type: $type})
-        ON CREATE SET e.created = datetime()
-        RETURN id(e) as entity_id
-        """
-
-        entity_result = tx.run(entity_query, name=entity_name, type=entity_type)
-        entity_record = entity_result.single()
-        entity_id = entity_record["entity_id"]
-
-        # Ensure notebook exists
-        notebook_query = """
-        MERGE (n:Notebook {name: $name})
-        ON CREATE SET n.created = datetime()
-        RETURN id(n) as notebook_id
-        """
-
-        notebook_result = tx.run(notebook_query, name=notebook_name)
-        notebook_record = notebook_result.single()
-        notebook_id = notebook_record["notebook_id"]
-
-        # Create reference
-        reference_query = """
-        MATCH (e:Entity), (n:Notebook)
-        WHERE id(e) = $entity_id AND id(n) = $notebook_id
-        MERGE (ref:Reference {notebook: $notebook, page: $page})
-        ON CREATE SET ref.created = datetime(), ref.context = $context
-        ON MATCH SET ref.context = $context, ref.updated = datetime()
-        MERGE (ref)-[:REFERS_TO]->(e)
-        MERGE (n)-[:CONTAINS]->(e)
-        ON CREATE SET n.page_count = coalesce(n.page_count, 0) + 1
-        RETURN id(ref) as reference_id
-        """
-
-        reference_result = tx.run(
-            reference_query,
-            entity_id=entity_id,
-            notebook_id=notebook_id,
-            notebook=notebook_name,
-            page=str(page_number),
-            context=context,
-        )
-        reference_record = reference_result.single()
-        reference_id = reference_record["reference_id"]
-
-        # Update entity count in notebook
-        count_query = """
-        MATCH (n:Notebook {name: $notebook})-[r:CONTAINS]->(e:Entity {name: $entity})
-        SET r.count = coalesce(r.count, 0) + 1
-        """
-
-        tx.run(count_query, notebook=notebook_name, entity=entity_name)
-
-        return {
-            "reference_id": reference_id,
-            "entity_id": entity_id,
-            "notebook_id": notebook_id,
-            "entity": entity_name,
-            "notebook": notebook_name,
-            "page": page_number,
-        }
-
-    def create_semantic_connection(
-        self,
-        entity1_name: str,
-        entity2_name: str,
-        strength: float = 0.5,
-        relation_type: str = "SEMANTICALLY_RELATED",
-    ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Create a semantic connection between two entities.
-
-        Args:
-            entity1_name: Name of the first entity
-            entity2_name: Name of the second entity
-            strength: Strength of the connection (0.0 to 1.0)
-            relation_type: Type of the relation
-
-        Returns:
-            Tuple of (success, connection_dict)
-        """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return False, {"error": "Neo4j driver not initialized"}
-
-        try:
-            with self._driver.session(database=self.database) as session:
-                result = session.write_transaction(
-                    self._create_semantic_connection_tx,
-                    entity1_name,
-                    entity2_name,
-                    strength,
-                    relation_type,
-                )
-
-                return True, result
-
-        except Exception as e:
-            logger.error(f"Error creating semantic connection: {str(e)}")
-            return False, {"error": str(e)}
-
-    def _create_semantic_connection_tx(
-        self, tx, entity1_name, entity2_name, strength, relation_type
-    ):
-        """
-        Neo4j transaction function for creating a semantic connection.
-
-        Args:
-            tx: Neo4j transaction
-            entity1_name: Name of the first entity
-            entity2_name: Name of the second entity
-            strength: Strength of the connection
-            relation_type: Type of the relation
-
-        Returns:
-            Connection dictionary
-        """
-        query = (
-            """
-        MATCH (e1:Entity {name: $entity1})
-        MATCH (e2:Entity {name: $entity2})
-        MERGE (e1)-[r:%s {strength: $strength}]->(e2)
-        ON CREATE SET r.created = datetime()
-        ON MATCH SET r.strength = $strength, r.updated = datetime()
-        RETURN id(r) as connection_id
-        """
-            % relation_type
-        )
-
-        result = tx.run(
-            query, entity1=entity1_name, entity2=entity2_name, strength=strength
-        )
-        record = result.single()
-
-        return {
-            "connection_id": record["connection_id"],
-            "entity1": entity1_name,
-            "entity2": entity2_name,
-            "strength": strength,
-            "relation_type": relation_type,
-        }
-
-    def create_topic(
-        self, name: str, description: str = None, entities: List[Dict[str, Any]] = None
-    ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Create a topic and connect it to entities.
-
-        Args:
-            name: Name of the topic
-            description: Description of the topic
-            entities: List of entity dictionaries with name and strength
-
-        Returns:
-            Tuple of (success, topic_dict)
-        """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return False, {"error": "Neo4j driver not initialized"}
-
-        try:
-            with self._driver.session(database=self.database) as session:
-                result = session.write_transaction(
-                    self._create_topic_tx, name, description, entities
-                )
-
-                return True, result
-
-        except Exception as e:
-            logger.error(f"Error creating topic: {str(e)}")
-            return False, {"error": str(e)}
-
-    def _create_topic_tx(self, tx, name, description, entities):
-        """
-        Neo4j transaction function for creating a topic.
-
-        Args:
-            tx: Neo4j transaction
-            name: Name of the topic
-            description: Description of the topic
-            entities: List of entity dictionaries
-
-        Returns:
-            Topic dictionary
-        """
-        # Create topic node
-        topic_query = """
-        MERGE (t:Topic {name: $name})
-        ON CREATE SET t.created = datetime(), t.description = $description
-        ON MATCH SET t.description = $description, t.updated = datetime()
-        RETURN id(t) as topic_id
-        """
-
-        topic_result = tx.run(topic_query, name=name, description=description)
-        topic_record = topic_result.single()
-        topic_id = topic_record["topic_id"]
-
-        # Connect topic to entities if provided
-        entity_connections = []
-        if entities:
+            # Collect notebook references from entities
             for entity in entities:
-                entity_name = entity.get("name")
-                strength = entity.get("strength", 0.5)
+                for reference in entity.get("references", []):
+                    notebook_name = reference.get("notebook", "Unknown")
+                    if notebook_name == "Unknown":
+                        continue
 
-                # Connect topic to entity
-                connection_query = """
-                MATCH (t:Topic), (e:Entity)
-                WHERE id(t) = $topic_id AND e.name = $entity
-                MERGE (t)-[r:INCLUDES]->(e)
-                ON CREATE SET r.strength = $strength, r.created = datetime()
-                ON MATCH SET r.strength = $strength, r.updated = datetime()
-                RETURN id(r) as connection_id
-                """
+                    if notebook_name not in notebooks:
+                        notebooks[notebook_name] = {
+                            "name": notebook_name,
+                            "entities": [],
+                            "topics": [],
+                        }
 
-                connection_result = tx.run(
-                    connection_query,
-                    topic_id=topic_id,
-                    entity=entity_name,
-                    strength=strength,
-                )
-                connection_record = connection_result.single()
-
-                entity_connections.append(
-                    {
-                        "entity": entity_name,
-                        "strength": strength,
-                        "connection_id": connection_record["connection_id"],
+                    # Add entity to notebook if not already present
+                    entity_entry = {
+                        "name": entity["name"],
+                        "type": entity["type"],
+                        "count": 1,
                     }
-                )
 
-        return {
-            "topic_id": topic_id,
-            "name": name,
-            "description": description,
-            "connections": entity_connections,
-        }
+                    if entity_entry not in notebooks[notebook_name]["entities"]:
+                        notebooks[notebook_name]["entities"].append(entity_entry)
 
-    def relate_notebook_to_topic(
-        self, notebook_name: str, topic_name: str, relevance: float = 0.5
-    ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Create a relationship between a notebook and a topic.
+            # Get topics and link them to notebooks
+            topics = self.get_topics()
+            for notebook_name, notebook in notebooks.items():
+                for topic in topics:
+                    # Check if any topic entities are in the notebook
+                    for connection in topic.get("connections", []):
+                        entity_name = connection.get("entity")
+                        if any(e["name"] == entity_name for e in notebook["entities"]):
+                            # Add topic to notebook if not already present
+                            topic_entry = {
+                                "name": topic["name"],
+                                "relevance": 0.7,  # Default relevance
+                            }
+                            if topic_entry not in notebook["topics"]:
+                                notebook["topics"].append(topic_entry)
 
-        Args:
-            notebook_name: Name of the notebook
-            topic_name: Name of the topic
-            relevance: Relevance score (0.0 to 1.0)
-
-        Returns:
-            Tuple of (success, relation_dict)
-        """
-        if not self._driver:
-            logger.error("Neo4j driver not initialized")
-            return False, {"error": "Neo4j driver not initialized"}
-
-        try:
-            with self._driver.session(database=self.database) as session:
-                result = session.write_transaction(
-                    self._relate_notebook_to_topic_tx,
-                    notebook_name,
-                    topic_name,
-                    relevance,
-                )
-
-                return True, result
+            return list(notebooks.values())
 
         except Exception as e:
-            logger.error(f"Error relating notebook to topic: {str(e)}")
-            return False, {"error": str(e)}
-
-    def _relate_notebook_to_topic_tx(self, tx, notebook_name, topic_name, relevance):
-        """
-        Neo4j transaction function for relating a notebook to a topic.
-
-        Args:
-            tx: Neo4j transaction
-            notebook_name: Name of the notebook
-            topic_name: Name of the topic
-            relevance: Relevance score
-
-        Returns:
-            Relation dictionary
-        """
-        query = """
-        MATCH (n:Notebook {name: $notebook})
-        MATCH (t:Topic {name: $topic})
-        MERGE (n)-[r:RELATES_TO]->(t)
-        ON CREATE SET r.relevance = $relevance, r.created = datetime()
-        ON MATCH SET r.relevance = $relevance, r.updated = datetime()
-        RETURN id(r) as relation_id
-        """
-
-        result = tx.run(
-            query, notebook=notebook_name, topic=topic_name, relevance=relevance
-        )
-        record = result.single()
-
-        return {
-            "relation_id": record["relation_id"],
-            "notebook": notebook_name,
-            "topic": topic_name,
-            "relevance": relevance,
-        }
+            logger.error(f"Error getting notebooks: {e}")
+            return []

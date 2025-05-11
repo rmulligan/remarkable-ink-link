@@ -30,10 +30,13 @@ from inklink.services.handwriting_recognition_service import (
 )
 from inklink.services.google_docs_service import GoogleDocsService
 from inklink.services.ai_service import AIService
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.knowledge_graph_integration_service import (
+    KnowledgeGraphIntegrationService,
+)
 
 # Import new services for knowledge index notebooks
 from inklink.services.epub_generator import EPUBGenerator
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.knowledge_index_service import KnowledgeIndexService
 
 logger = logging.getLogger(__name__)
@@ -99,21 +102,41 @@ class Container:
             ),
         )
 
-        # Register Knowledge Graph service
         # Get Neo4j configuration from environment or config
         neo4j_uri = normalized_config.get("neo4j_uri", "bolt://localhost:7687")
         neo4j_user = normalized_config.get("neo4j_user", "neo4j")
         neo4j_pass = normalized_config.get("neo4j_pass", "password")
-        neo4j_db = normalized_config.get("neo4j_db", "neo4j")
 
+        # Create knowledge graph service
+        knowledge_graph_service = KnowledgeGraphService(
+            uri=neo4j_uri,
+            username=neo4j_user,
+            password=neo4j_pass,
+        )
+
+        # Register KnowledgeGraphService
         provider.register_factory(
-            IKnowledgeGraphService,
-            lambda: KnowledgeGraphService(
-                uri=neo4j_uri,
-                username=neo4j_user,
-                password=neo4j_pass,
-                database=neo4j_db,
-            ),
+            IKnowledgeGraphService, lambda: knowledge_graph_service
+        )
+        provider.register_factory(
+            KnowledgeGraphService, lambda: knowledge_graph_service
+        )
+
+        # Create and register knowledge graph integration service
+        handwriting_service = provider.resolve(IHandwritingRecognitionService)
+        knowledge_graph_integration_service = KnowledgeGraphIntegrationService(
+            handwriting_service=handwriting_service,
+            knowledge_graph_service=knowledge_graph_service,
+        )
+        provider.register_factory(
+            KnowledgeGraphIntegrationService,
+            lambda: knowledge_graph_integration_service,
+        )
+
+        # Register service instances for direct access
+        provider.register_instance("knowledge_graph_service", knowledge_graph_service)
+        provider.register_instance(
+            "knowledge_graph_integration_service", knowledge_graph_integration_service
         )
 
         # Register Knowledge Index Service
