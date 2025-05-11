@@ -83,7 +83,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
 class CustomHTTPServer(HTTPServer):
     """Custom HTTP Server with additional attributes for tokens, files, and responses."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Initialize attributes needed by controllers

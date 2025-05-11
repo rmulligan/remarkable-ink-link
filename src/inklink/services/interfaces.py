@@ -57,7 +57,7 @@ class IDocumentService(ABC):
     def create_rmdoc(self, hcl_path: str, url: str) -> Optional[str]:
         """Convert HCL to Remarkable document"""
         pass
-    
+
     @abstractmethod
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]

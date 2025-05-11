@@ -33,7 +33,7 @@ class DocumentService(IDocumentService):
     ):
         """
         Initialize with directories and paths.
-        
+
         Args:
             temp_dir: Directory for temporary files
             drawj2d_path: Optional path to drawj2d executable (for legacy support)
@@ -43,7 +43,7 @@ class DocumentService(IDocumentService):
         self.drawj2d_path = drawj2d_path
         self.pdf_service = pdf_service  # Used for automated index notebook updates
         os.makedirs(temp_dir, exist_ok=True)
-        
+
         # Check if RCU is available
         self.use_rcu = ensure_rcu_available()
         if not self.use_rcu:
@@ -93,7 +93,7 @@ class DocumentService(IDocumentService):
             content: Structured content dictionary. Supports both legacy and enhanced formats:
                 - Legacy: {"structured_content": [ ... ]}
                 - Enhanced: {"pages": [...], "cross_page_links": [...]}
-                
+
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -101,7 +101,7 @@ class DocumentService(IDocumentService):
             # Ensure we have valid content
             if not content:
                 content = {"title": f"Page from {url}", "structured_content": []}
-                
+
             logger.info(f"Creating document for: {content.get('title', url)}")
 
             # Prepare content for converter
@@ -154,14 +154,14 @@ class DocumentService(IDocumentService):
             qr_path: Path to QR code image
             html_content: Raw HTML content
             title: Optional document title
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
         if not self.use_rcu:
             logger.warning("RCU not available, cannot convert HTML directly")
             return None
-            
+
         try:
             # Prepare content for converter
             converter_content = {
@@ -188,11 +188,11 @@ class DocumentService(IDocumentService):
             else:
                 logger.error("No HTML converter found")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
             return None
-    
+
     def create_pdf_rmdoc(
         self, pdf_path: str, title: str, qr_path: Optional[str] = None
     ) -> Optional[str]:
@@ -203,7 +203,7 @@ class DocumentService(IDocumentService):
             pdf_path: Path to PDF file
             title: Document title
             qr_path: Optional path to QR code image
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -232,7 +232,7 @@ class DocumentService(IDocumentService):
             else:
                 logger.error("No PDF converter found")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")
             return None
@@ -246,12 +246,12 @@ class DocumentService(IDocumentService):
         Legacy method to create reMarkable document using HCL and drawj2d.
 
         This is kept for compatibility when RCU is not available.
-        
+
         Args:
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -260,7 +260,7 @@ class DocumentService(IDocumentService):
             if not self.drawj2d_path or not os.path.exists(self.drawj2d_path):
                 logger.error("drawj2d path not available for legacy conversion")
                 return None
-                
+
             # Create HCL file
             hcl_path = self.create_hcl(url, qr_path, content)
             if not hcl_path:
@@ -279,7 +279,7 @@ class DocumentService(IDocumentService):
             else:
                 logger.error("Legacy conversion failed")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error in legacy document creation: {str(e)}")
             return None
@@ -294,7 +294,7 @@ class DocumentService(IDocumentService):
             url: Source URL
             qr_path: Path to QR code image
             content: Structured content dictionary
-            
+
         Returns:
             Path to generated HCL file or None if failed
         """

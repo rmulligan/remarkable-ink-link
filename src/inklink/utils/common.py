@@ -34,7 +34,7 @@ def retry_operation(
 
     Returns:
         The result of the operation if successful
-        
+
     Raises:
         The last exception encountered if all retries fail
     """

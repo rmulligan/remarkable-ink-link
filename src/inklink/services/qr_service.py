@@ -9,6 +9,7 @@ from inklink.adapters.qr_adapter import QRCodeAdapter
 
 logger = logging.getLogger(__name__)
 
+
 class QRCodeService(IQRCodeService):
     """Generates QR codes for URLs."""
 
