@@ -211,3 +211,165 @@ class IAIService(ABC):
             AI-generated response.
         """
         pass
+
+
+class IEPUBGenerator(ABC):
+    @abstractmethod
+    def create_epub_from_markdown(
+        self,
+        title: str,
+        content: str,
+        author: str = "InkLink",
+        entity_links: Optional[Dict[str, str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create an EPUB document from markdown content.
+
+        Args:
+            title: Title of the EPUB document
+            content: Markdown content
+            author: Author of the document
+            entity_links: Dictionary mapping entity names to their anchor IDs
+            metadata: Additional metadata for the EPUB
+
+        Returns:
+            Tuple of (success, result_dict)
+        """
+        pass
+
+    @abstractmethod
+    def enhance_markdown_with_hyperlinks(
+        self, markdown_content: str, entity_links: Dict[str, str]
+    ) -> str:
+        """
+        Enhance markdown content with hyperlinks.
+
+        Args:
+            markdown_content: Original markdown content
+            entity_links: Dictionary mapping entity names to their anchor IDs
+
+        Returns:
+            Enhanced markdown content with hyperlinks
+        """
+        pass
+
+
+class IKnowledgeGraphService(ABC):
+    @abstractmethod
+    def get_entities(
+        self, types: Optional[List[str]] = None, min_references: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get entities from the knowledge graph, optionally filtered by type.
+
+        Args:
+            types: Optional list of entity types to filter by
+            min_references: Minimum number of references for an entity to be included
+
+        Returns:
+            List of entity dictionaries
+        """
+        pass
+
+    @abstractmethod
+    def get_topics(
+        self, limit: int = 20, min_connections: int = 2
+    ) -> List[Dict[str, Any]]:
+        """
+        Get topics from the knowledge graph.
+
+        Topics are derived from entity clusters and semantic connections.
+
+        Args:
+            limit: Maximum number of topics to return
+            min_connections: Minimum number of connections for a topic to be included
+
+        Returns:
+            List of topic dictionaries
+        """
+        pass
+
+    @abstractmethod
+    def get_notebooks(self) -> List[Dict[str, Any]]:
+        """
+        Get notebooks from the knowledge graph.
+
+        Returns:
+            List of notebook dictionaries with their entities and topics
+        """
+        pass
+
+
+class IKnowledgeIndexService(ABC):
+    @abstractmethod
+    def create_entity_index(
+        self,
+        entity_types: Optional[List[str]] = None,
+        min_references: int = 1,
+        upload_to_remarkable: bool = True,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create an entity index notebook grouping entities by type.
+
+        Args:
+            entity_types: Optional list of entity types to include (None for all)
+            min_references: Minimum number of references for an entity to be included
+            upload_to_remarkable: Whether to upload index to reMarkable Cloud
+
+        Returns:
+            Tuple of (success, result_dict)
+        """
+        pass
+
+    @abstractmethod
+    def create_topic_index(
+        self,
+        top_n_topics: int = 20,
+        min_connections: int = 2,
+        upload_to_remarkable: bool = True,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create a topic index notebook organizing content by topic.
+
+        Args:
+            top_n_topics: Number of top topics to include
+            min_connections: Minimum connections for a topic to be included
+            upload_to_remarkable: Whether to upload index to reMarkable Cloud
+
+        Returns:
+            Tuple of (success, result_dict)
+        """
+        pass
+
+    @abstractmethod
+    def create_notebook_index(
+        self,
+        upload_to_remarkable: bool = True,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create a notebook index organizing content by source notebook.
+
+        Args:
+            upload_to_remarkable: Whether to upload index to reMarkable Cloud
+
+        Returns:
+            Tuple of (success, result_dict)
+        """
+        pass
+
+    @abstractmethod
+    def create_master_index(
+        self,
+        upload_to_remarkable: bool = True,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Create a master index combining entity, topic, and notebook indices.
+
+        Args:
+            upload_to_remarkable: Whether to upload index to reMarkable Cloud
+
+        Returns:
+            Tuple of (success, result_dict)
+        """
+        pass

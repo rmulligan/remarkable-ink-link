@@ -7,6 +7,7 @@ import time
 import logging
 import subprocess
 import re
+import os
 from urllib.parse import urlparse
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -220,3 +221,34 @@ def is_safe_url(url: str) -> bool:
             return False
 
     return True
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize a filename to make it safe for use in file systems.
+
+    Args:
+        filename: The filename to sanitize
+
+    Returns:
+        A sanitized filename
+    """
+    # Remove or replace invalid characters
+    invalid_chars = r'[<>:"/\\|?*]'
+    sanitized = re.sub(invalid_chars, "_", filename)
+
+    # Limit length to avoid issues with long filenames
+    max_length = 255
+    if len(sanitized) > max_length:
+        name, ext = os.path.splitext(sanitized)
+        name = name[: max_length - len(ext)]
+        sanitized = name + ext
+
+    # Ensure the filename doesn't start or end with spaces or periods
+    sanitized = sanitized.strip(". ")
+
+    # If filename is empty after sanitizing, use a default name
+    if not sanitized:
+        sanitized = "unnamed"
+
+    return sanitized
