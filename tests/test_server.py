@@ -1,7 +1,7 @@
 import pytest
 
-from inklink.utils.url_utils import extract_url, sanitize_url
-from inklink.utils.common import is_safe_url
+from inklink.utils.url_utils import extract_url
+from inklink.utils import is_safe_url
 
 
 def call_extract(payload: bytes):
@@ -14,22 +14,8 @@ def call_extract(payload: bytes):
     Returns:
         Extracted URL string if valid, None otherwise
     """
-    # Convert bytes to string
-    payload_str = payload.decode("utf-8")
-
-    # Handle JSON payload
-    if payload_str.startswith("{") and '"url":' in payload_str:
-        import json
-
-        try:
-            data = json.loads(payload_str)
-            if "url" in data:
-                payload_str = data["url"]
-        except Exception:
-            return None
-
-    # Check if URL matches the valid pattern
-    url = extract_url(payload_str)
+    # Use extract_url directly with the payload bytes
+    url = extract_url(payload)
     if not url:
         return None
 
