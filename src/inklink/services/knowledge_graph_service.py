@@ -8,11 +8,12 @@ from typing import Dict, List, Any, Optional, Tuple, Union
 
 from inklink.config import CONFIG
 from inklink.services.ai_service import AIService
+from inklink.services.interfaces import IKnowledgeGraphService
 
 logger = logging.getLogger(__name__)
 
 
-class KnowledgeGraphService:
+class KnowledgeGraphService(IKnowledgeGraphService):
     """
     Service for creating, managing, and querying knowledge graph data.
 
@@ -674,3 +675,191 @@ class KnowledgeGraphService:
         except Exception as e:
             logger.error(f"Error finding semantically similar text: {e}")
             return False, {"error": f"Semantic search failed: {str(e)}"}
+
+    # Required methods for IKnowledgeGraphService interface
+    def get_entities(
+        self, types: Optional[List[str]] = None, min_references: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Get entities from the knowledge graph, optionally filtered by type.
+
+        Args:
+            types: Optional list of entity types to filter by
+            min_references: Minimum number of references for an entity to be included
+
+        Returns:
+            List of entity dictionaries
+        """
+        try:
+            logger.info("Getting entities from knowledge graph")
+            driver = self.get_driver()
+            if not driver:
+                logger.error("Neo4j connection not available")
+                return []
+
+            entities = []
+            # Get all entities from graph
+            with driver.session() as session:
+                query = "MATCH (e:Entity)"
+                if types:
+                    type_list = ", ".join([f"'{t}'" for t in types])
+                    query += f" WHERE e.type IN [{type_list}]"
+                query += " RETURN e"
+
+                result = session.run(query)
+
+                for record in result:
+                    entity = record["e"]
+                    entity_data = {
+                        "name": entity.get("name"),
+                        "type": entity.get("type"),
+                        "references": [],  # Default empty references
+                    }
+
+                    # Get metadata and properties
+                    properties = entity.get("properties", {})
+                    if (
+                        properties
+                        and isinstance(properties, dict)
+                        and "observations" in properties
+                    ):
+                        for obs in properties["observations"]:
+                            if isinstance(obs, str) and len(obs) > 0:
+                                # Create a reference from the observation
+                                entity_data["references"].append(
+                                    {
+                                        "notebook": "Unknown",
+                                        "page": "0",
+                                        "context": obs[
+                                            :100
+                                        ],  # Truncate long observations
+                                    }
+                                )
+
+                    if len(entity_data["references"]) >= min_references:
+                        entities.append(entity_data)
+
+            return entities
+
+        except Exception as e:
+            logger.error(f"Error getting entities: {e}")
+            return []
+
+    def get_topics(
+        self, limit: int = 20, min_connections: int = 2
+    ) -> List[Dict[str, Any]]:
+        """
+        Get topics from the knowledge graph.
+
+        Topics are derived from entity clusters and semantic connections.
+
+        Args:
+            limit: Maximum number of topics to return
+            min_connections: Minimum number of connections for a topic to be included
+
+        Returns:
+            List of topic dictionaries
+        """
+        try:
+            logger.info("Getting topics from knowledge graph")
+
+            # For now, simulate topics by clustering entities by type
+            topics = []
+            entities = self.get_entities()
+
+            # Group entities by type
+            type_groups = {}
+            for entity in entities:
+                entity_type = entity.get("type", "Unknown")
+                if entity_type not in type_groups:
+                    type_groups[entity_type] = []
+                type_groups[entity_type].append(entity)
+
+            # Create a topic for each entity type with enough connections
+            for entity_type, entity_list in type_groups.items():
+                if len(entity_list) >= min_connections:
+                    connections = []
+                    for entity in entity_list:
+                        connections.append(
+                            {
+                                "entity": entity["name"],
+                                "entity_type": entity["type"],
+                                "strength": 0.8,  # Default strength
+                            }
+                        )
+
+                    topics.append(
+                        {
+                            "name": f"{entity_type} Concepts",
+                            "description": f"Collection of {entity_type} concepts",
+                            "connections": connections,
+                        }
+                    )
+
+            # Sort topics by number of connections and limit results
+            topics.sort(key=lambda x: len(x["connections"]), reverse=True)
+            return topics[:limit]
+
+        except Exception as e:
+            logger.error(f"Error getting topics: {e}")
+            return []
+
+    def get_notebooks(self) -> List[Dict[str, Any]]:
+        """
+        Get notebooks from the knowledge graph.
+
+        Returns:
+            List of notebook dictionaries with their entities and topics
+        """
+        try:
+            logger.info("Getting notebooks from knowledge graph")
+
+            # For now, simulate notebooks by collecting unique references
+            notebooks = {}
+            entities = self.get_entities()
+
+            # Collect notebook references from entities
+            for entity in entities:
+                for reference in entity.get("references", []):
+                    notebook_name = reference.get("notebook", "Unknown")
+                    if notebook_name == "Unknown":
+                        continue
+
+                    if notebook_name not in notebooks:
+                        notebooks[notebook_name] = {
+                            "name": notebook_name,
+                            "entities": [],
+                            "topics": [],
+                        }
+
+                    # Add entity to notebook if not already present
+                    entity_entry = {
+                        "name": entity["name"],
+                        "type": entity["type"],
+                        "count": 1,
+                    }
+
+                    if entity_entry not in notebooks[notebook_name]["entities"]:
+                        notebooks[notebook_name]["entities"].append(entity_entry)
+
+            # Get topics and link them to notebooks
+            topics = self.get_topics()
+            for notebook_name, notebook in notebooks.items():
+                for topic in topics:
+                    # Check if any topic entities are in the notebook
+                    for connection in topic.get("connections", []):
+                        entity_name = connection.get("entity")
+                        if any(e["name"] == entity_name for e in notebook["entities"]):
+                            # Add topic to notebook if not already present
+                            topic_entry = {
+                                "name": topic["name"],
+                                "relevance": 0.7,  # Default relevance
+                            }
+                            if topic_entry not in notebook["topics"]:
+                                notebook["topics"].append(topic_entry)
+
+            return list(notebooks.values())
+
+        except Exception as e:
+            logger.error(f"Error getting notebooks: {e}")
+            return []
