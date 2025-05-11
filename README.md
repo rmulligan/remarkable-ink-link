@@ -200,9 +200,8 @@ InkLink is built with modularity in mind. Through MCP, it can connect to externa
 
 Available integrations:
 - `GitHub MCP`: Integrated GitHub repository management directly accessible via Claude. See [GitHub Integration](docs/github_integration.md).
-
-Standalone integration modules (coming soon):
-- `inklink-mcp-limitless`: Sync lifelog entries from the Limitless Pendant and convert them into editable ink for review, summarization, or planning.
+- `Knowledge Graph`: A powerful knowledge graph system for entity extraction, relationship mapping, and semantic search across all content types. See documentation in the codebase.
+- `Limitless Integration`: Automatic syncing of Limitless Pendant life logs into the knowledge graph for entity extraction, relationship mapping, and semantic search. See [Limitless Integration](docs/limitless_integration.md).
 
 > Want to build your own? Stay tuned for the `inklink-mcp-template` to roll your own plug-ins.
 
@@ -219,10 +218,10 @@ Standalone integration modules (coming soon):
 - [ ] Handwriting recognition (MyScript iink SDK integration)
 - [ ] UI-based tag action system: `#summarize`, `#calendar`, `#index`, etc.
 - [ ] Calendar sync module
-- [ ] Visual knowledge graph builder
+- [x] Visual knowledge graph builder
+- [x] First MCP integration: Limitless Pendant life log sync
 - [ ] Hosted version with user-friendly flows
 - [ ] Two-way sync and auto-update
-- [ ] First MCP integration: Limitless Pendant
 
 ---
 

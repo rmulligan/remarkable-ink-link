@@ -20,6 +20,9 @@ from inklink.controllers import (
 from inklink.controllers.knowledge_graph_integration_controller import (
     KnowledgeGraphIntegrationController,
 )
+from inklink.controllers.limitless_controller import (
+    LimitlessController,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +91,14 @@ class Router:
                 if knowledge_graph_service and kg_integration_service:
                     return KnowledgeGraphIntegrationController(
                         kg_integration_service, handler
+                    )
+            # Limitless Life Log routes
+            elif route.startswith("/limitless/"):
+                limitless_service = self.services.get("limitless_service")
+                limitless_scheduler = self.services.get("limitless_scheduler")
+                if limitless_service and limitless_scheduler:
+                    return LimitlessController(
+                        limitless_service, limitless_scheduler, handler
                     )
 
         # No route matched

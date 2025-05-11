@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple, Any, Union
+from datetime import datetime
 
 
 class IQRCodeService(ABC):
@@ -371,5 +372,53 @@ class IKnowledgeIndexService(ABC):
 
         Returns:
             Tuple of (success, result_dict)
+        """
+        pass
+
+
+class ILimitlessLifeLogService(ABC):
+    @abstractmethod
+    def sync_life_logs(self, force_full_sync: bool = False) -> Tuple[bool, str]:
+        """
+        Sync life logs from Limitless API to knowledge graph.
+
+        Args:
+            force_full_sync: If True, sync all life logs regardless of last sync time
+
+        Returns:
+            Tuple of (success, message)
+        """
+        pass
+
+    @abstractmethod
+    def get_life_log(self, log_id: str) -> Tuple[bool, Union[Dict[str, Any], str]]:
+        """
+        Retrieve a specific life log by ID.
+
+        Args:
+            log_id: ID of the life log to retrieve
+
+        Returns:
+            Tuple of (success, life_log_or_error)
+        """
+        pass
+
+    @abstractmethod
+    def get_sync_status(self) -> Dict[str, Any]:
+        """
+        Get the current sync status.
+
+        Returns:
+            Dictionary with sync status information
+        """
+        pass
+
+    @abstractmethod
+    def clear_cache(self) -> Tuple[bool, str]:
+        """
+        Clear the local cache of life logs.
+
+        Returns:
+            Tuple of (success, message)
         """
         pass
