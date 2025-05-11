@@ -19,6 +19,7 @@ from inklink.services.interfaces import (
     IEPUBGenerator,
     IKnowledgeGraphService,
     IKnowledgeIndexService,
+    ILimitlessLifeLogService,
 )
 from inklink.services.qr_service import QRCodeService
 from inklink.services.web_scraper_service import WebScraperService
@@ -38,6 +39,11 @@ from inklink.services.knowledge_graph_integration_service import (
 # Import new services for knowledge index notebooks
 from inklink.services.epub_generator import EPUBGenerator
 from inklink.services.knowledge_index_service import KnowledgeIndexService
+
+# Import Limitless services
+from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.services.limitless_life_log_service import LimitlessLifeLogService
+from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
 
 logger = logging.getLogger(__name__)
 
@@ -141,5 +147,59 @@ class Container:
 
         # Register Knowledge Index Service
         provider.register(IKnowledgeIndexService, KnowledgeIndexService)
+
+        # Create Limitless services if API key is available
+        limitless_api_key = normalized_config.get("limitless_api_key")
+        if limitless_api_key:
+            # Create Limitless adapter
+            limitless_adapter = LimitlessAdapter(
+                api_key=limitless_api_key,
+                base_url=normalized_config.get(
+                    "limitless_api_url", "https://api.limitless.ai"
+                ),
+            )
+
+            # Create Limitless Life Log service
+            limitless_service = LimitlessLifeLogService(
+                limitless_adapter=limitless_adapter,
+                knowledge_graph_service=knowledge_graph_service,
+                sync_interval=int(
+                    normalized_config.get("limitless_sync_interval", 3600)
+                ),
+                storage_path=normalized_config.get(
+                    "limitless_storage_path", os.path.join(temp_dir, "limitless")
+                ),
+            )
+
+            # Create Limitless scheduler service
+            limitless_scheduler = LimitlessSchedulerService(
+                limitless_service=limitless_service,
+                sync_interval=int(
+                    normalized_config.get("limitless_sync_interval", 3600)
+                ),
+            )
+
+            # Register Limitless services
+            provider.register_factory(
+                ILimitlessLifeLogService, lambda: limitless_service
+            )
+            provider.register_factory(
+                LimitlessLifeLogService, lambda: limitless_service
+            )
+            provider.register_factory(
+                LimitlessSchedulerService, lambda: limitless_scheduler
+            )
+
+            # Register service instances
+            provider.register_instance("limitless_adapter", limitless_adapter)
+            provider.register_instance("limitless_service", limitless_service)
+            provider.register_instance("limitless_scheduler", limitless_scheduler)
+
+            # Start the scheduler if auto-start is enabled
+            if normalized_config.get("limitless_autostart", "true").lower() == "true":
+                limitless_scheduler.start()
+                logger.info("Limitless scheduler autostarted")
+        else:
+            logger.info("Limitless integration disabled (no API key provided)")
 
         return provider
