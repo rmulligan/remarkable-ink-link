@@ -240,7 +240,9 @@ def test_adapter_initialization():
 
         # Parse the API base URL to check domain properly
         parsed_url = urlparse(adapter.api_base)
-        assert parsed_url.netloc == "api.openai.com" or parsed_url.netloc.endswith(".api.openai.com")
+        assert parsed_url.netloc == "api.openai.com" or parsed_url.netloc.endswith(
+            ".api.openai.com"
+        )
 
     # Test with Anthropic provider
     with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test_anthropic_key"}):
@@ -251,7 +253,9 @@ def test_adapter_initialization():
 
         # Parse the API base URL to check domain properly
         parsed_url = urlparse(adapter.api_base)
-        assert parsed_url.netloc == "api.anthropic.com" or parsed_url.netloc.endswith(".api.anthropic.com")
+        assert parsed_url.netloc == "api.anthropic.com" or parsed_url.netloc.endswith(
+            ".api.anthropic.com"
+        )
 
 
 def test_build_system_prompt_with_context(mock_adapter):

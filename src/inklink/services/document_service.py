@@ -70,10 +70,14 @@ class DocumentService(IDocumentService):
 
     def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
         """Get the appropriate converter for the content type."""
-        for converter in self.converters:
-            if converter.can_convert(content_type):
-                return converter
-        return None
+        return next(
+            (
+                converter
+                for converter in self.converters
+                if converter.can_convert(content_type)
+            ),
+            None,
+        )
 
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]

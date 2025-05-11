@@ -74,7 +74,7 @@ class URLHandler(BaseHTTPRequestHandler):
 
     def _send_error(self, message: str):
         """Send error response."""
-        self.send_response(500)
+        self.send_response(404)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         response = f'{{"success": false, "message": "{message}"}}'
@@ -112,6 +112,15 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
         "ai_service": provider.resolve(AIService),
         "rmapi_path": CONFIG.get("RMAPI_PATH"),
     }
+
+    # Validate dependency injection configuration
+    for key, value in services.items():
+        if value is None and key != "rmapi_path":  # rmapi_path is optional
+            raise ValueError(
+                "DI configuration error: '{}' service is not configured properly.".format(
+                    key
+                )
+            )
 
     # Create router
     router = Router(services)

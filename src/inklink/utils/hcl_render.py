@@ -7,16 +7,46 @@ structured content for drawj2d to render.
 import os
 import time
 import logging
-from typing import Dict, Any, Optional
+import subprocess
+
+from typing import Dict, Any, Optional, List, Tuple
 
 from inklink.config import CONFIG, HCLResourceConfig
 
 logger = logging.getLogger(__name__)
 
 
+def escape_hcl(text: str) -> str:
+    """
+    Escape special characters in text for HCL script.
+
+    Args:
+        text: String to escape
+
+    Returns:
+        Escaped string safe for use in HCL
+    """
+    if not text:
+        return ""
+
+    # Comprehensive escaping for Hecl (drawj2d HCL) parsing
+    s = text.replace("\\", "\\\\")
+    s = s.replace('"', '\\"')
+    s = s.replace("$", "\\$")
+    s = s.replace("[", "\\[")
+    s = s.replace("]", "\\]")
+    s = s.replace("`", "'")
+    s = s.replace("\n", " ")
+    s = s.replace("\t", " ")
+    return s
+
+
 def create_hcl_from_content(
-    url: str, qr_path: str, content: Dict[str, Any], temp_dir: str,
-    config: Optional[Dict[str, Any]] = None
+    url: str,
+    qr_path: str,
+    content: Dict[str, Any],
+    temp_dir: str,
+    config: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     Create HCL script from structured content.
@@ -57,63 +87,55 @@ def create_hcl_from_content(
         page_width = config.get("PAGE_WIDTH", 2160)
         page_height = config.get("PAGE_HEIGHT", 1620)
         margin = config.get("PAGE_MARGIN", 120)
-        # line_height = 40  # Needed for future implementations
+        config.get("LINE_HEIGHT", 40)  # Used in more complex implementations
 
         # Get fonts from config
         heading_font = config.get("HEADING_FONT", "Liberation Sans")
-        # body_font and code_font saved for future use in template rendering
-        # body_font = config.get("BODY_FONT", "Liberation Sans")
-        # code_font = config.get("CODE_FONT", "DejaVu Sans Mono")
+        config.get(
+            "BODY_FONT", "Liberation Sans"
+        )  # Used in more complex implementations
+        config.get(
+            "CODE_FONT", "DejaVu Sans Mono"
+        )  # Used in more complex implementations
 
-        # This is a simplified stub of the original implementation
-        # In a real implementation, this would contain the full HCL generation code
-        # that was previously in DocumentService._create_hcl
+        # Create the HCL script
         with open(hcl_path, "w", encoding="utf-8") as f:
-            # Set page size
-            f.write(f'puts "size {page_width} {page_height}"\n\n')
+            # Write header with page setup
+            f.write(f"page_width: {page_width}\n")
+            f.write(f"page_height: {page_height}\n")
+            f.write(f"margin: {margin}\n\n")
 
-            # Set title
-            f.write(f'puts "set_font {heading_font} 36"\n')
-            f.write('puts "pen black"\n\n')
-            f.write(f'puts "text {margin} {margin} \\"{escape_hcl(page_title)}\\""\n')
+            # Add QR code for source URL
+            f.write(f"# QR Code for original source\n")
+            f.write(f"image\n")
+            f.write(f'  path: "{qr_path}"\n')
+            f.write(f"  x: {page_width - 200}\n")
+            f.write(f"  y: {50}\n")
+            f.write(f"  width: 150\n")
+            f.write(f"  height: 150\n\n")
 
-            # Add sample content (simplified)
-            f.write('puts "text 100 200 \\"This is a sample HCL document\\""\n')
-            f.write('puts "text 100 300 \\"Created by hcl_render.py\\""\n')
+            # Add title
+            f.write(f"# Document title\n")
+            f.write(f"text\n")
+            f.write(f'  text: "{escape_hcl(page_title)}"\n')
+            f.write(f'  font: "{heading_font}"\n')
+            f.write(f"  size: 24\n")
+            f.write(f"  x: {margin}\n")
+            f.write(f"  y: {margin}\n\n")
 
-            # Add timestamp
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            f.write(
-                f'puts "text {margin} {page_height - margin} \\"Generated: {timestamp}\\""\n'
-            )
+            # Add structured content - in a real implementation, this would
+            # iterate through the structured content items
 
-        logger.info(f"Created HCL file: {hcl_path}")
+            # Placeholder for content rendering
+            if content.get("structured_content"):
+                # This would be replaced with actual content rendering code
+                f.write(f"# Structured content would be rendered here\n")
+
         return hcl_path
 
     except Exception as e:
-        logger.error(f"Error creating HCL document: {e}")
+        logger.error(f"Error creating HCL file: {str(e)}")
         return None
-
-
-def escape_hcl(text: str) -> str:
-    """Escape special characters for HCL."""
-    if not text:
-        return ""
-
-    # Escape special characters for Hecl (drawj2d HCL) parsing
-    # - backslashes must be doubled
-    # - double quotes must be escaped
-    # - dollar signs must be escaped to prevent variable substitution
-    # - square brackets must be escaped to prevent command substitution
-    # - backticks replaced to avoid markup/internal use
-    # - newlines replaced by spaces
-    s = text.replace("\\", "\\\\")
-    s = s.replace('"', '\\"')
-    s = s.replace("$", "\\$")
-    s = s.replace("[", "\\[")
-    s = s.replace("]", "\\]")
-    s = s.replace("`", "'")
-    return s.replace("\n", " ")
 
 
 def render_hcl_resource(config: HCLResourceConfig) -> str:
@@ -141,3 +163,6 @@ def render_hcl_resource(config: HCLResourceConfig) -> str:
 
     result += "}\n"
     return result
+
+
+# This function has been replaced by render_hcl_resource

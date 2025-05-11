@@ -7,7 +7,7 @@ into reMarkable-compatible formats.
 import os
 import subprocess
 import logging
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Union, Tuple
 
 from inklink.services.converters.base_converter import BaseConverter
 from inklink.config import CONFIG
@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 class PDFConverter(BaseConverter):
     """Converts PDF files to reMarkable format."""
 
-    def __init__(self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize the PDF converter.
 
@@ -147,6 +149,25 @@ class PDFConverter(BaseConverter):
             logger.error(f"Error in legacy PDF conversion: {str(e)}")
             return None
 
+    def get_image_dimensions(self, image_path: str) -> Tuple[int, int]:
+        """
+        Get the dimensions of an image using PIL.
+        Args:
+            image_path: Path to the image file
+
+        Returns:
+            Tuple containing width and height
+        """
+        try:
+            from PIL import Image
+
+            with Image.open(image_path) as img:
+                return img.size
+        except (ImportError, Exception) as e:
+            logger.warning(f"Error getting image dimensions with PIL: {str(e)}")
+            # Estimate default dimensions if PIL is not available
+            return (1404, 1872)  # Default reMarkable dimensions
+
     def _create_pdf_hcl(
         self,
         pdf_path: str,
@@ -229,14 +250,24 @@ class PDFConverter(BaseConverter):
                 elif images:
                     for img_path in images:
                         f.write('puts "newpage"\n')
-                        # We would normally use PIL's Image here, but to avoid additional dependencies
-                        # we'll estimate the image size
+
+                        # Use PIL to get actual image dimensions for better rendering
+                        img_width, img_height = self.get_image_dimensions(img_path)
+
+                        # Calculate the scale to fit within the page while maintaining aspect ratio
                         max_w = self.page_width - 2 * self.margin
-                        x = self.margin
-                        y = self.margin
-                        f.write(
-                            f'puts "image {x} {y} {max_w} {self.page_height - 2 * self.margin} \\"{img_path}\\""\n'
-                        )
+                        max_h = self.page_height - 2 * self.margin
+
+                        scale_w = max_w / img_width
+                        scale_h = max_h / img_height
+                        scale = min(scale_w, scale_h)
+                        # Calculate dimensions and position to center the image
+                        w = img_width * scale
+                        h = img_height * scale
+                        x = self.margin + (max_w - w) / 2
+                        y = self.margin + (max_h - h) / 2
+
+                        f.write(f'puts "image {x} {y} {w} {h} \\"{img_path}\\""\n')
                 else:
                     # Add instructions for viewing the PDF
                     f.write(

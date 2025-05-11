@@ -1,3 +1,25 @@
+#!/bin/bash
+
+# Script to resolve DI conflicts
+# This script resolves conflicts in the DI files by preferring the origin/main version
+# but keeping the normalization of config keys from the HEAD branch
+
+# DI files
+di_files=(
+  "src/inklink/di/__init__.py"
+  "src/inklink/di/service_provider.py"
+)
+
+# Resolve conflicts by preferring origin/main for most files
+for file in "${di_files[@]}"; do
+  echo "Resolving conflicts in $file"
+  git checkout --theirs "$file"
+  git add "$file"
+done
+
+# For container.py, we need to manually merge the changes
+echo "Manually merging container.py"
+cat > src/inklink/di/container.py << 'EOF'
 """Dependency injection container for InkLink.
 
 This module provides a container for configuring and resolving dependencies.
@@ -72,10 +94,13 @@ class Container:
         # Populate any values directly from normalized config
         provider.register_instance("temp_dir", normalized_config.get("temp_dir"))
         provider.register_instance("output_dir", normalized_config.get("output_dir"))
-        provider.register_instance(
-            "drawj2d_path", normalized_config.get("drawj2d_path")
-        )
+        provider.register_instance("drawj2d_path", normalized_config.get("drawj2d_path"))
         provider.register_instance("rmapi_path", normalized_config.get("rmapi_path"))
         provider.register_instance("rm_folder", normalized_config.get("rm_folder"))
 
         return provider
+EOF
+
+git add src/inklink/di/container.py
+
+echo "DI file conflicts resolved. Check the files to make sure everything looks correct."

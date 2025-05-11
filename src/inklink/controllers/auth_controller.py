@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from urllib.parse import parse_qs
 
 from inklink.controllers.base_controller import BaseController
-from inklink.adapters.rmapi_adapter import RMAPIAdapter
+from inklink.adapters.rmapi_adapter import RmapiAdapter
 from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class AuthController(BaseController):
             rmapi_path: Path to the rmapi executable
         """
         super().__init__()
-        self.rmapi_adapter = RMAPIAdapter(rmapi_path or CONFIG.get("RMAPI_PATH"))
+        self.rmapi_adapter = RmapiAdapter(rmapi_path or CONFIG.get("RMAPI_PATH"))
 
     def handle(self, method: str = "GET", path: str = "") -> None:
         """

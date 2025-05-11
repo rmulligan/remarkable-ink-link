@@ -5,16 +5,18 @@ import logging
 from typing import Optional, Tuple, Any
 
 from inklink.services.interfaces import IRemarkableService
-from inklink.adapters.remarkable_adapter import RemarkableAdapter
+from inklink.adapters.rmapi_adapter import RmapiAdapter
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
 class RemarkableService(IRemarkableService):
+    """Service for interacting with reMarkable Cloud using RmapiAdapter."""
+
     """Service for interacting with reMarkable Cloud using the RemarkableAdapter."""
 
-    def __init__(self, rmapi_path: str, rm_folder: str = "/"):
+    def __init__(self, adapter: RmapiAdapter):
         """
         Initialize with paths and folder.
 
@@ -22,8 +24,7 @@ class RemarkableService(IRemarkableService):
             rmapi_path: Path to rmapi executable
             rm_folder: Folder on reMarkable to upload to
         """
-        self.adapter = RemarkableAdapter(rmapi_path, rm_folder)
-        self.upload_folder = rm_folder
+        self.adapter = adapter
 
     def test_connection(self) -> Tuple[bool, str]:
         """

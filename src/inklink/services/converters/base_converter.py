@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 class BaseConverter(IContentConverter, ABC):
     """Base implementation for content converters."""
 
-    def __init__(self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, temp_dir: Optional[str] = None, config: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize with temporary directory and configuration.
 

@@ -24,7 +24,7 @@ class HCLRenderer(IDocumentRenderer):
         self,
         temp_dir: str,
         drawj2d_path: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize with temporary directory and drawj2d path.

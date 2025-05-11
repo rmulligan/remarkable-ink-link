@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 logger = logging.getLogger(__name__)
 
 
-class RMAPIAdapter:
+class RmapiAdapter:
     """Adapter for interacting with reMarkable Cloud via rmapi tool."""
 
     def __init__(self, rmapi_path: Optional[str] = None):
@@ -129,7 +129,10 @@ class RMAPIAdapter:
                 return True, "Authentication successful"
 
             # If expect script failed, log the details
-            return False, f"Expect script failed with code {process.returncode}, output: {process.stdout}"
+            return (
+                False,
+                f"Expect script failed with code {process.returncode}, output: {process.stdout}",
+            )
 
         finally:
             # Remove the temporary script
@@ -216,3 +219,85 @@ class RMAPIAdapter:
         except Exception as e:
             logger.error(f"Error running rmapi command: {str(e)}")
             return False, "", str(e)
+
+    def upload_file(self, file_path: str, title: str) -> Tuple[bool, str]:
+        """
+        Upload a file to reMarkable Cloud.
+
+        Args:
+            file_path: Path to the file to upload
+            title: Title for the document in reMarkable
+
+        Returns:
+            Tuple of (success, message)
+        """
+        if not self._validate_executable():
+            return False, "rmapi path not valid"
+
+        # First use 'put' to upload the file
+        success, stdout, stderr = self.run_command("put", file_path)
+        if not success:
+            return False, f"Failed to upload: {stderr}"
+
+        # Check for document ID in output
+        doc_id = None
+        for line in stdout.splitlines():
+            if "ID:" in line:
+                parts = line.split("ID:")
+                if len(parts) > 1:
+                    doc_id = parts[1].strip()
+
+        if doc_id:
+            # If we found an ID, try to rename the document
+            success, _, stderr = self.run_command("mv", doc_id, title)
+            if not success:
+                return (
+                    True,
+                    f"Document uploaded to reMarkable but renaming failed: {stderr}",
+                )
+            return True, f"Document '{title}' uploaded successfully"
+        else:
+            # No ID found, but upload seems successful
+            return True, "Document uploaded to reMarkable"
+
+    def download_file(
+        self, doc_id: str, output_path: str, export_format: str = "pdf"
+    ) -> Tuple[bool, str]:
+        """
+        Download a file from reMarkable Cloud.
+
+        Args:
+            doc_id: Document ID to download
+            output_path: Path where to save the downloaded file
+            export_format: Format to export (pdf, epub, etc.)
+
+        Returns:
+            Tuple of (success, message)
+        """
+        if not self._validate_executable():
+            return False, "rmapi path not valid"
+
+        # Use 'get' to download the file
+        success, stdout, stderr = self.run_command("get", doc_id, output_path)
+        if not success:
+            return False, f"Failed to download: {stderr}"
+
+        # Verify the file exists
+        if not os.path.exists(output_path):
+            return False, "Download appeared successful but file not found"
+
+        return True, f"Downloaded document {doc_id}"
+
+    def ping(self) -> bool:
+        """
+        Check if the reMarkable Cloud API is available and authenticated.
+
+        Returns:
+            True if API is accessible, False otherwise
+        """
+        if not self._validate_executable():
+            return False
+
+        # Try to run a simple 'ls' command
+        success, _, _ = self.run_command("ls")
+        return success

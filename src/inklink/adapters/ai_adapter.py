@@ -190,8 +190,14 @@ class AIAdapter(Adapter):
             response.raise_for_status()
             result = response.json()
             # Validate the 'choices' array in the response
-            if "choices" not in result or not isinstance(result["choices"], list) or not result["choices"]:
-                raise ValueError("Invalid API response: 'choices' array is missing or empty")
+            if (
+                "choices" not in result
+                or not isinstance(result["choices"], list)
+                or not result["choices"]
+            ):
+                raise ValueError(
+                    "Invalid API response: 'choices' array is missing or empty"
+                )
             # OpenAI returns choices[0].message.content
             return result["choices"][0]["message"]["content"].strip()
 
