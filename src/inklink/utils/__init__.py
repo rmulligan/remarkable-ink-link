@@ -24,6 +24,10 @@ from inklink.utils.url_utils import (
 from inklink.utils.html_processor import (
     extract_structured_content,
     validate_and_fix_content,
+    extract_title_from_html,
+    find_main_content_container,
+    parse_html_container,
+    generate_title_from_url,
 )
 
 __all__ = [
@@ -38,4 +42,8 @@ __all__ = [
     "extract_url",
     "extract_structured_content",
     "validate_and_fix_content",
+    "extract_title_from_html",
+    "find_main_content_container",
+    "parse_html_container",
+    "generate_title_from_url",
 ]
