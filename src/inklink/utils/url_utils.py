@@ -7,8 +7,6 @@ import json
 import logging
 from urllib.parse import urlparse
 
-from inklink.utils import is_safe_url
-
 logger = logging.getLogger(__name__)
 
 

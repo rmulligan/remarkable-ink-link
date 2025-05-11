@@ -17,15 +17,17 @@ logger = logging.getLogger(__name__)
 
 class MarkdownConverter(BaseConverter):
     """Converts structured content to Markdown and then to reMarkable format."""
-    
+
     def can_convert(self, content_type: str) -> bool:
         """Check if this converter can handle the given content type."""
-        return content_type in {"structured", "markdown"}
-    
-    def convert(self, content: Dict[str, Any], output_path: Optional[str] = None) -> Optional[str]:
+        return content_type in ["structured", "markdown"]
+
+    def convert(
+        self, content: Dict[str, Any], output_path: Optional[str] = None
+    ) -> Optional[str]:
         """
         Convert structured content to reMarkable format via Markdown.
-        
+
         Args:
             content: Dictionary containing structured content and metadata
                     Should include:
@@ -34,7 +36,7 @@ class MarkdownConverter(BaseConverter):
                     - title: Content title
                     - structured_content or pages: The actual content
             output_path: Optional explicit output path
-            
+
         Returns:
             Path to generated .rm file or None if failed
         """
@@ -42,13 +44,13 @@ class MarkdownConverter(BaseConverter):
             url = content.get("url", "")
             qr_path = content.get("qr_path", "")
             title = content.get("title", f"Page from {url}")
-            
+
             # Generate markdown file path if not provided
             if not output_path:
                 output_path = self._generate_temp_path("doc", url, "md")
-                
+
             logger.info(f"Creating document for: {title}")
-            
+
             # Detect enhanced format (pages/cross_page_links) or legacy (structured_content)
             pages = content.get("pages")
             cross_page_links = content.get("cross_page_links")
@@ -56,21 +58,31 @@ class MarkdownConverter(BaseConverter):
                 # Fallback to legacy
                 pages = content.get("structured_content", [])
                 cross_page_links = content.get("cross_page_links", [])
-            
+
             # Write markdown file
-            self._write_markdown_file(output_path, url, qr_path, title, pages, cross_page_links, content.get("raw_markdown"))
-            
+            self._write_markdown_file(
+                output_path,
+                url,
+                qr_path,
+                title,
+                pages,
+                cross_page_links,
+                content.get("raw_markdown"),
+            )
+
             logger.info(f"Created markdown file: {output_path}")
-            
+
             # Convert to reMarkable format
             use_rcu = content.get("use_rcu", True)
             if use_rcu:
                 success, result = convert_markdown_to_rm(
                     markdown_path=output_path, title=title
                 )
-                
+
                 if success:
-                    logger.info(f"Successfully converted to reMarkable format: {result}")
+                    logger.info(
+                        f"Successfully converted to reMarkable format: {result}"
+                    )
                     return result
                 else:
                     logger.error(f"Markdown conversion failed: {result}")
@@ -78,16 +90,24 @@ class MarkdownConverter(BaseConverter):
             else:
                 logger.error("RCU not available for Markdown conversion")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error converting markdown: {str(e)}")
             return None
-    
-    def _write_markdown_file(self, md_path: str, url: str, qr_path: str, title: str,
-                            pages: list, cross_page_links: list, raw_markdown: Optional[str] = None) -> None:
+
+    def _write_markdown_file(
+        self,
+        md_path: str,
+        url: str,
+        qr_path: str,
+        title: str,
+        pages: list,
+        cross_page_links: list,
+        raw_markdown: Optional[str] = None,
+    ) -> None:
         """
         Write structured content to a Markdown file.
-        
+
         Args:
             md_path: Path to output markdown file
             url: Source URL
@@ -100,20 +120,20 @@ class MarkdownConverter(BaseConverter):
         with open(md_path, "w", encoding="utf-8") as f:
             # Add title
             f.write(f"# {title}\n\n")
-            
+
             # Add source URL
             f.write(f"Source: {url}\n\n")
-            
+
             # Add horizontal separator
             f.write("---\n\n")
-            
+
             # Add QR code if available
             if os.path.exists(qr_path):
                 logger.debug(f"QR code found at {qr_path}, adding to markdown")
                 f.write(f"![QR Code for original content]({qr_path})\n\n")
             else:
                 logger.debug(f"No QR code found at {qr_path}")
-            
+
             # If raw_markdown is present, write it directly and skip structured_content
             if raw_markdown:
                 f.write(raw_markdown)
@@ -125,11 +145,11 @@ class MarkdownConverter(BaseConverter):
                     page_number = page.get("page_number", idx + 1)
                     items = page.get("items", [])
                     metadata = page.get("metadata", {})
-                    
+
                     # Write page break except for first page
                     if page_number and page_number > 1:
                         f.write("\n---\n\n")
-                    
+
                     # Optionally, write page header/footer using metadata
                     # Annotate references if present in metadata
                     references = metadata.get("references", [])
@@ -143,14 +163,14 @@ class MarkdownConverter(BaseConverter):
                                 f"- {ref_label} (to page {ref_to}, type: {ref_type})\n"
                             )
                         f.write("\n")
-                    
+
                     for item in items:
                         item_type = item.get("type", "paragraph")
                         item_content = item.get("content", "")
-                        
+
                         if not item_content:
                             continue
-                        
+
                         if item_type == "h1" or item_type == "heading":
                             f.write(f"# {item_content}\n\n")
                         elif item_type == "h2":
@@ -180,7 +200,7 @@ class MarkdownConverter(BaseConverter):
                         else:
                             # Default to paragraph
                             f.write(f"{item_content}\n\n")
-                
+
                 # Render cross-page links section if present
                 if cross_page_links:
                     f.write("## Cross-Page Links\n\n")
@@ -195,7 +215,7 @@ class MarkdownConverter(BaseConverter):
                             f"- {label} (from page {from_page} to page {to_page}, type: {link_type})\n"
                         )
                     f.write("\n---\n\n")
-            
+
             # Add timestamp
             timestamp = self._get_timestamp()
             f.write(f"\n\n*Generated: {timestamp}*")

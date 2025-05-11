@@ -12,11 +12,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from inklink.config import CONFIG, setup_logging
 from inklink.router import Router
-from inklink.services.qr_service import QRCodeService
-from inklink.services.pdf_service import PDFService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.remarkable_service import RemarkableService
+from inklink.di.container import Container
+from inklink.services.interfaces import (
+    IQRCodeService,
+    IWebScraperService,
+    IDocumentService,
+    IPDFService,
+    IRemarkableService,
+)
 from inklink.services.ai_service import AIService
 
 # Define a TypeVar for our custom server type
@@ -44,7 +47,9 @@ class URLHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests."""
         try:
-            if controller := self.router.route(self, "GET", self.path):
+            controller = self.router.route(self, "GET", self.path)
+
+            if controller:
                 controller.handle("GET", self.path)
             else:
                 self._send_error("Invalid endpoint")
@@ -56,7 +61,9 @@ class URLHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         """Handle POST requests."""
         try:
-            if controller := self.router.route(self, "POST", self.path):
+            controller = self.router.route(self, "POST", self.path)
+
+            if controller:
                 controller.handle("POST", self.path)
             else:
                 self._send_error("Invalid endpoint")
@@ -92,8 +99,28 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
     port_value = port if port is not None else int(CONFIG.get("PORT", 9999))
     server_address = (host_value, port_value)
 
-    # Create services
-    services = initialize_services()
+    # Create service provider
+    provider = Container.create_provider(CONFIG)
+
+    # Resolve services
+    services = {
+        "qr_service": provider.resolve(IQRCodeService),
+        "pdf_service": provider.resolve(IPDFService),
+        "web_scraper": provider.resolve(IWebScraperService),
+        "document_service": provider.resolve(IDocumentService),
+        "remarkable_service": provider.resolve(IRemarkableService),
+        "ai_service": provider.resolve(AIService),
+        "rmapi_path": CONFIG.get("RMAPI_PATH"),
+    }
+
+    # Validate dependency injection configuration
+    for key, value in services.items():
+        if value is None and key != "rmapi_path":  # rmapi_path is optional
+            raise ValueError(
+                "DI configuration error: '{}' service is not configured properly.".format(
+                    key
+                )
+            )
 
     # Create router
     router = Router(services)
@@ -114,22 +141,3 @@ def run_server(host: Optional[str] = None, port: Optional[int] = None):
     except KeyboardInterrupt:
         logger.info("Shutting down server")
         httpd.server_close()
-
-
-def initialize_services() -> Dict[str, Any]:
-    """Initialize services for dependency injection."""
-    qr_service = QRCodeService(CONFIG["TEMP_DIR"])
-    pdf_service = PDFService(CONFIG["TEMP_DIR"], CONFIG["OUTPUT_DIR"])
-    web_scraper = WebScraperService()
-    document_service = DocumentService(CONFIG["TEMP_DIR"], CONFIG["DRAWJ2D_PATH"])
-    remarkable_service = RemarkableService(CONFIG["RMAPI_PATH"], CONFIG["RM_FOLDER"])
-    ai_service = AIService()
-
-    return {
-        "qr_service": qr_service,
-        "pdf_service": pdf_service,
-        "web_scraper": web_scraper,
-        "document_service": document_service,
-        "remarkable_service": remarkable_service,
-        "ai_service": ai_service,
-    }

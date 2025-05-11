@@ -49,35 +49,35 @@ class Router:
         """
         # Parse the path
         route, query = self._parse_path(path)
-        # Split route but use directly in conditionals below
+        # Split route into parts if needed for more complex routing in the future
 
         # Route GET requests
         if method == "GET":
-            if route == "/auth":
-                return AuthController(handler)
-            elif route.startswith("/download/"):
-                return DownloadController(handler)
-            elif route.startswith("/response"):
-                return ResponseController(handler)
-
-        # Route POST requests
-        elif method == "POST":
             if route == "/auth":
                 return AuthController(handler)
             elif route == "/auth/remarkable":
                 return AuthController(handler)
             elif route == "/auth/myscript":
                 return AuthController(handler)
+            elif route.startswith("/download/"):
+                return DownloadController(handler, self.services)
+            elif route.startswith("/response"):
+                return ResponseController(handler, self.services)
+
+        # Route POST requests
+        elif method == "POST":
+            if route == "/auth":
+                return AuthController(handler)
+            elif route == "/share":
+                return ShareController(handler, self.services)
             elif route == "/ingest":
                 return IngestController(handler, self.services)
             elif route == "/upload":
-                return UploadController(handler)
+                return UploadController(handler, self.services)
             elif route == "/process":
-                return ProcessController(handler)
-            elif route == "/share":
-                return ShareController(handler, self.services)
+                return ProcessController(handler, self.services)
 
-        # If no route matches, return None
+        # No route matched
         return None
 
     def _parse_path(self, path: str) -> Tuple[str, str]:
