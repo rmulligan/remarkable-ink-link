@@ -54,10 +54,34 @@ class KnowledgeIndexService:
         self.output_dir = output_dir or tempfile.gettempdir()
 
         # EPUB format is inherent, not a configuration option
-        self.use_epub_format = True
+        # This is a private variable - use the property getter
+        self._use_epub_format = True
 
         # Create output directory if it doesn't exist
         os.makedirs(self.output_dir, exist_ok=True)
+
+    @property
+    def use_epub_format(self) -> bool:
+        """
+        EPUB format is inherent in this service, not configurable.
+        This property always returns True and ignores any attempts to set it.
+
+        Returns:
+            Always returns True
+        """
+        return True
+
+    @use_epub_format.setter
+    def use_epub_format(self, value: bool) -> None:
+        """
+        Setter that ignores any attempts to change the value.
+        EPUB format is inherent and cannot be changed.
+
+        Args:
+            value: Ignored value
+        """
+        # Do nothing - value is ignored
+        pass
 
     def create_entity_index(
         self,
