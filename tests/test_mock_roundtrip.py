@@ -6,6 +6,7 @@ external dependencies like rmapi or Neo4j.
 """
 
 import os
+import json
 import pytest
 import logging
 from unittest.mock import MagicMock
@@ -16,6 +17,13 @@ from inklink.pipeline.factory import PipelineFactory
 from inklink.pipeline.processor import PipelineContext
 from inklink.controllers.share_controller import ShareController
 from inklink.services.web_scraper_service import WebScraperService
+from inklink.services.interfaces import (
+    IQRCodeService,
+    IWebScraperService,
+    IDocumentService,
+    IRemarkableService,
+)
+from inklink.di.service_provider import ServiceProvider
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
@@ -50,7 +58,7 @@ class MockResponse:
         return self.body
 
 
-class MockQRService:
+class MockQRService(IQRCodeService):
     """Mock QR service."""
 
     def __init__(self, temp_dir=None):
@@ -63,13 +71,34 @@ class MockQRService:
         qr_path = os.path.join(self.temp_dir, "mock_qr.png")
         return qr_path, "mock_qr.png"
 
+    def generate_svg_qr(self, url):
+        """Generate SVG QR code for URL."""
+        qr_path = os.path.join(self.temp_dir, "mock_qr.svg")
+        return qr_path, "mock_qr.svg"
 
-class MockDocumentService:
+    def generate_custom_qr(self, url, config, svg=False):
+        """Generate custom QR code."""
+        if svg:
+            return self.generate_svg_qr(url)
+        return self.generate_qr(url)
+
+
+class MockDocumentService(IDocumentService):
     """Mock document service."""
 
     def __init__(self, temp_dir=None):
         """Initialize with temp directory."""
         self.temp_dir = temp_dir or "/tmp"
+
+    def create_hcl(self, url, qr_path, content):
+        """Create HCL script from content."""
+        hcl_path = os.path.join(self.temp_dir, "mock_document.hcl")
+        return hcl_path
+
+    def create_rmdoc(self, hcl_path, url):
+        """Convert HCL to Remarkable document."""
+        rm_path = os.path.join(self.temp_dir, "mock_document.rm")
+        return rm_path
 
     def create_rmdoc_from_content(self, url, qr_path, content):
         """Create reMarkable document from content."""
@@ -77,8 +106,13 @@ class MockDocumentService:
         rm_path = os.path.join(self.temp_dir, "mock_document.rm")
         return rm_path
 
+    def create_rmdoc_from_html(self, url, qr_path, html_content, title=None):
+        """Create reMarkable document directly from HTML content."""
+        rm_path = os.path.join(self.temp_dir, "mock_document.rm")
+        return rm_path
 
-class MockRemarkableService:
+
+class MockRemarkableService(IRemarkableService):
     """Mock reMarkable service."""
 
     def __init__(self, rmapi_path=None):
@@ -103,16 +137,22 @@ def test_share_controller_with_mocks():
     remarkable_service = MockRemarkableService()
     web_scraper = WebScraperService()  # Use the real web scraper for URL content
 
-    # Create the controller
-    controller = ShareController(
-        qr_service=qr_service,
-        document_service=document_service,
-        remarkable_service=remarkable_service,
-        web_scraper=web_scraper,
-    )
+    # Create mock handler
+    mock_handler = MagicMock()
 
-    # Create the request with a real URL
-    request = MockRequest({"url": "https://example.com/"})
+    # Create services dictionary
+    services = {
+        "qr_service": qr_service,
+        "document_service": document_service,
+        "remarkable_service": remarkable_service,
+        "web_scraper": web_scraper,
+    }
+
+    # Create the controller
+    controller = ShareController(handler=mock_handler, services=services)
+
+    # Set up the controller with a mock URL
+    url = "https://example.com/"
 
     # Patch the pipeline process method
     original_process = PipelineFactory.create_pipeline_for_url
@@ -124,16 +164,22 @@ def test_share_controller_with_mocks():
     # Register our mock pipeline creator
     PipelineFactory.create_pipeline_for_url = MagicMock(return_value=mock_pipeline)
 
+    # Mock the required methods on the controller
+    json_data = json.dumps({"url": url}).encode("utf-8")
+    controller.read_request_data = MagicMock(
+        return_value=(json_data, "application/json")
+    )
+    controller.get_accept_header = MagicMock(return_value="application/json")
+    controller.send_json = MagicMock()
+    controller.send_error = MagicMock()
+
     try:
         # Execute the controller
-        import asyncio
+        controller.handle(method="POST", path="/share")
 
-        response = asyncio.run(controller.share_url(request))
-
-        # Verify response
-        assert (
-            response.status == 200
-        ), f"Expected 200 status code, got {response.status}"
+        # Verify the controller sent a JSON response (success)
+        controller.send_json.assert_called_once()
+        controller.send_error.assert_not_called()
 
         # Verify mock pipeline was called
         mock_pipeline.process.assert_called_once()
