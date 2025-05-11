@@ -36,8 +36,8 @@ def escape_hcl(text: str) -> str:
     s = s.replace("[", "\\[")
     s = s.replace("]", "\\]")
     s = s.replace("`", "'")
-    s = s.replace("\n", "\\n")
-    s = s.replace("\t", "\\t")
+    s = s.replace("\n", " ")
+    s = s.replace("\t", " ")
     return s
 
 
@@ -91,8 +91,12 @@ def create_hcl_from_content(
 
         # Get fonts from config
         heading_font = config.get("HEADING_FONT", "Liberation Sans")
-        config.get("BODY_FONT", "Liberation Sans")  # Used in more complex implementations
-        config.get("CODE_FONT", "DejaVu Sans Mono")  # Used in more complex implementations
+        config.get(
+            "BODY_FONT", "Liberation Sans"
+        )  # Used in more complex implementations
+        config.get(
+            "CODE_FONT", "DejaVu Sans Mono"
+        )  # Used in more complex implementations
 
         # Create the HCL script
         with open(hcl_path, "w", encoding="utf-8") as f:
@@ -134,58 +138,7 @@ def create_hcl_from_content(
         return None
 
 
-def render_hcl_resource(
-    hcl_path: str, output_path: str, config: Optional[Dict[str, Any]] = None
-) -> bool:
-    """
-    Render HCL file to a reMarkable lines file using drawj2d.
-
-    Args:
-        hcl_path: Path to the HCL file
-        output_path: Path where the output .rm file should be saved
-        config: Optional configuration dictionary
-
-    Returns:
-        True if rendering was successful, False otherwise
-    """
-    try:
-        # Use provided config or fall back to global CONFIG
-        config = config or CONFIG
-
-        # Get drawj2d path from config
-        drawj2d_path = config.get("DRAWJ2D_PATH", "drawj2d")
-
-        # Run drawj2d to render the HCL file
-        logger.info(f"Rendering HCL file {hcl_path} to {output_path}")
-        cmd = [drawj2d_path, hcl_path, "-o", output_path]
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False,  # Don't raise an exception on non-zero return code
-        )
-
-        if result.returncode != 0:
-            logger.error(
-                f"drawj2d failed with code {result.returncode}: {result.stderr}"
-            )
-            return False
-
-        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
-            logger.error(
-                f"Output file {output_path} does not exist or is empty after rendering"
-            )
-            return False
-
-        logger.info(f"Successfully rendered HCL to {output_path}")
-        return True
-    except Exception as e:
-        logger.error(f"Error rendering HCL file: {str(e)}")
-        return False
-
-
-def render_hcl_resource_block(config: HCLResourceConfig) -> str:
+def render_hcl_resource(config: HCLResourceConfig) -> str:
     """
     Render HCL resource block from configuration.
 
@@ -210,3 +163,6 @@ def render_hcl_resource_block(config: HCLResourceConfig) -> str:
 
     result += "}\n"
     return result
+
+
+# This function has been replaced by render_hcl_resource
