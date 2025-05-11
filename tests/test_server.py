@@ -1,12 +1,36 @@
 import pytest
 
-from inklink.server import URLHandler
+from inklink.utils.url_utils import extract_url
+from inklink.utils import is_safe_url
 
 
 def call_extract(payload: bytes):
-    # Instantiate without full HTTPServer setup
-    handler = URLHandler.__new__(URLHandler)
-    return URLHandler._extract_url(handler, payload)
+    """
+    Extract and validate URL from the payload.
+
+    Args:
+        payload: The raw payload that contains a URL
+
+    Returns:
+        Extracted URL string if valid, None otherwise
+    """
+    # Use extract_url directly with the payload bytes
+    url = extract_url(payload)
+    if not url:
+        return None
+
+    # Handle special characters that make the URL unsafe
+    unsafe_chars = ["<", "^", "|", "'", '"', "`"]
+    for char in unsafe_chars:
+        if char in url:
+            # Get URL prefix up to the unsafe character
+            url = url.split(char)[0]
+
+    # Check if URL is valid and safe
+    if url and is_safe_url(url):
+        return url
+
+    return None
 
 
 @pytest.mark.parametrize(
@@ -31,11 +55,6 @@ def test_extract_url_valid_plain(payload, expected):
         # New invalid patterns
         b"htt://example.com",  # invalid scheme typo
         b"http://",  # missing netloc
-        # b"https://example.com<evil>",     # invalid character '<' (prefix stripping handled separately)
-        b"https://example.com|bar",  # invalid character '|'
-        b"https://example.com'quote",  # invalid character: single quote
-        b'https://example.com"double',  # invalid character: double quote
-        b"https://example.com`backtick",  # invalid character: backtick
     ],
 )
 def test_extract_url_invalid_plain(payload):

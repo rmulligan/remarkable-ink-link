@@ -31,20 +31,20 @@ logger = logging.getLogger(__name__)
 
 class PipelineFactory:
     """Factory for creating pipelines for different content types."""
-    
+
     def __init__(self, services: Dict[str, Any]):
         """
         Initialize with services.
-        
+
         Args:
             services: Dictionary of services
         """
         self.services = services
-    
+
     def create_web_pipeline(self) -> Pipeline:
         """
         Create a pipeline for processing web content.
-        
+
         Returns:
             Pipeline for web content
         """
@@ -52,13 +52,12 @@ class PipelineFactory:
         url_processor = URLProcessor()
         qr_processor = QRProcessor(self.services.get("qr_service"))
         web_content_processor = WebContentProcessor(
-            self.services.get("web_scraper"),
-            self.services.get("pdf_service")
+            self.services.get("web_scraper"), self.services.get("pdf_service")
         )
         ai_processor = AIProcessor(self.services.get("ai_service"))
         document_processor = DocumentProcessor(self.services.get("document_service"))
         upload_processor = UploadProcessor(self.services.get("remarkable_service"))
-        
+
         # Create and configure pipeline
         pipeline = Pipeline(name="WebPipeline")
         pipeline.add_processor(url_processor)
@@ -67,13 +66,13 @@ class PipelineFactory:
         pipeline.add_processor(ai_processor)
         pipeline.add_processor(document_processor)
         pipeline.add_processor(upload_processor)
-        
+
         return pipeline
-    
+
     def create_pdf_pipeline(self) -> Pipeline:
         """
         Create a pipeline for processing PDF content.
-        
+
         Returns:
             Pipeline for PDF content
         """
@@ -81,12 +80,11 @@ class PipelineFactory:
         url_processor = URLProcessor()
         qr_processor = QRProcessor(self.services.get("qr_service"))
         web_content_processor = WebContentProcessor(
-            self.services.get("web_scraper"),
-            self.services.get("pdf_service")
+            self.services.get("web_scraper"), self.services.get("pdf_service")
         )
         document_processor = DocumentProcessor(self.services.get("document_service"))
         upload_processor = UploadProcessor(self.services.get("remarkable_service"))
-        
+
         # Create and configure pipeline
         pipeline = Pipeline(name="PDFPipeline")
         pipeline.add_processor(url_processor)
@@ -94,13 +92,13 @@ class PipelineFactory:
         pipeline.add_processor(web_content_processor)
         pipeline.add_processor(document_processor)
         pipeline.add_processor(upload_processor)
-        
+
         return pipeline
-    
+
     def create_ingest_pipeline(self) -> Pipeline:
         """
         Create a pipeline for processing ingested content.
-        
+
         Returns:
             Pipeline for ingested content
         """
@@ -110,7 +108,7 @@ class PipelineFactory:
         ai_processor = AIProcessor(self.services.get("ai_service"))
         document_processor = DocumentProcessor(self.services.get("document_service"))
         upload_processor = UploadProcessor(self.services.get("remarkable_service"))
-        
+
         # Create and configure pipeline
         pipeline = Pipeline(name="IngestPipeline")
         pipeline.add_processor(ingest_processor)
@@ -118,16 +116,16 @@ class PipelineFactory:
         pipeline.add_processor(ai_processor)
         pipeline.add_processor(document_processor)
         pipeline.add_processor(upload_processor)
-        
+
         return pipeline
-    
+
     def create_pipeline_for_url(self, url: str) -> Pipeline:
         """
         Create a pipeline for processing the given URL.
-        
+
         Args:
             url: URL to process
-            
+
         Returns:
             Appropriate pipeline for the URL
         """
