@@ -17,6 +17,9 @@ from inklink.controllers import (
     UploadController,
     ProcessController,
 )
+from inklink.controllers.knowledge_graph_integration_controller import (
+    KnowledgeGraphIntegrationController,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +79,16 @@ class Router:
                 return UploadController(handler, self.services)
             elif route == "/process":
                 return ProcessController(handler, self.services)
+            # Knowledge Graph routes
+            elif route.startswith("/kg/"):
+                knowledge_graph_service = self.services.get("knowledge_graph_service")
+                kg_integration_service = self.services.get(
+                    "knowledge_graph_integration_service"
+                )
+                if knowledge_graph_service and kg_integration_service:
+                    return KnowledgeGraphIntegrationController(
+                        kg_integration_service, handler
+                    )
 
         # No route matched
         return None
