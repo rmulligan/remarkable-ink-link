@@ -26,6 +26,19 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple, Union
 
+# Import core modules (early import to avoid E402 errors)
+from inklink.services.qr_service import QRCodeService
+from inklink.services.web_scraper_service import WebScraperService
+from inklink.services.document_service import DocumentService
+from inklink.services.pdf_service import PDFService
+from inklink.services.remarkable_service import RemarkableService
+from inklink.services.ai_service import AIService
+from inklink.controllers.share_controller import ShareController
+from inklink.controllers.ingest_controller import IngestController
+from inklink.controllers.process_controller import ProcessController
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.controllers.knowledge_graph_controller import KnowledgeGraphController
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("test_live_roundtrip")
@@ -36,7 +49,10 @@ DEFAULT_RMAPI_VERSION = "0.0.24"
 
 # Helper functions for dependency installation
 
-def run_command(cmd: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None) -> Tuple[int, str, str]:
+
+def run_command(
+    cmd: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None
+) -> Tuple[int, str, str]:
     """
     Run a shell command and return exit code, stdout, and stderr.
 
@@ -57,7 +73,7 @@ def run_command(cmd: List[str], cwd: Optional[str] = None, env: Optional[Dict[st
             stderr=subprocess.PIPE,
             cwd=cwd,
             env=env or os.environ.copy(),
-            text=True
+            text=True,
         )
 
         stdout, stderr = process.communicate()
@@ -108,7 +124,9 @@ def ensure_python_package(package_name: str) -> bool:
             return False
 
     # Try pip as fallback
-    exit_code, stdout, stderr = run_command([sys.executable, "-m", "pip", "install", package_name])
+    exit_code, stdout, stderr = run_command(
+        [sys.executable, "-m", "pip", "install", package_name]
+    )
 
     if exit_code == 0:
         logger.info(f"Successfully installed {package_name} with pip")
@@ -153,11 +171,7 @@ def ensure_rmapi(version: str = DEFAULT_RMAPI_VERSION) -> Tuple[bool, str]:
     machine = platform.machine().lower()
 
     # Map system and architecture to download URL format
-    os_map = {
-        "linux": "linux",
-        "darwin": "darwin",
-        "windows": "windows"
-    }
+    os_map = {"linux": "linux", "darwin": "darwin", "windows": "windows"}
 
     arch_map = {
         "x86_64": "amd64",
@@ -188,6 +202,7 @@ def ensure_rmapi(version: str = DEFAULT_RMAPI_VERSION) -> Tuple[bool, str]:
     logger.info(f"Downloading rmapi from {download_url}")
 
     import requests
+
     try:
         response = requests.get(download_url, stream=True)
         if response.status_code != 200:
@@ -239,9 +254,7 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
     try:
         from neo4j import GraphDatabase
 
-        driver = GraphDatabase.driver(
-            neo4j_uri, auth=(neo4j_username, neo4j_password)
-        )
+        driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_username, neo4j_password))
 
         with driver.session() as session:
             result = session.run("RETURN 1 as test")
@@ -262,19 +275,30 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
     container_name = "inklink_neo4j_test"
 
     # Check if container is already running
-    exit_code, stdout, stderr = run_command(["docker", "ps", "-q", "-f", f"name={container_name}"])
+    exit_code, stdout, stderr = run_command(
+        ["docker", "ps", "-q", "-f", f"name={container_name}"]
+    )
     if stdout.strip():
         logger.info(f"Neo4j container {container_name} is already running")
     else:
         # Start container
         logger.info(f"Starting Neo4j container with Docker")
-        exit_code, stdout, stderr = run_command([
-            "docker", "run", "-d",
-            "--name", container_name,
-            "-p", "7474:7474", "-p", "7687:7687",
-            "-e", f"NEO4J_AUTH={neo4j_username}/{neo4j_password}",
-            f"neo4j:{version}"
-        ])
+        exit_code, stdout, stderr = run_command(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                container_name,
+                "-p",
+                "7474:7474",
+                "-p",
+                "7687:7687",
+                "-e",
+                f"NEO4J_AUTH={neo4j_username}/{neo4j_password}",
+                f"neo4j:{version}",
+            ]
+        )
 
         if exit_code != 0:
             logger.error(f"Failed to start Neo4j container: {stderr}")
@@ -287,9 +311,7 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
     try:
         from neo4j import GraphDatabase
 
-        driver = GraphDatabase.driver(
-            neo4j_uri, auth=(neo4j_username, neo4j_password)
-        )
+        driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_username, neo4j_password))
 
         with driver.session() as session:
             result = session.run("RETURN 1 as test")
@@ -386,7 +408,9 @@ def ensure_remarkable_auth() -> bool:
     # Run rmapi to authenticate
     if sys.stdout.isatty():
         logger.info("reMarkable authentication required")
-        print("\nTo use reMarkable Cloud features, you need to authenticate with your reMarkable account.")
+        print(
+            "\nTo use reMarkable Cloud features, you need to authenticate with your reMarkable account."
+        )
         print("Please follow the instructions to complete the authentication process.")
 
         # Run rmapi interactively
@@ -411,21 +435,6 @@ def ensure_remarkable_auth() -> bool:
 ensure_python_package("neo4j")
 ensure_python_package("requests")
 
-# Import core modules
-from inklink.services.qr_service import QRCodeService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.pdf_service import PDFService
-from inklink.services.remarkable_service import RemarkableService
-from inklink.services.ai_service import AIService
-from inklink.controllers.share_controller import ShareController
-from inklink.controllers.ingest_controller import IngestController
-from inklink.controllers.process_controller import ProcessController
-
-# Import knowledge graph related modules (now safe since we installed neo4j if needed)
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.controllers.knowledge_graph_controller import KnowledgeGraphController
-
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("test_live_roundtrip")
@@ -433,17 +442,20 @@ logger = logging.getLogger("test_live_roundtrip")
 
 class LiveRequest:
     """Live HTTP request for testing controllers."""
-    
+
     def __init__(self, body=None, match_info=None):
         """Initialize with request body and match info."""
         self.body = body or {}
         self.match_info = match_info or {}
-        self.headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
     async def json(self):
         """Return the request body as JSON."""
         return self.body
-        
+
     def get_accept_header(self):
         """Return the accept header."""
         return self.headers.get("Accept", "")
@@ -531,7 +543,7 @@ class LiveTestEnvironment:
         self.kg_service = KnowledgeGraphService(
             uri=self.neo4j_uri,
             username=self.neo4j_username,
-            password=self.neo4j_password
+            password=self.neo4j_password,
         )
 
         # Verify all services are working
@@ -605,10 +617,13 @@ def test_live_share_url(live_env):
     # Verify response body
     body_text = asyncio.run(response.text())
     import json
+
     body = json.loads(body_text)
 
     assert body["success"] is True, f"Expected success, got {body}"
-    assert "uploaded" in body.get("message", "").lower(), f"Expected 'uploaded' in message, got {body.get('message')}"
+    assert (
+        "uploaded" in body.get("message", "").lower()
+    ), f"Expected 'uploaded' in message, got {body.get('message')}"
 
     logger.info("Live share URL test passed")
 
@@ -622,35 +637,50 @@ def test_live_knowledge_graph(live_env):
     test_entity_name = f"Test_Entity_{os.getpid()}"
 
     # Create entity request
-    create_request = LiveRequest({
-        "name": test_entity_name,
-        "type": "TestEntity",
-        "observations": ["Live test observation"]
-    })
+    create_request = LiveRequest(
+        {
+            "name": test_entity_name,
+            "type": "TestEntity",
+            "observations": ["Live test observation"],
+        }
+    )
 
     try:
         # Create entity
-        create_response = asyncio.run(live_env.kg_controller.create_entity(create_request))
+        create_response = asyncio.run(
+            live_env.kg_controller.create_entity(create_request)
+        )
 
         # Verify creation success
-        assert create_response.status == 201, f"Expected 201 status code, got {create_response.status}"
+        assert (
+            create_response.status == 201
+        ), f"Expected 201 status code, got {create_response.status}"
 
         # Get the entity
         get_request = LiveRequest(match_info={"name": test_entity_name})
         get_response = asyncio.run(live_env.kg_controller.get_entity(get_request))
 
         # Verify entity retrieval
-        assert get_response.status == 200, f"Expected 200 status code, got {get_response.status}"
+        assert (
+            get_response.status == 200
+        ), f"Expected 200 status code, got {get_response.status}"
 
         # Parse response
         get_body_text = asyncio.run(get_response.text())
         import json
+
         entity = json.loads(get_body_text)
 
         # Verify entity data
-        assert entity["name"] == test_entity_name, f"Expected name {test_entity_name}, got {entity['name']}"
-        assert entity["type"] == "TestEntity", f"Expected type TestEntity, got {entity['type']}"
-        assert "observations" in entity["properties"], "observations not found in entity properties"
+        assert (
+            entity["name"] == test_entity_name
+        ), f"Expected name {test_entity_name}, got {entity['name']}"
+        assert (
+            entity["type"] == "TestEntity"
+        ), f"Expected type TestEntity, got {entity['type']}"
+        assert (
+            "observations" in entity["properties"]
+        ), "observations not found in entity properties"
 
         logger.info("Live knowledge graph test passed")
 
@@ -658,8 +688,10 @@ def test_live_knowledge_graph(live_env):
         # Clean up - delete the test entity
         try:
             delete_request = LiveRequest(match_info={"name": test_entity_name})
-            delete_response = asyncio.run(live_env.kg_controller.delete_entity(delete_request))
-            logger.info(f"Test entity {test_entity_name} deleted")
+            result = asyncio.run(live_env.kg_controller.delete_entity(delete_request))
+            logger.info(
+                f"Test entity {test_entity_name} deleted with status {result.status}"
+            )
         except Exception as e:
             logger.error(f"Error deleting test entity: {e}")
 
@@ -727,13 +759,17 @@ def test_live_web_scraper(live_env):
     """Test the web scraper with a real URL."""
     # Scrape a test URL
     result = live_env.web_scraper.scrape("https://example.com/")
-    
+
     # Verify basic scrape results
     assert result is not None, "Web scraper returned None"
     assert "title" in result, "Title not found in scrape results"
-    assert "Example Domain" in result["title"], f"Expected 'Example Domain' in title, got {result['title']}"
-    assert "structured_content" in result, "structured_content not found in scrape results"
-    
+    assert (
+        "Example Domain" in result["title"]
+    ), f"Expected 'Example Domain' in title, got {result['title']}"
+    assert (
+        "structured_content" in result
+    ), "structured_content not found in scrape results"
+
     logger.info("Live web scraper test passed")
 
 
@@ -743,22 +779,22 @@ if __name__ == "__main__":
     if not os.environ.get("INKLINK_TEST_LIVE", "").lower() == "true":
         print("Live tests skipped. Set INKLINK_TEST_LIVE=true to run.")
         sys.exit(0)
-        
+
     # Create test environment
     env = LiveTestEnvironment()
-    
+
     try:
         # Run tests
         test_live_web_scraper(env)
-        
+
         if env.remarkable_service:
             test_live_share_url(env)
-            
+
         if neo4j_installed and env.kg_service:
             test_live_knowledge_graph(env)
-            
+
         print("All live tests passed!")
-        
+
     finally:
         # Clean up
         env.cleanup()
