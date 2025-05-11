@@ -37,6 +37,7 @@ pytest = "^8.3"
 black = "^25.1.0"
 flake8 = "^7.2"
 pre-commit = "^4.2.0"
+mypy = "^1.15.0"
 
 [tool.poetry.scripts]
 inklink = "inklink.main:main"

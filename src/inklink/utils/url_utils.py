@@ -1,100 +1,85 @@
-"""URL-related utilities for InkLink.
+"""URL utilities for InkLink.
 
-This module provides functions for handling URLs including
-extraction, sanitization, and validation.
+This module provides utilities for handling URLs safely.
 """
 
+import json
 import logging
-import re
-from urllib.parse import urlparse, urljoin, quote
+from urllib.parse import urlparse
+
+from inklink.utils.common import is_safe_url
 
 logger = logging.getLogger(__name__)
 
 
-def extract_url(path: str) -> str:
+def extract_url(post_data: bytes) -> str:
     """
-    Extract URL from path.
+    Extract URL from request data (JSON or plain text).
 
     Args:
-        path: Path which may contain a URL
+        post_data: Request data
 
     Returns:
-        Extracted URL or empty string
+        Extracted URL or None if invalid
     """
-    # Try to extract a URL from the path
-    # Match "/share/<url>" format
-    url_match = re.match(r"^/share/(https?://.+)$", path)
-    if url_match:
-        return url_match.group(1)
-
-    # Match "/ingest/<url>" format
-    url_match = re.match(r"^/ingest/(https?://.+)$", path)
-    if url_match:
-        return url_match.group(1)
-
-    # Match query parameter format "?url=<url>"
-    url_match = re.match(r"^/share\?url=(https?://.+)$", path)
-    if url_match:
-        return url_match.group(1)
-
-    # Check if the path itself looks like a URL
-    if path.startswith("http://") or path.startswith("https://"):
-        return path
-
-    return ""
-
-
-def sanitize_url(url: str) -> str:
-    """
-    Sanitize URL by encoding unsafe characters.
-
-    Args:
-        url: URL to sanitize
-
-    Returns:
-        Sanitized URL
-    """
-    if not url:
-        return ""
-
-    # Parse URL into components
+    # Try to decode as JSON
     try:
-        parsed = urlparse(url)
+        data = json.loads(post_data.decode("utf-8"))
 
-        # Reconstruct with proper quoting
-        # Keep allowed special chars in path (/,:)
-        path = quote(parsed.path, safe="/:,")
+        if url := data.get("url"):
+            # Reject URLs containing any whitespace or control characters
+            if any(c.isspace() for c in url):
+                return None
 
-        # Rebuild URL with properly quoted path
-        sanitized = f"{parsed.scheme}://{parsed.netloc}{path}"
+            # Trim and parse
+            url = url.strip()
 
-        # Add query string if present (also quoted)
-        if parsed.query:
-            sanitized += f"?{quote(parsed.query, safe='=&')}"
+            parsed = urlparse(url)
+            # Validate scheme, netloc, and allowed characters
+            if (
+                parsed.scheme in ("http", "https")
+                and parsed.netloc
+                and is_safe_url(url)
+            ):
+                return url
 
-        # Add fragment if present (quoted)
-        if parsed.fragment:
-            sanitized += f"#{quote(parsed.fragment)}"
+    except json.JSONDecodeError:
+        pass
 
-        return sanitized
-
-    except Exception as e:
-        logger.error(f"Error sanitizing URL: {e}")
-        return url  # Return original if parsing fails
-
-
-def get_hostname(url: str) -> str:
-    """
-    Extract hostname from URL.
-
-    Args:
-        url: URL to extract hostname from
-
-    Returns:
-        Hostname or empty string
-    """
+    # Try as plain text: decode and validate the raw URL string
     try:
-        parsed = urlparse(url)
-        return parsed.netloc
-    except Exception:
-        return ""
+        raw = post_data.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+    # Reject if any whitespace or control characters present
+    if any(c.isspace() for c in raw):
+        return None
+
+    # Trim extraneous whitespace at ends
+    raw = raw.strip()
+
+    parsed = urlparse(raw)
+    # Validate scheme and netloc
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return None
+
+    # If the entire URL is safe, return it
+    if is_safe_url(raw):
+        return raw
+
+    # Check for unsafe delimiters and get the prefix if found
+    unsafe_delimiters = ["<", "^", "|", "'", '"', "`"]
+    for delimiter in unsafe_delimiters:
+        if delimiter in raw:
+            prefix = raw.split(delimiter, 1)[0]
+            parsed_pref = urlparse(prefix)
+            if (
+                parsed_pref.scheme in ("http", "https")
+                and parsed_pref.netloc
+                and is_safe_url(prefix)
+            ):
+                return prefix
+
+    # Not a valid URL
+    return None

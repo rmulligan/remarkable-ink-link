@@ -17,14 +17,15 @@ logger = logging.getLogger(__name__)
 class AuthController(BaseController):
     """Controller for handling authentication requests."""
 
-    def __init__(self, rmapi_path: Optional[str] = None):
+    def __init__(self, handler=None, rmapi_path: Optional[str] = None):
         """
         Initialize the auth controller.
 
         Args:
+            handler: HTTP request handler
             rmapi_path: Path to the rmapi executable
         """
-        super().__init__()
+        super().__init__(handler)
         self.rmapi_adapter = RmapiAdapter(rmapi_path or CONFIG.get("RMAPI_PATH"))
 
     def handle(self, method: str = "GET", path: str = "") -> None:

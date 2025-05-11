@@ -8,15 +8,17 @@ import os
 import time
 import logging
 import threading
-from typing import Dict, Any, Optional, List, Type
+from typing import Dict, Any, Optional, List
 
 from inklink.services.interfaces import (
     IDocumentService,
     IContentConverter,
     IDocumentRenderer,
 )
-from inklink.services.converters import MarkdownConverter, HTMLConverter, PDFConverter
-from inklink.services.renderers import HCLRenderer
+from inklink.services.converters.markdown_converter import MarkdownConverter
+from inklink.services.converters.html_converter import HTMLConverter
+from inklink.services.converters.pdf_converter import PDFConverter
+from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_rcu_available
 from inklink.config import CONFIG
 
@@ -57,10 +59,10 @@ class DocumentService(IDocumentService):
         # Initialize converters
         self.converters = self._initialize_converters()
 
-        # Initialize renderers
-        self.hcl_renderer = HCLRenderer(temp_dir, drawj2d_path)
+        # Initialize renderer
+        self.hcl_renderer = HCLRenderer(self.temp_dir, self.drawj2d_path)
 
-    def _initialize_converters(self) -> List[IContentConverter]:
+    def _initialize_converters(self):
         """Initialize the content converters."""
         return [
             MarkdownConverter(self.temp_dir),
@@ -68,7 +70,7 @@ class DocumentService(IDocumentService):
             PDFConverter(self.temp_dir),
         ]
 
-    def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
+    def _get_converter_for_type(self, content_type: str):
         """Get the appropriate converter for the content type."""
         return next(
             (
@@ -118,7 +120,6 @@ class DocumentService(IDocumentService):
             converter = self._get_converter_for_type("structured")
             if converter:
                 result = converter.convert(converter_content)
-
                 if result:
                     logger.info(
                         f"Successfully converted to reMarkable format: {result}"
@@ -174,7 +175,7 @@ class DocumentService(IDocumentService):
             # Get HTML converter and convert content
             converter = self._get_converter_for_type("html")
             if converter:
-                result = converter.convert(converter_content)
+                result = converter.convert(converter_content, None)
 
                 if result:
                     logger.info(
@@ -218,7 +219,7 @@ class DocumentService(IDocumentService):
             # Get PDF converter and convert content
             converter = self._get_converter_for_type("pdf")
             if converter:
-                result = converter.convert(converter_content)
+                result = converter.convert(converter_content, None)
 
                 if result:
                     logger.info(
@@ -270,7 +271,7 @@ class DocumentService(IDocumentService):
             renderer_content = {"hcl_path": hcl_path, "url": url}
 
             # Render HCL to reMarkable format
-            result = self.hcl_renderer.render(renderer_content)
+            result = self.hcl_renderer.render(renderer_content, None)
 
             if result:
                 logger.info(f"Legacy conversion successful: {result}")
@@ -320,7 +321,7 @@ class DocumentService(IDocumentService):
             renderer_content = {"hcl_path": hcl_path, "url": url}
 
             # Render HCL to reMarkable format
-            return self.hcl_renderer.render(renderer_content)
+            return self.hcl_renderer.render(renderer_content, None)
 
         except Exception as e:
             logger.error(f"Error in create_rmdoc: {e}")
