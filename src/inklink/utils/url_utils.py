@@ -7,6 +7,8 @@ import json
 import logging
 from urllib.parse import urlparse
 
+from inklink.utils.common import is_safe_url
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,16 +68,18 @@ def extract_url(post_data: bytes) -> str:
     if is_safe_url(raw):
         return raw
 
-    # If there is a '<' suffix, strip it and validate the prefix
-    if "<" in raw:
-        prefix = raw.split("<", 1)[0]
-        parsed_pref = urlparse(prefix)
-        if (
-            parsed_pref.scheme in ("http", "https")
-            and parsed_pref.netloc
-            and is_safe_url(prefix)
-        ):
-            return prefix
+    # Check for unsafe delimiters and get the prefix if found
+    unsafe_delimiters = ["<", "^", "|", "'", '"', "`"]
+    for delimiter in unsafe_delimiters:
+        if delimiter in raw:
+            prefix = raw.split(delimiter, 1)[0]
+            parsed_pref = urlparse(prefix)
+            if (
+                parsed_pref.scheme in ("http", "https")
+                and parsed_pref.netloc
+                and is_safe_url(prefix)
+            ):
+                return prefix
 
     # Not a valid URL
     return None
