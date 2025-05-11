@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 class RemarkableService(IRemarkableService):
     """Service for interacting with reMarkable Cloud using RmapiAdapter."""
 
-    """Service for interacting with reMarkable Cloud using the RemarkableAdapter."""
-
     def __init__(self, adapter: RmapiAdapter):
         """
         Initialize with paths and folder.
