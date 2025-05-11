@@ -18,30 +18,30 @@ logger = logging.getLogger(__name__)
 class KnowledgeIndexMCPIntegration:
     """
     Integration of knowledge index service with MCP tools.
-    
+
     This class provides MCP-compatible functions for creating and managing
     knowledge index notebooks that organize content for easy reference.
     """
-    
+
     def __init__(self, knowledge_index_service: KnowledgeIndexService):
         """
         Initialize the MCP integration.
-        
+
         Args:
             knowledge_index_service: Service for knowledge index functionality
         """
         self.knowledge_index_service = knowledge_index_service
-    
+
     def create_entity_index(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create an entity index notebook.
-        
+
         Args:
             params: Dictionary with the following keys:
                 - entity_types: Optional list of entity types to include
                 - min_references: Minimum number of references (default: 1)
                 - upload_to_remarkable: Whether to upload to reMarkable (default: true)
-                
+
         Returns:
             Result dictionary
         """
@@ -49,17 +49,17 @@ class KnowledgeIndexMCPIntegration:
         entity_types = params.get("entity_types")
         min_references = params.get("min_references", 1)
         upload_to_remarkable = params.get("upload_to_remarkable", True)
-        
+
         # Create the entity index
         success, result = self.knowledge_index_service.create_entity_index(
             entity_types=entity_types,
             min_references=min_references,
-            upload_to_remarkable=upload_to_remarkable
+            upload_to_remarkable=upload_to_remarkable,
         )
-        
+
         if not success:
             return {"success": False, "error": result.get("error", "Creation failed")}
-        
+
         # Return summarized result
         return {
             "success": True,
@@ -67,19 +67,19 @@ class KnowledgeIndexMCPIntegration:
             "entity_types": result.get("entity_types", []),
             "document_path": result.get("document_path"),
             "uploaded": result.get("upload_result", {}).get("success", False),
-            "title": result.get("upload_result", {}).get("title", "")
+            "title": result.get("upload_result", {}).get("title", ""),
         }
-    
+
     def create_topic_index(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a topic index notebook.
-        
+
         Args:
             params: Dictionary with the following keys:
                 - top_n_topics: Number of top topics (default: 20)
                 - min_connections: Minimum connections (default: 2)
                 - upload_to_remarkable: Whether to upload to reMarkable (default: true)
-                
+
         Returns:
             Result dictionary
         """
@@ -87,79 +87,79 @@ class KnowledgeIndexMCPIntegration:
         top_n_topics = params.get("top_n_topics", 20)
         min_connections = params.get("min_connections", 2)
         upload_to_remarkable = params.get("upload_to_remarkable", True)
-        
+
         # Create the topic index
         success, result = self.knowledge_index_service.create_topic_index(
             top_n_topics=top_n_topics,
             min_connections=min_connections,
-            upload_to_remarkable=upload_to_remarkable
+            upload_to_remarkable=upload_to_remarkable,
         )
-        
+
         if not success:
             return {"success": False, "error": result.get("error", "Creation failed")}
-        
+
         # Return summarized result
         return {
             "success": True,
             "topic_count": result.get("topic_count", 0),
             "document_path": result.get("document_path"),
             "uploaded": result.get("upload_result", {}).get("success", False),
-            "title": result.get("upload_result", {}).get("title", "")
+            "title": result.get("upload_result", {}).get("title", ""),
         }
-    
+
     def create_notebook_index(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a notebook content index.
-        
+
         Args:
             params: Dictionary with the following keys:
                 - upload_to_remarkable: Whether to upload to reMarkable (default: true)
-                
+
         Returns:
             Result dictionary
         """
         # Get parameters
         upload_to_remarkable = params.get("upload_to_remarkable", True)
-        
+
         # Create the notebook index
         success, result = self.knowledge_index_service.create_notebook_index(
             upload_to_remarkable=upload_to_remarkable
         )
-        
+
         if not success:
             return {"success": False, "error": result.get("error", "Creation failed")}
-        
+
         # Return summarized result
         return {
             "success": True,
             "notebook_count": result.get("notebook_count", 0),
             "document_path": result.get("document_path"),
             "uploaded": result.get("upload_result", {}).get("success", False),
-            "title": result.get("upload_result", {}).get("title", "")
+            "title": result.get("upload_result", {}).get("title", ""),
         }
-    
+
     def create_master_index(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a master index notebook containing entity, topic, and notebook indices.
-        
+
         Args:
             params: Dictionary with the following keys:
                 - upload_to_remarkable: Whether to upload to reMarkable (default: true)
-                
+
         Returns:
             Result dictionary
         """
         # Get parameters
         upload_to_remarkable = params.get("upload_to_remarkable", True)
-        
+
         # Create the master index
         success, result = self.knowledge_index_service.create_master_index(
             upload_to_remarkable=upload_to_remarkable
         )
-        
+
         if not success:
             return {"success": False, "error": result.get("error", "Creation failed")}
-        
+
         # Return summarized result
         return {
             "success": True,
@@ -168,11 +168,12 @@ class KnowledgeIndexMCPIntegration:
             "notebook_count": result.get("notebook_count", 0),
             "document_path": result.get("document_path"),
             "uploaded": result.get("upload_result", {}).get("success", False),
-            "title": result.get("upload_result", {}).get("title", "")
+            "title": result.get("upload_result", {}).get("title", ""),
         }
 
 
 # MCP tool handler functions (for direct use with MCP server)
+
 
 def create_entity_index(params):
     """MCP handler for creating an entity index notebook."""
