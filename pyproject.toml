@@ -31,6 +31,9 @@ httpx = "^0.28.1"
 rmscene = "^0.7.0"
 cryptography = "^44.0.3"
 openai = "^1.78.0"
+ebooklib = "^0.18.0"
+neo4j = "^5.18.0"
+sentence-transformers = "^2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
