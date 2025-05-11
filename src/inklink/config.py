@@ -12,6 +12,7 @@ class HCLResourceConfig(BaseModel):
 
 
 # Default configuration dictionary for InkLink
+# Note: Knowledge indexes are always generated in EPUB format with hyperlinks
 
 
 CONFIG = {
