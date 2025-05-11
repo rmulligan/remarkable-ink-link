@@ -26,6 +26,10 @@ from inklink.services.handwriting_recognition_service import (
 )
 from inklink.services.google_docs_service import GoogleDocsService
 from inklink.services.ai_service import AIService
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.knowledge_graph_integration_service import (
+    KnowledgeGraphIntegrationService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +66,29 @@ class Container:
 
         # Register services that don't have interfaces yet
         provider.register_factory(AIService, lambda: AIService())
+
+        # Register knowledge graph services
+        knowledge_graph_service = KnowledgeGraphService()
+        provider.register_factory(
+            KnowledgeGraphService, lambda: knowledge_graph_service
+        )
+
+        # Create and register knowledge graph integration service
+        handwriting_service = provider.resolve(IHandwritingRecognitionService)
+        knowledge_graph_integration_service = KnowledgeGraphIntegrationService(
+            handwriting_service=handwriting_service,
+            knowledge_graph_service=knowledge_graph_service,
+        )
+        provider.register_factory(
+            KnowledgeGraphIntegrationService,
+            lambda: knowledge_graph_integration_service,
+        )
+
+        # Register service instances for direct access
+        provider.register_instance("knowledge_graph_service", knowledge_graph_service)
+        provider.register_instance(
+            "knowledge_graph_integration_service", knowledge_graph_integration_service
+        )
 
         # Normalize configuration keys to lowercase
         normalized_config = {key.lower(): value for key, value in config.items()}
