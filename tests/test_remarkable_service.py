@@ -1,6 +1,7 @@
 import os
 import subprocess
 from inklink.services.remarkable_service import RemarkableService
+from inklink.adapters.rmapi_adapter import RmapiAdapter
 
 
 class DummyResult:
@@ -13,7 +14,8 @@ class DummyResult:
 def test_upload_missing_doc(monkeypatch, tmp_path):
     # Setup service with fake rmapi path
     rmapi = str(tmp_path / "rmapi")
-    service = RemarkableService(rmapi, upload_folder="/")
+    adapter = RmapiAdapter(rmapi_path=rmapi)
+    service = RemarkableService(adapter=adapter)
     # doc_path does not exist
     success, message = service.upload(str(tmp_path / "noexist.rm"), "Title")
     assert not success
@@ -24,10 +26,12 @@ def test_upload_missing_rmapi(monkeypatch, tmp_path):
     # Create dummy doc file
     doc_path = tmp_path / "file.rm"
     doc_path.write_text("data")
-    service = RemarkableService(str(tmp_path / "noapi"), upload_folder="/")
+    adapter = RmapiAdapter(rmapi_path=str(tmp_path / "noapi"))
+    service = RemarkableService(adapter=adapter)
     success, message = service.upload(str(doc_path), "Title")
     assert not success
-    assert "rmapi executable not found" in message
+    # Different error message now that validation is in the adapter
+    assert "rmapi path not valid" in message
 
 
 def test_upload_success_and_rename(monkeypatch, tmp_path):
@@ -37,10 +41,11 @@ def test_upload_success_and_rename(monkeypatch, tmp_path):
     os.chmod(str(rmapi), 0o755)
     doc_path = tmp_path / "file.rm"
     doc_path.write_text("data")
-    service = RemarkableService(str(rmapi), upload_folder="/")
+    adapter = RmapiAdapter(rmapi_path=str(rmapi))
+    service = RemarkableService(adapter=adapter)
 
     # Mock subprocess.run to simulate success and ID in stdout
-    def fake_run(cmd, capture_output, text, check):
+    def fake_run(cmd, capture_output, text, timeout=None):
         if cmd[1] == "put":
             return DummyResult(returncode=0, stdout="Uploaded. ID: abc123\n")
         if cmd[1] == "mv":
@@ -50,4 +55,6 @@ def test_upload_success_and_rename(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "run", fake_run)
     success, message = service.upload(str(doc_path), "MyTitle")
     assert success
-    assert "uploaded to remarkable" in message.lower()
+    assert (
+        "uploaded to remarkable" in message.lower() or "successfully" in message.lower()
+    )

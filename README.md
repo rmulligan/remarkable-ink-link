@@ -198,6 +198,9 @@ This allows you to save and review documents locally without requiring a reMarka
 
 InkLink is built with modularity in mind. Through MCP, it can connect to external tools and services like calendars, research agents, or lifelogging platforms.
 
+Available integrations:
+- `GitHub MCP`: Integrated GitHub repository management directly accessible via Claude. See [GitHub Integration](docs/github_integration.md).
+
 Standalone integration modules (coming soon):
 - `inklink-mcp-limitless`: Sync lifelog entries from the Limitless Pendant and convert them into editable ink for review, summarization, or planning.
 

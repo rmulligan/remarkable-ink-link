@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class HTMLConverter(BaseConverter):
-    """Converts HTML content directly to reMarkable format."""
+    """Converts HTML content directly to reMarkable format.
+
+    Note: HTML-to-structured-content utilities are intentionally bypassed in this converter.
+    We directly convert the HTML to remarkable format for better quality output.
+    """
 
     def can_convert(self, content_type: str) -> bool:
         """Check if this converter can handle the given content type."""

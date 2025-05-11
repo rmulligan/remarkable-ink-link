@@ -2,7 +2,7 @@ import pytest
 import os
 import tempfile
 from typing import Dict, Any
-from inklink.config import HCLResourceConfig, CONFIG
+from inklink.config import HCLResourceConfig
 from inklink.utils.hcl_render import render_hcl_resource, create_hcl_from_content
 
 
@@ -51,5 +51,6 @@ def test_create_hcl_from_content_basic():
         # Check that the custom config values were used
         with open(hcl_path, "r") as f:
             content = f.read()
-            assert "size 1000 800" in content
-            assert "set_font Custom Font" in content
+            assert "page_width: 1000" in content
+            assert "page_height: 800" in content
+            assert 'font: "Custom Font"' in content
