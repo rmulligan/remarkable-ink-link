@@ -51,7 +51,11 @@ DEFAULT_RMAPI_VERSION = "0.0.24"
 
 
 def run_command(
-    cmd: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None
+    cmd: List[str],
+    cwd: Optional[str] = None,
+    env: Optional[Dict[str, str]] = None,
+    log_cmd: bool = True,
+    sensitive: bool = False,
 ) -> Tuple[int, str, str]:
     """
     Run a shell command and return exit code, stdout, and stderr.
@@ -60,11 +64,18 @@ def run_command(
         cmd: Command and arguments as list
         cwd: Working directory (optional)
         env: Environment variables (optional)
+        log_cmd: Whether to log the command (default: True)
+        sensitive: Whether the command contains sensitive data like passwords (default: False)
 
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
-    logger.info(f"Running command: {' '.join(cmd)}")
+    if log_cmd:
+        if sensitive:
+            # Just log the command name without arguments that might contain sensitive data
+            logger.info(f"Running sensitive command: {cmd[0]}")
+        else:
+            logger.info(f"Running command: {' '.join(cmd)}")
 
     try:
         process = subprocess.Popen(
@@ -283,22 +294,24 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
     else:
         # Start container
         logger.info(f"Starting Neo4j container with Docker")
-        exit_code, stdout, stderr = run_command(
-            [
-                "docker",
-                "run",
-                "-d",
-                "--name",
-                container_name,
-                "-p",
-                "7474:7474",
-                "-p",
-                "7687:7687",
-                "-e",
-                f"NEO4J_AUTH={neo4j_username}/{neo4j_password}",
-                f"neo4j:{version}",
-            ]
-        )
+        # Set up command with potentially sensitive password information
+        docker_cmd = [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            container_name,
+            "-p",
+            "7474:7474",
+            "-p",
+            "7687:7687",
+            "-e",
+            f"NEO4J_AUTH={neo4j_username}/{neo4j_password}",
+            f"neo4j:{version}",
+        ]
+        # Log a sanitized version and mark the actual command as sensitive
+        logger.info(f"Starting Neo4j container {container_name} with Docker")
+        exit_code, stdout, stderr = run_command(docker_cmd, sensitive=True)
 
         if exit_code != 0:
             logger.error(f"Failed to start Neo4j container: {stderr}")
