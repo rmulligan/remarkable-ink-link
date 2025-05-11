@@ -64,6 +64,30 @@ class KnowledgeGraphService:
             logger.error(f"Failed to initialize Neo4j driver: {str(e)}")
             self._driver = None
 
+    @property
+    def driver(self):
+        """Get the Neo4j driver."""
+        return self._driver
+
+    def is_connected(self):
+        """
+        Check if connected to Neo4j.
+
+        Returns:
+            True if connected, False otherwise
+        """
+        try:
+            if not self._driver:
+                logger.warning("Neo4j driver not initialized")
+                return False
+
+            with self._driver.session() as session:
+                result = session.run("RETURN 1 as test")
+                return result.single()["test"] == 1
+        except Exception as e:
+            logger.error(f"Neo4j connection error: {e}")
+            return False
+
     def close(self):
         """Close the Neo4j driver."""
         if self._driver:
