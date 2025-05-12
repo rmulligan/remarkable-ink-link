@@ -33,7 +33,7 @@ cryptography = "^44.0.3"
 openai = "^1.78.1"
 ebooklib = "^0.18.0"
 neo4j = "^5.18.0"
-sentence-transformers = "^2.3.1"
+sentence-transformers = "^4.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
