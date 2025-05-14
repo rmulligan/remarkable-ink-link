@@ -672,7 +672,7 @@ def lilly(interval, tag, rmapi, output_dir, claude_command, lilly_workspace, onc
 @click.option("--kg-tag", default="kg", help="Tag for knowledge graph processing")
 @click.option("--new-tag", default="new", help="Tag to start a new conversation")
 @click.option("--mcp-tools", default="", help="Comma-separated list of MCP tools to support as tags")
-@click.option("--claude-command", default="claude -c", help="Command to run Claude with context by default")
+@click.option("--claude-command", default="/home/ryan/.claude/local/claude", help="Command to run Claude with context by default")
 @click.option("--poll-interval", default=60, help="Poll interval in seconds")
 @click.option("--highlighting/--no-highlighting", default=True, 
               help="Enable syntax highlighting for code")

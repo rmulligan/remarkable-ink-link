@@ -474,15 +474,23 @@ class RmapiAdapter:
                     id_match = re.search(r'\[(.*?)\]', line)
                     if id_match:
                         doc_id = id_match.group(1)
-                        name = line.split('[')[0].strip()
+                        # Extract the file type flag (f=file, d=directory)
+                        file_type = doc_id
+                        
+                        # Remove type prefix from name if present
+                        if line.startswith('[f]') or line.startswith('[d]'):
+                            name = line[3:].strip()
+                        else:
+                            name = line.split('[')[0].strip()
+                            
                         document_type = "DocumentType"
                         
-                        # Check if it's a collection (folder) - typically shown as [name]/ in rmapi
-                        if "/" in line:
+                        # Check if it's a collection (folder) or directory flag
+                        if "/" in line or doc_id == 'd':
                             document_type = "CollectionType"
                             
                         documents.append({
-                            "ID": doc_id,
+                            "ID": name,  # Use the name as ID for better rmapi compatibility
                             "VissibleName": name,  # Using same spelling as reMarkable API
                             "Type": document_type
                         })
@@ -571,6 +579,12 @@ class RmapiAdapter:
         Returns:
             Tuple of (has_tag, metadata)
         """
+        # Skip files with certain extensions that are unlikely to be notebooks
+        skip_extensions = ('.pdf', '.epub', '.html', '.txt', '.png', '.jpg', '.jpeg', '.gif')
+        if any(doc_id_or_name.lower().endswith(ext) for ext in skip_extensions):
+            logger.debug(f"Skipping non-notebook file: {doc_id_or_name}")
+            return False, {}
+            
         temp_dir = tempfile.mkdtemp(prefix="remarkable_")
         zip_path = os.path.join(temp_dir, f"{doc_id_or_name}.rmdoc")
 
@@ -579,7 +593,7 @@ class RmapiAdapter:
             # First try by name (which is more reliable with rmapi)
             success, message = self.download_file(doc_id_or_name, zip_path, "zip")
             if not success:
-                logger.error(f"Failed to download document: {message}")
+                logger.warning(f"Failed to download document: {message}")
                 return False, {}
 
             # Verify the file exists

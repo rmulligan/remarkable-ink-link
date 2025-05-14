@@ -57,8 +57,12 @@ class ClaudeVisionAdapter(Adapter):
             True if available, False otherwise
         """
         try:
+            # Split the command if it contains spaces
+            # Remove -c flag if it's part of the command when checking version
+            cmd = self.claude_command.replace(" -c", "").replace(" -r", "")
+            cmd_parts = cmd.split() if ' ' in cmd else [cmd]
             result = subprocess.run(
-                [self.claude_command, "--version"], 
+                cmd_parts + ["--version"], 
                 capture_output=True, 
                 text=True
             )
