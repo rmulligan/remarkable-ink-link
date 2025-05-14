@@ -9,7 +9,11 @@ import subprocess
 import tempfile
 import time
 import logging
-from typing import Optional, Tuple
+import json
+import zipfile
+import shutil
+import re
+from typing import Optional, Tuple, List, Dict, Any, Set
 
 logger = logging.getLogger(__name__)
 
@@ -30,19 +34,98 @@ class RmapiAdapter:
     def _validate_executable(self) -> bool:
         """
         Validate that the rmapi executable exists and is executable.
+        If not available, attempts to download the ddvk fork.
 
         Returns:
             True if valid, False otherwise
         """
-        if not self.rmapi_path or not os.path.exists(self.rmapi_path):
-            logger.warning("rmapi path not available. RMAPI operations will fail.")
-            return False
+        # If rmapi exists and is executable, we're good
+        if self.rmapi_path and os.path.exists(self.rmapi_path) and os.access(self.rmapi_path, os.X_OK):
+            return True
 
-        if not os.access(self.rmapi_path, os.X_OK):
-            logger.warning(f"rmapi at {self.rmapi_path} is not executable")
+        # Try to download the ddvk fork of rmapi
+        return self._download_ddvk_rmapi()
+        
+    def _download_ddvk_rmapi(self) -> bool:
+        """
+        Download the ddvk fork of rmapi if not available.
+        
+        Returns:
+            True if download successful, False otherwise
+        """
+        import platform
+        import requests
+        import stat
+        
+        try:
+            # Determine OS and architecture
+            system = platform.system().lower()
+            machine = platform.machine().lower()
+            
+            # Map to GitHub release asset names
+            if system == "linux":
+                if "arm" in machine or "aarch" in machine:
+                    if "64" in machine:
+                        asset_name = "rmapi-arm64"
+                    else:
+                        asset_name = "rmapi-arm"
+                else:
+                    asset_name = "rmapi-amd64"
+            elif system == "darwin":
+                if "arm" in machine or "aarch" in machine:
+                    asset_name = "rmapi-darwin-arm64"
+                else:
+                    asset_name = "rmapi-darwin-amd64"
+            elif system == "windows":
+                asset_name = "rmapi.exe"
+            else:
+                logger.error(f"Unsupported platform: {system} {machine}")
+                return False
+                
+            # Get the latest release URL
+            release_url = "https://api.github.com/repos/ddvk/rmapi/releases/latest"
+            response = requests.get(release_url, timeout=10)
+            response.raise_for_status()
+            release_data = response.json()
+            
+            # Find the matching asset
+            asset_url = None
+            for asset in release_data.get("assets", []):
+                if asset["name"] == asset_name:
+                    asset_url = asset["browser_download_url"]
+                    break
+                    
+            if not asset_url:
+                logger.error(f"Could not find release asset for {asset_name}")
+                return False
+                
+            # Determine destination directory
+            bin_dir = os.path.expanduser("~/.local/bin")
+            os.makedirs(bin_dir, exist_ok=True)
+            
+            # Download the binary
+            dest_path = os.path.join(bin_dir, "rmapi")
+            logger.info(f"Downloading rmapi from {asset_url} to {dest_path}")
+            
+            response = requests.get(asset_url, timeout=30)
+            response.raise_for_status()
+            
+            # Save the binary
+            with open(dest_path, "wb") as f:
+                f.write(response.content)
+                
+            # Make it executable
+            os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            
+            # Update the path
+            self.rmapi_path = dest_path
+            logger.info(f"Successfully downloaded rmapi to {dest_path}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error downloading rmapi: {str(e)}")
             return False
-
-        return True
 
     def authenticate_with_code(self, code: str) -> Tuple[bool, str]:
         """
@@ -261,13 +344,13 @@ class RmapiAdapter:
             return True, "Document uploaded to reMarkable"
 
     def download_file(
-        self, doc_id: str, output_path: str, export_format: str = "pdf"
+        self, doc_id_or_name: str, output_path: str, export_format: str = "pdf"
     ) -> Tuple[bool, str]:
         """
         Download a file from reMarkable Cloud.
 
         Args:
-            doc_id: Document ID to download
+            doc_id_or_name: Document ID or name to download
             output_path: Path where to save the downloaded file
             export_format: Format to export (pdf, epub, etc.)
 
@@ -277,16 +360,40 @@ class RmapiAdapter:
         if not self._validate_executable():
             return False, "rmapi path not valid"
 
-        # Use 'get' to download the file
-        success, stdout, stderr = self.run_command("get", doc_id, output_path)
+        # Get the directory where the file will be downloaded
+        output_dir = os.path.dirname(output_path)
+        if not output_dir:
+            output_dir = "."
+
+        # Use 'get' to download the file to the directory
+        success, stdout, stderr = self.run_command("get", doc_id_or_name, output_dir)
         if not success:
             return False, f"Failed to download: {stderr}"
 
-        # Verify the file exists
-        if not os.path.exists(output_path):
-            return False, "Download appeared successful but file not found"
+        # rmapi renames files to their original name + .rmdoc
+        # We need to find the downloaded file and rename it if necessary
+        if doc_id_or_name.endswith('.pdf') or doc_id_or_name.endswith('.epub'):
+            expected_filename = os.path.join(output_dir, doc_id_or_name)
+        else:
+            expected_filename = os.path.join(output_dir, f"{doc_id_or_name}.rmdoc")
 
-        return True, f"Downloaded document {doc_id}"
+        if os.path.exists(expected_filename):
+            # If the file exists with the expected name, move it to the requested output path
+            if expected_filename != output_path:
+                os.rename(expected_filename, output_path)
+            return True, f"Downloaded document {doc_id_or_name}"
+        else:
+            # Try to find the file in the output directory
+            files = os.listdir(output_dir)
+            rmdoc_files = [f for f in files if f.endswith('.rmdoc')]
+
+            if rmdoc_files:
+                # Use the first .rmdoc file found
+                downloaded_file = os.path.join(output_dir, rmdoc_files[0])
+                os.rename(downloaded_file, output_path)
+                return True, f"Downloaded document {doc_id_or_name}"
+            else:
+                return False, "Download appeared successful but file not found"
 
     def ping(self) -> bool:
         """
@@ -301,3 +408,195 @@ class RmapiAdapter:
         # Try to run a simple 'ls' command
         success, _, _ = self.run_command("ls")
         return success
+        
+    def list_files(self) -> Tuple[bool, List[Dict[str, Any]]]:
+        """
+        List all files and notebooks on the reMarkable Cloud.
+        
+        Returns:
+            Tuple of (success, list of documents)
+        """
+        if not self._validate_executable():
+            logger.error("rmapi path not valid")
+            return False, []
+            
+        try:
+            # Run the list command
+            success, stdout, stderr = self.run_command("ls")
+            if not success:
+                logger.error(f"Failed to list documents: {stderr}")
+                return False, []
+                
+            # Process the output
+            documents = []
+            for line in stdout.split('\n'):
+                line = line.strip()
+                if line and '[' in line and ']' in line:
+                    # Extract ID from "[id]" in the line
+                    id_match = re.search(r'\[(.*?)\]', line)
+                    if id_match:
+                        doc_id = id_match.group(1)
+                        name = line.split('[')[0].strip()
+                        document_type = "DocumentType"
+                        
+                        # Check if it's a collection (folder) - typically shown as [name]/ in rmapi
+                        if "/" in line:
+                            document_type = "CollectionType"
+                            
+                        documents.append({
+                            "ID": doc_id,
+                            "VissibleName": name,  # Using same spelling as reMarkable API
+                            "Type": document_type
+                        })
+            
+            return True, documents
+            
+        except Exception as e:
+            logger.error(f"Error listing files: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False, []
+
+    def find_tagged_notebooks(self, tag: str = "Cass") -> List[Dict[str, Any]]:
+        """
+        Find all notebooks that have the specified tag.
+
+        Args:
+            tag: Tag to search for, defaults to "Cass"
+
+        Returns:
+            List of dictionaries with notebook info including IDs and metadata
+        """
+        if not self._validate_executable():
+            logger.error("rmapi path not valid")
+            return []
+
+        tagged_notebooks = []
+        
+        # List all documents
+        success, stdout, stderr = self.run_command("ls")
+        if not success:
+            logger.error(f"Failed to list documents: {stderr}")
+            return []
+        
+        try:
+            # Process the text output
+            documents = []
+            for line in stdout.split('\n'):
+                line = line.strip()
+                if line and '[' in line and ']' in line:
+                    # Extract ID from "[id]" in the line
+                    id_match = re.search(r'\[(.*?)\]', line)
+                    if id_match:
+                        doc_id = id_match.group(1)
+                        name = line.split('[')[0].strip()
+                        documents.append({
+                            "ID": doc_id,
+                            "VissibleName": name,
+                            "Type": "CollectionType"  # Assume all are collections
+                        })
+            
+            # Process each document
+            for doc in documents:
+                # Process each document
+                doc_id = doc.get("ID")
+                name = doc.get("VissibleName")
+                
+                # Get detailed metadata for this document
+                has_tag, metadata = self._check_document_for_tag(doc_id, tag)
+                
+                if has_tag:
+                    tagged_notebooks.append({
+                        "id": doc_id,
+                        "name": name,
+                        "metadata": metadata
+                    })
+                    logger.info(f"Found tagged notebook: {name} ({doc_id})")
+            
+            return tagged_notebooks
+            
+        except json.JSONDecodeError:
+            logger.error("Failed to parse JSON response from rmapi")
+            return []
+        except Exception as e:
+            logger.error(f"Error finding tagged notebooks: {str(e)}")
+            return []
+
+    def _check_document_for_tag(self, doc_id_or_name: str, tag: str) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if a document has the specified tag by downloading and examining its content file.
+
+        Args:
+            doc_id_or_name: Document ID or name
+            tag: Tag to search for
+
+        Returns:
+            Tuple of (has_tag, metadata)
+        """
+        temp_dir = tempfile.mkdtemp(prefix="remarkable_")
+        zip_path = os.path.join(temp_dir, f"{doc_id_or_name}.rmdoc")
+
+        try:
+            # Download the document by name or ID
+            # First try by name (which is more reliable with rmapi)
+            success, message = self.download_file(doc_id_or_name, zip_path, "zip")
+            if not success:
+                logger.error(f"Failed to download document: {message}")
+                return False, {}
+
+            # Verify the file exists
+            if not os.path.exists(zip_path):
+                logger.error(f"Download claimed success but file not found at {zip_path}")
+                return False, {}
+
+            logger.info(f"Successfully downloaded document to {zip_path}")
+
+            # Extract the content file
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                content_files = [f for f in zip_ref.namelist() if f.endswith('.content')]
+                if not content_files:
+                    logger.warning(f"No content file found in document {doc_id_or_name}")
+                    return False, {}
+
+                # Extract the content file
+                content_file = content_files[0]
+                zip_ref.extract(content_file, temp_dir)
+
+                # Read the content file
+                content_path = os.path.join(temp_dir, content_file)
+                with open(content_path, 'r') as f:
+                    content_data = json.load(f)
+
+                # Check if the tag exists
+                tags = content_data.get('tags', [])
+                logger.info(f"Document {doc_id_or_name} has tags: {tags}")
+
+                has_tag = tag in tags
+
+                # Also check for case-insensitive match
+                if not has_tag and any(t.lower() == tag.lower() for t in tags):
+                    logger.info(f"Found case-insensitive tag match for '{tag}' in document {doc_id_or_name}")
+                    matching_tag = next(t for t in tags if t.lower() == tag.lower())
+                    logger.info(f"Tag in document is '{matching_tag}', but we're looking for '{tag}'")
+
+                # Write all tags to a log file for debugging
+                try:
+                    with open('/home/ryan/Cassidy/all_tags.txt', 'a') as log_file:
+                        log_file.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Document '{doc_id_or_name}' has tags: {tags}\n")
+                except Exception as e:
+                    logger.error(f"Error writing to log file: {e}")
+
+                return has_tag, content_data
+
+        except Exception as e:
+            logger.error(f"Error checking document for tag: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False, {}
+
+        finally:
+            # Clean up
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass

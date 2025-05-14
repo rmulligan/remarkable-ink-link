@@ -94,7 +94,7 @@ class ClaudePenpalService:
             model=self.model
         )
         self.document_service = DocumentService(
-            output_dir=self.temp_dir,
+            temp_dir=self.temp_dir,
             drawj2d_path=CONFIG.get("DRAWJ2D_PATH")
         )
         
