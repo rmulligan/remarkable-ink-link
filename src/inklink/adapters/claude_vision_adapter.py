@@ -40,7 +40,7 @@ class ClaudeVisionAdapter(Adapter):
         self.logger = logging.getLogger(__name__)
         
         # Get command from arguments or environment
-        self.claude_command = claude_command or os.environ.get("CLAUDE_COMMAND", "claude")
+        self.claude_command = claude_command or os.environ.get("CLAUDE_COMMAND", "/home/ryan/.claude/local/claude")
         self.model = model or os.environ.get("CLAUDE_MODEL", "")
         
         # Model flag for command if specified

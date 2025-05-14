@@ -39,7 +39,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         self.claude_command = (
             claude_command
             or os.environ.get("CLAUDE_COMMAND")
-            or CONFIG.get("CLAUDE_COMMAND", "claude")
+            or CONFIG.get("CLAUDE_COMMAND", "/home/ryan/.claude/local/claude")
         )
         self.model = (
             model
