@@ -403,9 +403,26 @@ class RmapiAdapter:
         if not output_dir:
             output_dir = "."
 
+        # Escape spaces and special characters in file name
+        safe_name = doc_id_or_name.replace(" ", "\\ ").replace("&", "\\&").replace("|", "\\|")
+        
         # Use 'get' to download the file to the directory
-        success, stdout, stderr = self.run_command("get", doc_id_or_name, output_dir)
-        if not success:
+        success, stdout, stderr = self.run_command("get", safe_name, output_dir)
+        
+        # If direct download fails, try a different approach with quotes
+        if not success and "file doesn't exist" in stderr:
+            # Try with quotes
+            quoted_name = f'"{doc_id_or_name}"'
+            cmd = f'{self.rmapi_path} get {quoted_name} {output_dir}'
+            try:
+                # Use shell=True to handle quoted names properly
+                process = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+                success = process.returncode == 0
+                if not success:
+                    return False, f"Failed to download: {stderr}"
+            except Exception as e:
+                return False, f"Error downloading: {str(e)}"
+        elif not success:
             return False, f"Failed to download: {stderr}"
 
         # rmapi renames files to their original name + .rmdoc
