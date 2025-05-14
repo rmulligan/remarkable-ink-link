@@ -20,7 +20,7 @@ import uuid
 import shutil
 import subprocess
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, Set
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter
 from inklink.services.handwriting_recognition_service import HandwritingRecognitionService
@@ -41,9 +41,12 @@ class ClaudePenpalService:
         query_tag: str = "Lilly",
         context_tag: str = "Context",
         knowledge_graph_tag: str = "kg",
+        new_conversation_tag: str = "new",
+        mcp_tool_tags: Optional[List[str]] = None,
         poll_interval: int = 60,
         syntax_highlighting: bool = True,
-        remove_tags_after_processing: bool = True
+        remove_tags_after_processing: bool = True,
+        use_conversation_ids: bool = True
     ):
         """Initialize the service with necessary components.
         
@@ -54,9 +57,12 @@ class ClaudePenpalService:
             query_tag: Tag to identify query pages (default: Lilly)
             context_tag: Tag to identify additional context pages
             knowledge_graph_tag: Tag to identify pages for KG processing (default: kg)
+            new_conversation_tag: Tag to identify start of new conversation (default: new)
+            mcp_tool_tags: List of tags that map to MCP tools to enforce
             poll_interval: How often to check for new pages (seconds)
             syntax_highlighting: Whether to enable syntax highlighting for code
             remove_tags_after_processing: Whether to remove tags after processing
+            use_conversation_ids: Whether to use separate Claude conversation IDs per notebook
         """
         self.rmapi_path = rmapi_path or CONFIG.get("RMAPI_PATH")
         self.claude_command = claude_command or CONFIG.get("CLAUDE_COMMAND", "claude")
@@ -64,11 +70,22 @@ class ClaudePenpalService:
         self.query_tag = query_tag
         self.context_tag = context_tag
         self.knowledge_graph_tag = knowledge_graph_tag
+        self.new_conversation_tag = new_conversation_tag
+        self.mcp_tool_tags = mcp_tool_tags or []
         self.poll_interval = poll_interval
         self.syntax_highlighting = syntax_highlighting
         self.remove_tags_after_processing = remove_tags_after_processing
+        self.use_conversation_ids = use_conversation_ids
         self.temp_dir = CONFIG.get("TEMP_DIR")
         os.makedirs(self.temp_dir, exist_ok=True)
+        
+        # Track notebooks with active context and conversation IDs
+        self.notebook_contexts: Dict[str, bool] = {}
+        self.notebook_conversation_ids: Dict[str, str] = {}
+        self.conversation_storage_path = os.path.join(self.temp_dir, "claude_conversation_ids.json")
+        
+        # Load existing conversation IDs if available
+        self._load_conversation_ids()
         
         # Initialize components
         self.rmapi_adapter = RmapiAdapter(self.rmapi_path)
@@ -139,6 +156,26 @@ class ClaudePenpalService:
             # Wait for next poll interval
             time.sleep(self.poll_interval)
 
+    def _load_conversation_ids(self):
+        """Load saved conversation IDs from storage."""
+        try:
+            if os.path.exists(self.conversation_storage_path):
+                with open(self.conversation_storage_path, 'r') as f:
+                    self.notebook_conversation_ids = json.load(f)
+                    logger.info(f"Loaded {len(self.notebook_conversation_ids)} conversation IDs")
+        except Exception as e:
+            logger.error(f"Error loading conversation IDs: {e}")
+            self.notebook_conversation_ids = {}
+            
+    def _save_conversation_ids(self):
+        """Save conversation IDs to storage."""
+        try:
+            with open(self.conversation_storage_path, 'w') as f:
+                json.dump(self.notebook_conversation_ids, f)
+            logger.info(f"Saved {len(self.notebook_conversation_ids)} conversation IDs")
+        except Exception as e:
+            logger.error(f"Error saving conversation IDs: {e}")
+
     def _check_notebook_for_tagged_pages(self, notebook):
         """Check a notebook for pages with tags.
         
@@ -178,12 +215,27 @@ class ClaudePenpalService:
                         
                     logger.info(f"Processing query page {page_id} in notebook {notebook_name}")
                     
+                    # Check if this page has the 'new' tag to start a new conversation
+                    start_new_conversation = self._has_tag(query_page, self.new_conversation_tag)
+                    if start_new_conversation:
+                        logger.info(f"New conversation requested for notebook {notebook_name}")
+                        self.notebook_contexts[notebook_id] = False
+                        
+                        # Reset conversation ID if using separate IDs
+                        if self.use_conversation_ids and notebook_id in self.notebook_conversation_ids:
+                            logger.info(f"Resetting conversation ID for notebook {notebook_id}")
+                            del self.notebook_conversation_ids[notebook_id]
+                            self._save_conversation_ids()
+                    
                     # Find context pages (must come before the query page)
                     page_idx = pages_data.index(query_page)
                     context_pages = [
                         p for p in pages_data[:page_idx] 
                         if self._has_tag(p, self.context_tag)
                     ]
+                    
+                    # Check for MCP tool tags
+                    mcp_tools = self._get_mcp_tools_from_tags(query_page)
                     
                     # Process the query with context
                     self._process_query_with_context(
@@ -192,6 +244,8 @@ class ClaudePenpalService:
                         notebook_path=download_path,
                         query_page=query_page,
                         context_pages=context_pages,
+                        mcp_tools=mcp_tools,
+                        new_conversation=start_new_conversation,
                         all_pages=pages_data
                     )
                     
@@ -241,6 +295,30 @@ class ClaudePenpalService:
                 return True
                 
         return False
+
+    def _get_mcp_tools_from_tags(self, page) -> List[str]:
+        """Extract MCP tool tags from a page.
+        
+        Args:
+            page: Page data dictionary
+            
+        Returns:
+            List of MCP tools to enforce
+        """
+        tools = []
+        
+        # Check for explicit tags that match MCP tool tags
+        if "tags" in page:
+            tools.extend([tag for tag in page["tags"] if tag in self.mcp_tool_tags])
+            
+        # Check for hashtags in text
+        if "text" in page:
+            for tool in self.mcp_tool_tags:
+                tag_pattern = rf'#{tool}\b'
+                if re.search(tag_pattern, page["text"], re.IGNORECASE):
+                    tools.append(tool)
+                    
+        return list(set(tools))  # Remove duplicates
             
     def _extract_notebook_pages(self, notebook_path, extract_dir):
         """Extract pages from notebook and gather metadata.
@@ -368,6 +446,8 @@ class ClaudePenpalService:
         notebook_path,
         query_page,
         context_pages,
+        mcp_tools,
+        new_conversation,
         all_pages
     ):
         """Process a query page with its context and insert response.
@@ -378,6 +458,8 @@ class ClaudePenpalService:
             notebook_path: Path to downloaded notebook
             query_page: Query page data
             context_pages: List of context page data
+            mcp_tools: List of MCP tools to enforce
+            new_conversation: Whether to start a new conversation
             all_pages: List of all pages in the notebook
         """
         try:
@@ -393,6 +475,12 @@ class ClaudePenpalService:
                 ctx_title = ctx_page.get("metadata", {}).get("visibleName", f"Context Page {ctx_page['id']}")
                 context_text += f"\n\nCONTEXT: {ctx_title}\n{ctx_page.get('text', '')}"
                 
+            # Add MCP tools context if any tools specified
+            if mcp_tools:
+                tools_text = f"\n\nPlease use the following MCP tools in your response: {', '.join(mcp_tools)}"
+                context_text += tools_text
+                logger.info(f"Enforcing MCP tools: {', '.join(mcp_tools)}")
+                
             # Build prompt with context
             if context_text:
                 prompt = f"CONTEXT:\n{context_text}\n\nQUERY:\n{query_text}"
@@ -400,7 +488,11 @@ class ClaudePenpalService:
                 prompt = query_text
                 
             # Process with Claude
-            response_text = self._process_with_claude(prompt)
+            response_text = self._process_with_claude(
+                notebook_id=notebook_id,
+                prompt=prompt,
+                new_conversation=new_conversation
+            )
             
             # Now we need to insert the response after the query page
             self._insert_response_after_query(
@@ -414,12 +506,19 @@ class ClaudePenpalService:
             
             # Remove tags if configured
             if self.remove_tags_after_processing:
+                # Determine which tags to remove
+                tags_to_remove = [self.query_tag]
+                
+                # Only remove the new_conversation_tag if it exists
+                if new_conversation:
+                    tags_to_remove.append(self.new_conversation_tag)
+                
                 # Remove tags from query page
                 self._remove_tags_from_page(
                     notebook_id=notebook_id,
                     notebook_name=notebook_name,
                     page_id=query_page["id"],
-                    tags_to_remove=[self.query_tag]
+                    tags_to_remove=tags_to_remove
                 )
                 
                 # Remove tags from context pages
@@ -436,11 +535,13 @@ class ClaudePenpalService:
             import traceback
             logger.error(traceback.format_exc())
 
-    def _process_with_claude(self, query_text: str) -> str:
+    def _process_with_claude(self, notebook_id: str, prompt: str, new_conversation: bool = False) -> str:
         """Process query with Claude CLI.
         
         Args:
-            query_text: Text extracted from handwriting
+            notebook_id: ID of the notebook for context tracking
+            prompt: Text extracted from handwriting
+            new_conversation: Whether to start a new conversation
             
         Returns:
             Response from Claude
@@ -450,17 +551,56 @@ class ClaudePenpalService:
             with tempfile.NamedTemporaryFile(mode='w+', suffix='.txt', delete=False) as input_file:
                 input_path = input_file.name
                 # Write query to input file
-                input_file.write(query_text)
+                input_file.write(prompt)
                 input_file.flush()
             
             output_path = tempfile.NamedTemporaryFile(suffix='.txt', delete=False).name
             
             # Prepare Claude command
             model_flag = f"--model {self.model}" if self.model else ""
-            cmd = f'{self.claude_command} {model_flag} < {input_path} > {output_path}'
+            
+            # Determine which context mode to use
+            use_context = not new_conversation and notebook_id in self.notebook_contexts
+            
+            # Build command based on context strategy
+            if self.use_conversation_ids:
+                # Use -r flag with conversation ID if we have one
+                if use_context and notebook_id in self.notebook_conversation_ids:
+                    conversation_id = self.notebook_conversation_ids[notebook_id]
+                    context_flag = f"-r {conversation_id}"
+                    cmd = f'{self.claude_command} {model_flag} {context_flag} < {input_path} > {output_path}'
+                else:
+                    # New conversation, will capture and save the ID
+                    cmd = f'{self.claude_command} {model_flag} < {input_path} > {output_path} 2> /tmp/claude_stderr.txt'
+            else:
+                # Use simple -c flag
+                context_flag = "-c" if use_context else ""
+                cmd = f'{self.claude_command} {model_flag} {context_flag} < {input_path} > {output_path}'
+            
+            logger.info(f"Executing Claude command: {cmd}")
             
             # Execute command
             subprocess.run(cmd, shell=True, check=True)
+            
+            # If using conversation IDs and this is a new conversation, try to capture the ID
+            if self.use_conversation_ids and (new_conversation or notebook_id not in self.notebook_conversation_ids):
+                try:
+                    # Read stderr which might contain the conversation ID
+                    if os.path.exists("/tmp/claude_stderr.txt"):
+                        with open("/tmp/claude_stderr.txt", 'r') as stderr_file:
+                            stderr_content = stderr_file.read()
+                            # Look for conversation ID, usually printed like "Conversation: abc123"
+                            id_match = re.search(r'Conversation:\s+([a-zA-Z0-9]+)', stderr_content)
+                            if id_match:
+                                conversation_id = id_match.group(1)
+                                self.notebook_conversation_ids[notebook_id] = conversation_id
+                                logger.info(f"Saved conversation ID {conversation_id} for notebook {notebook_id}")
+                                self._save_conversation_ids()
+                except Exception as e:
+                    logger.error(f"Failed to capture conversation ID: {e}")
+            
+            # Mark this notebook as having an active context after successful execution
+            self.notebook_contexts[notebook_id] = True
             
             # Read response
             with open(output_path, 'r') as f:
@@ -469,6 +609,8 @@ class ClaudePenpalService:
             # Clean up temp files
             os.unlink(input_path)
             os.unlink(output_path)
+            if os.path.exists("/tmp/claude_stderr.txt"):
+                os.unlink("/tmp/claude_stderr.txt")
             
             return response
             
@@ -726,7 +868,10 @@ class ClaudePenpalService:
             TEXT:
             """
             
-            structured_data_text = self._process_with_claude(f"{prompt}\n\n{page_text}")
+            structured_data_text = self._process_with_claude(
+                notebook_id=notebook_id,
+                prompt=f"{prompt}\n\n{page_text}"
+            )
             
             # Parse the JSON response
             try:

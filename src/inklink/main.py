@@ -670,12 +670,18 @@ def lilly(interval, tag, rmapi, output_dir, claude_command, lilly_workspace, onc
 @click.option("--query-tag", default="Lilly", help="Tag for query pages")
 @click.option("--context-tag", default="Context", help="Tag for context pages")
 @click.option("--kg-tag", default="kg", help="Tag for knowledge graph processing")
+@click.option("--new-tag", default="new", help="Tag to start a new conversation")
+@click.option("--mcp-tools", default="", help="Comma-separated list of MCP tools to support as tags")
+@click.option("--claude-command", default="claude -c", help="Command to run Claude with context by default")
 @click.option("--poll-interval", default=60, help="Poll interval in seconds")
 @click.option("--highlighting/--no-highlighting", default=True, 
               help="Enable syntax highlighting for code")
 @click.option("--remove-tags/--keep-tags", default=True,
               help="Remove tags after processing")
-def penpal(query_tag, context_tag, kg_tag, poll_interval, highlighting, remove_tags):
+@click.option("--use-conversation-ids/--no-conversation-ids", default=True,
+              help="Use separate conversation IDs per notebook")
+def penpal(query_tag, context_tag, kg_tag, new_tag, mcp_tools, claude_command, 
+           poll_interval, highlighting, remove_tags, use_conversation_ids):
     """Start the Claude Penpal monitoring service."""
     from inklink.services.claude_penpal_service import ClaudePenpalService
     import logging
@@ -685,21 +691,37 @@ def penpal(query_tag, context_tag, kg_tag, poll_interval, highlighting, remove_t
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
+    # Process MCP tool tags if provided
+    mcp_tool_tags = []
+    if mcp_tools:
+        mcp_tool_tags = [tool.strip() for tool in mcp_tools.split(",")]
+    
     click.echo(f"Starting Claude Penpal monitoring service")
+    click.echo(f"Using Claude command: {claude_command}")
     click.echo(f"Looking for pages with tags:")
     click.echo(f"  - '{query_tag}' for queries to Claude")
     click.echo(f"  - '{context_tag}' for additional context")
     click.echo(f"  - '{kg_tag}' for Knowledge Graph processing")
+    click.echo(f"  - '{new_tag}' to start a new conversation")
+    
+    if mcp_tool_tags:
+        click.echo(f"Supported MCP tool tags: {', '.join(mcp_tool_tags)}")
+    
     click.echo(f"Syntax highlighting for code: {'Enabled' if highlighting else 'Disabled'}")
     click.echo(f"Tag removal after processing: {'Enabled' if remove_tags else 'Disabled'}")
+    click.echo(f"Conversation tracking: {'Per notebook' if use_conversation_ids else 'Simple context'}")
     
     service = ClaudePenpalService(
+        claude_command=claude_command,
         query_tag=query_tag,
         context_tag=context_tag,
         knowledge_graph_tag=kg_tag,
+        new_conversation_tag=new_tag,
+        mcp_tool_tags=mcp_tool_tags,
         poll_interval=poll_interval,
         syntax_highlighting=highlighting,
-        remove_tags_after_processing=remove_tags
+        remove_tags_after_processing=remove_tags,
+        use_conversation_ids=use_conversation_ids
     )
     
     service.start_monitoring()
