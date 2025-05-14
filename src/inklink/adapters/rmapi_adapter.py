@@ -64,20 +64,11 @@ class RmapiAdapter:
             
             # Map to GitHub release asset names
             if system == "linux":
-                if "arm" in machine or "aarch" in machine:
-                    if "64" in machine:
-                        asset_name = "rmapi-arm64"
-                    else:
-                        asset_name = "rmapi-arm"
-                else:
-                    asset_name = "rmapi-amd64"
+                asset_name = "rmapi-linuxx86-64.tar.gz"
             elif system == "darwin":
-                if "arm" in machine or "aarch" in machine:
-                    asset_name = "rmapi-darwin-arm64"
-                else:
-                    asset_name = "rmapi-darwin-amd64"
+                asset_name = "rmapi-macosx.zip"
             elif system == "windows":
-                asset_name = "rmapi.exe"
+                asset_name = "rmapi-win64.zip"
             else:
                 logger.error(f"Unsupported platform: {system} {machine}")
                 return False
@@ -103,19 +94,66 @@ class RmapiAdapter:
             bin_dir = os.path.expanduser("~/.local/bin")
             os.makedirs(bin_dir, exist_ok=True)
             
-            # Download the binary
+            # Create a temp directory for extraction
+            temp_dir = tempfile.mkdtemp(prefix="rmapi_download_")
+            download_path = os.path.join(temp_dir, asset_name)
             dest_path = os.path.join(bin_dir, "rmapi")
-            logger.info(f"Downloading rmapi from {asset_url} to {dest_path}")
             
-            response = requests.get(asset_url, timeout=30)
-            response.raise_for_status()
-            
-            # Save the binary
-            with open(dest_path, "wb") as f:
-                f.write(response.content)
+            try:
+                # Download the archive
+                logger.info(f"Downloading rmapi from {asset_url} to {download_path}")
+                response = requests.get(asset_url, timeout=30)
+                response.raise_for_status()
                 
-            # Make it executable
-            os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                # Save the downloaded file
+                with open(download_path, "wb") as f:
+                    f.write(response.content)
+                    
+                # Extract based on file type
+                if asset_name.endswith(".tar.gz"):
+                    import tarfile
+                    with tarfile.open(download_path, "r:gz") as tar:
+                        tar.extractall(path=temp_dir)
+                    # Find the binary
+                    binary_name = "rmapi"
+                    binary_path = os.path.join(temp_dir, binary_name)
+                    
+                elif asset_name.endswith(".zip"):
+                    import zipfile
+                    with zipfile.ZipFile(download_path, "r") as zip_ref:
+                        zip_ref.extractall(temp_dir)
+                    # For macOS, binary name might be different
+                    binary_name = "rmapi"
+                    binary_path = os.path.join(temp_dir, binary_name)
+                    
+                # Copy the binary to destination
+                if os.path.exists(binary_path):
+                    shutil.copy2(binary_path, dest_path)
+                else:
+                    # Try to find any executable in the temp directory
+                    found = False
+                    for root, _, files in os.walk(temp_dir):
+                        for file in files:
+                            if "rmapi" in file.lower() and not file.endswith((".tar.gz", ".zip")):
+                                file_path = os.path.join(root, file)
+                                shutil.copy2(file_path, dest_path)
+                                found = True
+                                break
+                        if found:
+                            break
+                    
+                    if not found:
+                        raise FileNotFoundError(f"Could not find rmapi binary in extracted files")
+                
+                # Make it executable
+                os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                
+            finally:
+                # Clean up temp directory
+                try:
+                    shutil.rmtree(temp_dir)
+                except Exception as e:
+                    logger.error(f"Failed to clean up temp directory: {e}")
             
             # Update the path
             self.rmapi_path = dest_path
