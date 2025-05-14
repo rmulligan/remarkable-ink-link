@@ -65,7 +65,7 @@ class ClaudePenpalService:
             use_conversation_ids: Whether to use separate Claude conversation IDs per notebook
         """
         self.rmapi_path = rmapi_path or CONFIG.get("RMAPI_PATH")
-        self.claude_command = claude_command or CONFIG.get("CLAUDE_COMMAND", "claude")
+        self.claude_command = claude_command or CONFIG.get("CLAUDE_COMMAND", "/home/ryan/.claude/local/claude")
         self.model = model or CONFIG.get("CLAUDE_MODEL", "")
         self.query_tag = query_tag
         self.context_tag = context_tag
