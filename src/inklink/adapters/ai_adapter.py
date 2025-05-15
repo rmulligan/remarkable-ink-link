@@ -390,9 +390,7 @@ Please evaluate:
 Provide a brief analysis and any corrections or enhancements needed."""
 
     @staticmethod
-    def _combine_responses(
-        primary_response: str, validation_response: str
-    ) -> str:
+    def _combine_responses(primary_response: str, validation_response: str) -> str:
         """Combine primary and validation responses into an ensemble result."""
         return f"""{primary_response}
 

@@ -103,7 +103,8 @@ def auth_submit(code: str = Form(...)):
             text=True,
             shell=False,  # Never use shell
             timeout=30,  # Add timeout to prevent hanging
-        check=True)
+            check=True,
+        )
 
         if result.returncode == 0:
             return HTMLResponse(
