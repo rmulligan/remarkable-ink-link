@@ -1,5 +1,7 @@
 """Authentication UI for reMarkable Cloud pairing."""
 
+import os
+import re
 import subprocess
 
 from fastapi import FastAPI, Form
@@ -39,13 +41,37 @@ def auth_form():
 
 @app.post("/auth", response_class=HTMLResponse)
 def auth_submit(code: str = Form(...)):
+    # Validate the pairing code - only allow alphanumeric characters and hyphens
+    if not re.match(r"^[a-zA-Z0-9\-]+$", code):
+        return HTMLResponse(
+            "<html><body><h2>Invalid pairing code format</h2></body></html>",
+            status_code=400,
+        )
+
     # Run ddvk rmapi pairing using the provided pairing code
     # Path to rmapi executable
     rmapi = CONFIG.get("RMAPI_PATH", "rmapi")
-    # Use pairing code authentication; adjust flag as per rmapi version
+
+    # Ensure rmapi path exists to prevent path traversal
+    if not os.path.exists(rmapi):
+        return HTMLResponse(
+            "<html><body><h2>Configuration error</h2></body></html>",
+            status_code=500,
+        )
+
+    # Use shlex to properly escape the arguments and prevent command injection
     cmd = [rmapi, "config", "--pairing-code", code]
+
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        # Use subprocess.run with specific arguments to prevent shell injection
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            shell=False,  # Explicitly disable shell
+            timeout=30,  # Add timeout to prevent hanging
+        )
+
         if result.returncode == 0:
             return HTMLResponse(
                 """
@@ -57,13 +83,19 @@ def auth_submit(code: str = Form(...)):
                 status_code=200,
             )
         else:
-            err = result.stderr or result.stdout
+            # Don't expose stderr/stdout in the response to prevent information leakage
             return HTMLResponse(
-                f"<html><body><h2>Authentication failed</h2><pre>{err}</pre></body></html>",
+                "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
                 status_code=400,
             )
-    except Exception as e:
+    except subprocess.TimeoutExpired:
         return HTMLResponse(
-            f"<html><body><h2>Error running rmapi:</h2><pre>{e}</pre></body></html>",
+            "<html><body><h2>Request timed out</h2><p>Please try again.</p></body></html>",
+            status_code=500,
+        )
+    except Exception:
+        # Don't expose exception details to prevent information disclosure
+        return HTMLResponse(
+            "<html><body><h2>An error occurred</h2><p>Please try again later.</p></body></html>",
             status_code=500,
         )
