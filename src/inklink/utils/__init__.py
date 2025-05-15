@@ -6,7 +6,8 @@ This package provides utility functions for the InkLink project.
 from inklink.utils.common import (
     retry_operation,
     format_error,
-    ensure_rcu_available,
+    ensure_drawj2d_available,
+    create_hcl_from_markdown,
     convert_markdown_to_rm,
     convert_html_to_rm,
     is_safe_url,
@@ -33,7 +34,8 @@ from inklink.utils.html_processor import (
 __all__ = [
     "retry_operation",
     "format_error",
-    "ensure_rcu_available",
+    "ensure_drawj2d_available",
+    "create_hcl_from_markdown",
     "convert_markdown_to_rm",
     "convert_html_to_rm",
     "create_hcl_from_content",

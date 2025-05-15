@@ -1,9 +1,10 @@
-"""AI Service for interacting with AI models."""
+"""AI Service for interacting with Claude via CLI."""
 
 import logging
 from typing import Any, Dict, List, Optional, Union
 
 from inklink.adapters.ai_adapter import AIAdapter
+from inklink.adapters.claude_cli_adapter import ClaudeCliAdapter
 from inklink.config import CONFIG
 from inklink.services.interfaces import IAIService
 
@@ -11,50 +12,47 @@ logger = logging.getLogger(__name__)
 
 
 class AIService(IAIService):
-    """Service for AI text processing using various providers."""
+    """Service for AI text processing using Claude CLI."""
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        claude_command: Optional[str] = None,
         model: Optional[str] = None,
-        provider: str = "openai",
-        ai_adapter: Optional[AIAdapter] = None,
+        adapter: Optional[ClaudeCliAdapter] = None,
     ):
         """
-        Initialize AIService with AI provider configuration.
+        Initialize AIService with Claude CLI configuration.
 
         Args:
-            api_key: API key for the AI provider (optional if using adapter)
-            model: AI model name (e.g., 'gpt-3.5-turbo')
-            provider: AI provider name ('openai', 'anthropic', etc.)
-            ai_adapter: Optional pre-configured AIAdapter
+            claude_command: Command to invoke Claude CLI
+            model: Claude model name
+            adapter: Optional pre-configured ClaudeCliAdapter
         """
-        self.provider = provider or CONFIG.get("AI_PROVIDER", "openai")
-
         # Use provided adapter or create a new one
-        self.adapter = ai_adapter or AIAdapter(
-            api_key=api_key,
-            model=model or CONFIG.get(f"{self.provider.upper()}_MODEL"),
-            system_prompt=CONFIG.get(
-                f"{self.provider.upper()}_SYSTEM_PROMPT", "You are a helpful assistant."
-            ),
-            provider=self.provider,
+        self.adapter = adapter or ClaudeCliAdapter(
+            claude_command=claude_command or CONFIG.get("CLAUDE_COMMAND"),
+            model=model or CONFIG.get("CLAUDE_MODEL"),
+            system_prompt=CONFIG.get("CLAUDE_SYSTEM_PROMPT", "You are a helpful assistant.")
         )
 
     def ask(self, prompt: str) -> str:
         """
-        Ask a prompt to the AI model and return the response text.
+        Ask a prompt to Claude and return the response text.
         Simplified interface for quick queries.
 
         Args:
-            prompt: The user prompt to send to the model.
+            prompt: The user prompt to send to Claude.
 
         Returns:
-            The AI-generated response string.
+            The Claude-generated response string.
         """
-        success, response = self.adapter.generate_completion(prompt=prompt)
+        success, response, _ = self.adapter.process_with_context(
+            prompt=prompt,
+            new_conversation=True  # Use a new conversation for each query
+        )
+        
         if not success:
-            logger.error(f"AI query failed: {response}")
+            logger.error(f"Claude query failed: {response}")
             return ""
         return response
 
@@ -69,7 +67,7 @@ class AIService(IAIService):
         selected_pages: Optional[List[Union[int, str]]] = None,
     ) -> str:
         """
-        Process a text query and return an AI response with document context.
+        Process a text query and return a Claude response with document context.
 
         Parameters:
             query_text (str): The user's query.
@@ -79,7 +77,7 @@ class AIService(IAIService):
             selected_pages (list[int] or list[str], optional): Specific pages to include.
 
         Returns:
-            str: AI-generated response.
+            str: Claude-generated response.
         """
         success, response = self.adapter.generate_structured_completion(
             query_text=query_text,
@@ -90,6 +88,6 @@ class AIService(IAIService):
         )
 
         if not success:
-            logger.error(f"AI structured query failed: {response}")
+            logger.error(f"Claude structured query failed: {response}")
             return ""
         return response

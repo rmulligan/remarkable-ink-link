@@ -398,57 +398,75 @@ class RmapiAdapter:
         if not self._validate_executable():
             return False, "rmapi path not valid"
 
+        # Log the download attempt
+        logger.info(f"Attempting to download document '{doc_id_or_name}' to '{output_path}'")
+
         # Get the directory where the file will be downloaded
         output_dir = os.path.dirname(output_path)
         if not output_dir:
             output_dir = "."
+        
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
 
-        # Escape spaces and special characters in file name
-        safe_name = doc_id_or_name.replace(" ", "\\ ").replace("&", "\\&").replace("|", "\\|")
-        
-        # Use 'get' to download the file to the directory
-        success, stdout, stderr = self.run_command("get", safe_name, output_dir)
-        
-        # If direct download fails, try a different approach with quotes
-        if not success and "file doesn't exist" in stderr:
-            # Try with quotes
-            quoted_name = f'"{doc_id_or_name}"'
-            cmd = f'{self.rmapi_path} get {quoted_name} {output_dir}'
+        # Create a working directory
+        with tempfile.TemporaryDirectory() as working_dir:
+            success = False
+            
             try:
-                # Use shell=True to handle quoted names properly
-                process = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
-                success = process.returncode == 0
-                if not success:
-                    return False, f"Failed to download: {stderr}"
+                # Use single quotes around the notebook name and absolute path for rmapi
+                rmapi_abs_path = os.path.abspath(self.rmapi_path)
+                cmd = f"{rmapi_abs_path} get '{doc_id_or_name}'"
+                
+                # Change to the working directory to execute the command
+                original_dir = os.getcwd()
+                os.chdir(working_dir)
+                
+                logger.info(f"Running download command: {cmd} in directory {working_dir}")
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+                logger.info(f"Command output: {result.stdout}")
+                logger.info(f"Command error (if any): {result.stderr}")
+                
+                # Check what files were actually downloaded
+                downloaded_files = os.listdir(working_dir)
+                logger.info(f"Files in working directory after download: {downloaded_files}")
+                
+                if downloaded_files:
+                    # Find a possible match - prefer .rmdoc files
+                    rmdoc_files = [f for f in downloaded_files if f.endswith('.rmdoc')]
+                    if rmdoc_files:
+                        downloaded_file = rmdoc_files[0]
+                    else:
+                        # Just use the first file
+                        downloaded_file = downloaded_files[0]
+                    
+                    # Copy to the output path
+                    src_path = os.path.join(working_dir, downloaded_file)
+                    logger.info(f"Copying {src_path} to {output_path}")
+                    shutil.copy2(src_path, output_path)
+                    success = True
+                else:
+                    logger.error(f"No files were downloaded for '{doc_id_or_name}'")
+                
+                # Restore original directory
+                os.chdir(original_dir)
+                
             except Exception as e:
-                return False, f"Error downloading: {str(e)}"
-        elif not success:
-            return False, f"Failed to download: {stderr}"
+                logger.error(f"Error executing download command: {e}")
+                try:
+                    os.chdir(original_dir)  # Make sure we restore the directory
+                except:
+                    pass
+                return False, f"Failed to download: {str(e)}"
 
-        # rmapi renames files to their original name + .rmdoc
-        # We need to find the downloaded file and rename it if necessary
-        if doc_id_or_name.endswith('.pdf') or doc_id_or_name.endswith('.epub'):
-            expected_filename = os.path.join(output_dir, doc_id_or_name)
-        else:
-            expected_filename = os.path.join(output_dir, f"{doc_id_or_name}.rmdoc")
-
-        if os.path.exists(expected_filename):
-            # If the file exists with the expected name, move it to the requested output path
-            if expected_filename != output_path:
-                os.rename(expected_filename, output_path)
+        # Verify successful download
+        if success and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info(f"Successfully downloaded document to {output_path} ({os.path.getsize(output_path)} bytes)")
             return True, f"Downloaded document {doc_id_or_name}"
-        else:
-            # Try to find the file in the output directory
-            files = os.listdir(output_dir)
-            rmdoc_files = [f for f in files if f.endswith('.rmdoc')]
-
-            if rmdoc_files:
-                # Use the first .rmdoc file found
-                downloaded_file = os.path.join(output_dir, rmdoc_files[0])
-                os.rename(downloaded_file, output_path)
-                return True, f"Downloaded document {doc_id_or_name}"
-            else:
-                return False, "Download appeared successful but file not found"
+        
+        # If download failed, return failure instead of masking it
+        logger.error(f"Failed to download document '{doc_id_or_name}' to '{output_path}'")
+        return False, f"Failed to download document {doc_id_or_name}"
 
     def ping(self) -> bool:
         """
@@ -476,42 +494,65 @@ class RmapiAdapter:
             return False, []
             
         try:
-            # Run the list command
+            # Run the ls command to list files
             success, stdout, stderr = self.run_command("ls")
             if not success:
                 logger.error(f"Failed to list documents: {stderr}")
                 return False, []
                 
+            # Debug output for troubleshooting
+            logger.info(f"Raw output from rmapi ls command:")
+            for line in stdout.split('\n'):
+                if line.strip():
+                    logger.info(f"  {line}")
+                
             # Process the output
             documents = []
+            
+            logger.info("Processing file listing")
             for line in stdout.split('\n'):
                 line = line.strip()
-                if line and '[' in line and ']' in line:
-                    # Extract ID from "[id]" in the line
-                    id_match = re.search(r'\[(.*?)\]', line)
-                    if id_match:
-                        doc_id = id_match.group(1)
-                        # Extract the file type flag (f=file, d=directory)
-                        file_type = doc_id
+                if not line:
+                    continue
+                
+                logger.info(f"Processing line: {line}")
+                    
+                # Extract name and type
+                if line.startswith('[f]'):
+                    # Format: [f] filename
+                    name = line[3:].strip()
+                    doc_type = "DocumentType"
+                    logger.info(f"Found file: {name}")
+                elif line.startswith('[d]'):
+                    # Format: [d] directory
+                    name = line[3:].strip()
+                    doc_type = "CollectionType"
+                    logger.info(f"Found directory: {name}")
+                else:
+                    # Some other format, try to handle generically
+                    name = line
+                    doc_type = "DocumentType"
+                    if '/' in name:
+                        doc_type = "CollectionType"
+                    logger.info(f"Found item with unknown format: {name}, treating as {doc_type}")
                         
-                        # Remove type prefix from name if present
-                        if line.startswith('[f]') or line.startswith('[d]'):
-                            name = line[3:].strip()
-                        else:
-                            name = line.split('[')[0].strip()
-                            
-                        document_type = "DocumentType"
-                        
-                        # Check if it's a collection (folder) or directory flag
-                        if "/" in line or doc_id == 'd':
-                            document_type = "CollectionType"
-                            
-                        documents.append({
-                            "ID": name,  # Use the name as ID for better rmapi compatibility
-                            "VissibleName": name,  # Using same spelling as reMarkable API
-                            "Type": document_type
-                        })
+                # Create document entry, using name as ID when no ID is available
+                doc_entry = {
+                    "ID": name,  # Use name as ID when no ID is available
+                    "VissibleName": name,
+                    "Type": doc_type
+                }
+                
+                documents.append(doc_entry)
+                logger.info(f"Added document: {doc_entry}")
             
+            logger.info(f"Found {len(documents)} documents")
+            
+            # If no documents found but stdout contains data, there might be a parsing issue
+            if not documents and stdout.strip():
+                logger.warning("No documents parsed but output exists. Raw output:")
+                logger.warning(stdout)
+                
             return True, documents
             
         except Exception as e:
@@ -520,12 +561,14 @@ class RmapiAdapter:
             logger.error(traceback.format_exc())
             return False, []
 
-    def find_tagged_notebooks(self, tag: str = "Cass") -> List[Dict[str, Any]]:
+    def find_tagged_notebooks(self, tag: str = "Cass", pre_filter_tag: str = None) -> List[Dict[str, Any]]:
         """
         Find all notebooks that have the specified tag.
 
         Args:
             tag: Tag to search for, defaults to "Cass"
+            pre_filter_tag: Optional tag to pre-filter notebooks (e.g., "HasLilly")
+                            This avoids downloading every notebook for checking.
 
         Returns:
             List of dictionaries with notebook info including IDs and metadata
@@ -536,53 +579,100 @@ class RmapiAdapter:
 
         tagged_notebooks = []
         
-        # List all documents
-        success, stdout, stderr = self.run_command("ls")
+        # Use improved list_files method to get all documents
+        success, documents = self.list_files()
         if not success:
-            logger.error(f"Failed to list documents: {stderr}")
+            logger.error("Failed to list documents")
             return []
         
+        # Log the number of documents found
+        logger.info(f"Found {len(documents)} documents to check for tag '{tag}'")
+        if pre_filter_tag:
+            logger.info(f"Using pre-filter tag '{pre_filter_tag}' to reduce downloads")
+        
         try:
-            # Process the text output
-            documents = []
-            for line in stdout.split('\n'):
-                line = line.strip()
-                if line and '[' in line and ']' in line:
-                    # Extract ID from "[id]" in the line
-                    id_match = re.search(r'\[(.*?)\]', line)
-                    if id_match:
-                        doc_id = id_match.group(1)
-                        name = line.split('[')[0].strip()
-                        documents.append({
-                            "ID": doc_id,
-                            "VissibleName": name,
-                            "Type": "CollectionType"  # Assume all are collections
-                        })
-            
-            # Process each document
+            # Process each document to check for tags
             for doc in documents:
-                # Process each document
+                # Get document details
                 doc_id = doc.get("ID")
-                name = doc.get("VissibleName")
+                name = doc.get("VissibleName", doc_id)
+                doc_type = doc.get("Type", "Unknown")
+                
+                logger.info(f"Checking document: {name} (ID: {doc_id}, Type: {doc_type})")
+                
+                # Skip certain document types that are unlikely to be notebooks
+                if name.lower().endswith(('.png', '.jpg', '.jpeg', '.pdf', '.epub')):
+                    logger.info(f"Skipping document with name suggesting non-notebook: {name}")
+                    continue
+                
+                # If pre-filtering is enabled, first check if notebook has the pre-filter tag
+                # This avoids downloading every notebook for detailed tag checking
+                if pre_filter_tag:
+                    # For pre-filtering, we can use "ls -l" to check document-level tags 
+                    # without downloading the entire notebook
+                    success, stdout, _ = self.run_command("ls", "-l")
+                    has_prefilter_tag = False
+                    
+                    if success:
+                        # Look for the notebook name in the output and check if the tag is there
+                        lines = stdout.split('\n')
+                        for line in lines:
+                            if f"[f]\t{name}" in line or f"[f] {name}" in line:
+                                # If this is the line for our notebook, check for the tag
+                                # Tags are typically shown after the name in the detailed listing
+                                if pre_filter_tag in line:
+                                    has_prefilter_tag = True
+                                    logger.info(f"Document {name} has pre-filter tag '{pre_filter_tag}'")
+                                    break
+                    
+                    if not has_prefilter_tag:
+                        logger.info(f"Document {name} does not have pre-filter tag '{pre_filter_tag}', skipping detailed check")
+                        continue
                 
                 # Get detailed metadata for this document
                 has_tag, metadata = self._check_document_for_tag(doc_id, tag)
                 
                 if has_tag:
-                    tagged_notebooks.append({
+                    # Construct notebook info with rich metadata
+                    notebook_info = {
                         "id": doc_id,
                         "name": name,
-                        "metadata": metadata
-                    })
+                        "metadata": metadata,
+                        "tags": metadata.get("tags", [])
+                    }
+                    
+                    # Add page information if available
+                    if "pages" in metadata:
+                        notebook_info["pages"] = []
+                        for page in metadata["pages"]:
+                            page_info = {
+                                "id": page.get("id"),
+                                "name": page.get("visibleName", "Unnamed page"),
+                                "tags": page.get("tags", [])
+                            }
+                            notebook_info["pages"].append(page_info)
+                    
+                    tagged_notebooks.append(notebook_info)
                     logger.info(f"Found tagged notebook: {name} ({doc_id})")
+                else:
+                    logger.info(f"Document {name} does not have tag '{tag}'")
+            
+            # Log a summary of found notebooks
+            if tagged_notebooks:
+                logger.info(f"Found {len(tagged_notebooks)} notebooks with tag '{tag}':")
+                for nb in tagged_notebooks:
+                    nb_name = nb.get("name", "Unknown")
+                    nb_id = nb.get("id", "Unknown")
+                    logger.info(f"  - {nb_name} ({nb_id})")
+            else:
+                logger.warning(f"No notebooks found with tag '{tag}'")
             
             return tagged_notebooks
             
-        except json.JSONDecodeError:
-            logger.error("Failed to parse JSON response from rmapi")
-            return []
         except Exception as e:
             logger.error(f"Error finding tagged notebooks: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return []
 
     def _check_document_for_tag(self, doc_id_or_name: str, tag: str) -> Tuple[bool, Dict[str, Any]]:
@@ -596,19 +686,25 @@ class RmapiAdapter:
         Returns:
             Tuple of (has_tag, metadata)
         """
+        if not doc_id_or_name:
+            logger.warning("Empty document ID or name provided")
+            return False, {}
+            
         # Skip files with certain extensions that are unlikely to be notebooks
         skip_extensions = ('.pdf', '.epub', '.html', '.txt', '.png', '.jpg', '.jpeg', '.gif')
-        if any(doc_id_or_name.lower().endswith(ext) for ext in skip_extensions):
+        if isinstance(doc_id_or_name, str) and any(doc_id_or_name.lower().endswith(ext) for ext in skip_extensions):
             logger.debug(f"Skipping non-notebook file: {doc_id_or_name}")
             return False, {}
             
-        temp_dir = tempfile.mkdtemp(prefix="remarkable_")
+        # Create a unique temporary directory for this operation
+        temp_dir = tempfile.mkdtemp(prefix=f"remarkable_{int(time.time())}_")
         zip_path = os.path.join(temp_dir, f"{doc_id_or_name}.rmdoc")
 
         try:
             # Download the document by name or ID
-            # First try by name (which is more reliable with rmapi)
+            logger.info(f"Downloading document: {doc_id_or_name}")
             success, message = self.download_file(doc_id_or_name, zip_path, "zip")
+            
             if not success:
                 logger.warning(f"Failed to download document: {message}")
                 return False, {}
@@ -616,46 +712,140 @@ class RmapiAdapter:
             # Verify the file exists
             if not os.path.exists(zip_path):
                 logger.error(f"Download claimed success but file not found at {zip_path}")
+                
+                # List files in temp directory to check what we actually got
+                files_in_temp = os.listdir(temp_dir)
+                logger.info(f"Files in temp directory: {files_in_temp}")
+                
+                # If we have any files that look like rmdoc or zip files, use the first one
+                rmdoc_files = [f for f in files_in_temp if f.endswith('.rmdoc') or f.endswith('.zip')]
+                if rmdoc_files:
+                    actual_file = os.path.join(temp_dir, rmdoc_files[0])
+                    logger.info(f"Using alternate file: {actual_file}")
+                    zip_path = actual_file
+                else:
+                    return False, {}
+                
+            if not os.path.getsize(zip_path) > 0:
+                logger.error(f"Downloaded file is empty: {zip_path}")
                 return False, {}
 
-            logger.info(f"Successfully downloaded document to {zip_path}")
+            logger.info(f"Successfully downloaded document to {zip_path} ({os.path.getsize(zip_path)} bytes)")
+
+            # Check if it's a valid zip file before attempting to extract
+            if not zipfile.is_zipfile(zip_path):
+                logger.error(f"Downloaded file is not a valid zip file: {zip_path}")
+                
+                # Try to read the first few bytes to see what it might be
+                with open(zip_path, 'rb') as f:
+                    header = f.read(20)
+                logger.error(f"File header: {header}")
+                
+                # Try to auto-detect format and convert if needed (simple check)
+                # If it's a PDF or EPUB, we can't process tags anyway
+                file_type = None
+                if header.startswith(b'%PDF'):
+                    file_type = "PDF"
+                elif header.startswith(b'PK\x03\x04'):
+                    # It might be an EPUB which is also a ZIP file
+                    file_type = "EPUB or ZIP"
+                    
+                logger.warning(f"File appears to be {file_type or 'unknown type'}, not a reMarkable notebook")
+                return False, {}
 
             # Extract the content file
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                content_files = [f for f in zip_ref.namelist() if f.endswith('.content')]
-                if not content_files:
-                    logger.warning(f"No content file found in document {doc_id_or_name}")
-                    return False, {}
+            try:
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    # Check if there are any entries in the zip file
+                    if not zip_ref.namelist():
+                        logger.error(f"Zip file is empty: {zip_path}")
+                        return False, {}
+                        
+                    # List all entries for debugging
+                    logger.info(f"Zip contents: {zip_ref.namelist()}")
+                    
+                    # Find all content files
+                    content_files = [f for f in zip_ref.namelist() if f.endswith('.content')]
+                    
+                    if not content_files:
+                        logger.warning(f"No content file found in document {doc_id_or_name}")
+                        return False, {}
 
-                # Extract the content file
-                content_file = content_files[0]
-                zip_ref.extract(content_file, temp_dir)
+                    # Extract the content file
+                    content_file = content_files[0]
+                    zip_ref.extract(content_file, temp_dir)
+            except zipfile.BadZipFile:
+                logger.error(f"Bad zip file: {zip_path}")
+                return False, {}
 
-                # Read the content file
-                content_path = os.path.join(temp_dir, content_file)
+            # Read the content file
+            content_path = os.path.join(temp_dir, content_file)
+            try:
                 with open(content_path, 'r') as f:
                     content_data = json.load(f)
+            except json.JSONDecodeError as je:
+                logger.error(f"Error parsing content file: {je}")
+                # Try to read the raw content for debugging
+                with open(content_path, 'r') as f:
+                    raw_content = f.read(200)  # First 200 chars
+                logger.error(f"Content file start: {raw_content}")
+                return False, {}
+            except Exception as e:
+                logger.error(f"Error reading content file: {e}")
+                return False, {}
 
-                # Check if the tag exists
-                tags = content_data.get('tags', [])
-                logger.info(f"Document {doc_id_or_name} has tags: {tags}")
+            # Check for tags in content and also in page metadata
+            has_tag = False
+            tags = content_data.get('tags', [])
+            logger.info(f"Document {doc_id_or_name} has document-level tags: {tags}")
+            
+            # Check document-level tags
+            if tag in tags:
+                logger.info(f"Found exact tag match '{tag}' at document level")
+                has_tag = True
+            # Also check for case-insensitive match at document level
+            elif any(t.lower() == tag.lower() for t in tags):
+                logger.info(f"Found case-insensitive tag match for '{tag}' at document level")
+                matching_tag = next(t for t in tags if t.lower() == tag.lower())
+                logger.info(f"Tag in document is '{matching_tag}', but we're looking for '{tag}'")
+                has_tag = True
+            
+            # Also check page-level tags
+            if not has_tag and 'pages' in content_data:
+                for page in content_data['pages']:
+                    page_tags = page.get('tags', [])
+                    page_name = page.get('visibleName', page.get('id', 'Unknown'))
+                    
+                    logger.info(f"Page '{page_name}' has tags: {page_tags}")
+                    
+                    if tag in page_tags:
+                        logger.info(f"Found exact tag match '{tag}' in page '{page_name}'")
+                        has_tag = True
+                        break
+                    # Also check for case-insensitive match
+                    elif any(t.lower() == tag.lower() for t in page_tags):
+                        logger.info(f"Found case-insensitive tag match for '{tag}' in page '{page_name}'")
+                        matching_tag = next(t for t in page_tags if t.lower() == tag.lower())
+                        logger.info(f"Tag in page is '{matching_tag}', but we're looking for '{tag}'")
+                        has_tag = True
+                        break
 
-                has_tag = tag in tags
+            # Log all the tags for debugging purposes
+            log_dir = os.path.join(os.path.expanduser("~"), ".claude", "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            try:
+                log_path = os.path.join(log_dir, "all_tags.txt")
+                with open(log_path, 'a') as log_file:
+                    log_file.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Document '{doc_id_or_name}' has document-level tags: {tags}\n")
+                    if 'pages' in content_data:
+                        for page in content_data['pages']:
+                            page_name = page.get('visibleName', page.get('id', 'Unknown'))
+                            page_tags = page.get('tags', [])
+                            log_file.write(f"  - Page '{page_name}' has tags: {page_tags}\n")
+            except Exception as e:
+                logger.error(f"Error writing to log file: {e}")
 
-                # Also check for case-insensitive match
-                if not has_tag and any(t.lower() == tag.lower() for t in tags):
-                    logger.info(f"Found case-insensitive tag match for '{tag}' in document {doc_id_or_name}")
-                    matching_tag = next(t for t in tags if t.lower() == tag.lower())
-                    logger.info(f"Tag in document is '{matching_tag}', but we're looking for '{tag}'")
-
-                # Write all tags to a log file for debugging
-                try:
-                    with open('/home/ryan/Cassidy/all_tags.txt', 'a') as log_file:
-                        log_file.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Document '{doc_id_or_name}' has tags: {tags}\n")
-                except Exception as e:
-                    logger.error(f"Error writing to log file: {e}")
-
-                return has_tag, content_data
+            return has_tag, content_data
 
         except Exception as e:
             logger.error(f"Error checking document for tag: {str(e)}")
@@ -667,5 +857,5 @@ class RmapiAdapter:
             # Clean up
             try:
                 shutil.rmtree(temp_dir)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error cleaning up temp directory: {e}")

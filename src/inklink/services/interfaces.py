@@ -124,7 +124,11 @@ class IRemarkableService(ABC):
 class IHandwritingRecognitionService(ABC):
     @abstractmethod
     def initialize_iink_sdk(self, application_key: str, hmac_key: str) -> bool:
-        """Initialize the MyScript iink SDK with authentication keys"""
+        """Initialize the MyScript Web API with authentication keys
+
+        Note: Despite the method name, this initializes the REST API, not an SDK.
+        The method name is kept for backward compatibility.
+        """
         pass
 
     @abstractmethod
@@ -134,7 +138,11 @@ class IHandwritingRecognitionService(ABC):
 
     @abstractmethod
     def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Convert reMarkable strokes to iink SDK compatible format"""
+        """Convert reMarkable strokes to MyScript Web API compatible format
+
+        Note: Despite the method name, this formats data for the REST API, not an SDK.
+        The method name is kept for backward compatibility.
+        """
         pass
 
     @abstractmethod
@@ -144,7 +152,10 @@ class IHandwritingRecognitionService(ABC):
         content_type: str = "Text",
         language: str = "en_US",
     ) -> Dict[str, Any]:
-        """Process ink data through the iink SDK and return recognition results"""
+        """Process ink data through the MyScript Web API and return recognition results
+
+        Uses the REST API endpoint for handwriting recognition.
+        """
         pass
 
     @abstractmethod

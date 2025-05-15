@@ -14,7 +14,8 @@ from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.interfaces import IContentConverter, IDocumentService
 from inklink.services.renderers.hcl_renderer import HCLRenderer
-from inklink.utils import ensure_rcu_available
+from inklink.utils import ensure_rcu_available, ensure_drawj2d_available
+from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class DocumentService(IDocumentService):
 
         Args:
             temp_dir: Directory for temporary files
-            drawj2d_path: Optional path to drawj2d executable (for legacy support)
+            drawj2d_path: Optional path to drawj2d executable
             pdf_service: Optional PDFService instance for index notebook updates
         """
         self.temp_dir = temp_dir
@@ -38,16 +39,13 @@ class DocumentService(IDocumentService):
         self.pdf_service = pdf_service  # Used for automated index notebook updates
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Check if RCU is available
-        self.use_rcu = ensure_rcu_available()
-        if not self.use_rcu:
-            logger.warning(
-                "RCU not available, falling back to drawj2d. "
-                "Install RCU for better conversion quality."
-            )
+        # Check if drawj2d is available
+        self.use_drawj2d = ensure_drawj2d_available()
+        if not self.use_drawj2d:
+            logger.error("drawj2d not available. Document conversion will fail.")
             if not drawj2d_path or not os.path.exists(drawj2d_path):
                 logger.error(
-                    "drawj2d fallback path not available. Document conversion will fail."
+                    "No drawj2d executable found. Document conversion will fail."
                 )
 
         # Initialize converters
@@ -107,7 +105,7 @@ class DocumentService(IDocumentService):
                 "structured_content": content.get("structured_content", []),
                 "cross_page_links": content.get("cross_page_links", []),
                 "raw_markdown": content.get("raw_markdown"),
-                "use_rcu": self.use_rcu,
+                "use_drawj2d": self.use_drawj2d,
             }
 
             # Get the appropriate converter and convert content
@@ -126,9 +124,12 @@ class DocumentService(IDocumentService):
                 else:
                     logger.error("Conversion failed using primary converter")
                     # If primary converter fails, try legacy method
-                    if not self.use_rcu:
+                    if self.use_drawj2d:
                         logger.info("Falling back to legacy conversion method...")
                         return self.create_rmdoc_legacy(url, qr_path, content)
+                    else:
+                        logger.error("No available conversion method.")
+                        return None
             else:
                 logger.error("No suitable converter found for structured content")
                 return None
@@ -152,8 +153,8 @@ class DocumentService(IDocumentService):
         Returns:
             Path to generated .rm file or None if failed
         """
-        if not self.use_rcu:
-            logger.warning("RCU not available, cannot convert HTML directly")
+        if not self.use_drawj2d:
+            logger.error("drawj2d not available, cannot convert HTML")
             return None
 
         try:
@@ -163,7 +164,7 @@ class DocumentService(IDocumentService):
                 "qr_path": qr_path,
                 "html_content": html_content,
                 "title": title or f"Page from {url}",
-                "use_rcu": self.use_rcu,
+                "use_drawj2d": self.use_drawj2d,
             }
 
             # Get HTML converter and convert content
@@ -207,7 +208,7 @@ class DocumentService(IDocumentService):
                 "pdf_path": pdf_path,
                 "title": title,
                 "qr_path": qr_path,
-                "use_rcu": self.use_rcu,
+                "use_drawj2d": self.use_drawj2d,
             }
 
             # Get PDF converter and convert content
@@ -239,7 +240,7 @@ class DocumentService(IDocumentService):
         """
         Legacy method to create reMarkable document using HCL and drawj2d.
 
-        This is kept for compatibility when RCU is not available.
+        This is the standard method for drawj2d-based conversion.
 
         Args:
             url: Source URL

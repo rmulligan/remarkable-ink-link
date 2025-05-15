@@ -40,7 +40,7 @@ def auth(host, port):
 
 @cli.command()
 @click.option("--prompt", prompt="Prompt", help="Question to send to AI model.")
-@click.option("--model", default=None, help="OpenAI model to use (overrides config).")
+@click.option("--model", default=None, help="Claude model to use (overrides config).")
 def ask(prompt, model):
     """Ask a question to the AI and upload the response as a .rm file."""
     # Lazy imports of services
@@ -667,21 +667,28 @@ def lilly(interval, tag, rmapi, output_dir, claude_command, lilly_workspace, onc
 
 
 @cli.command()
-@click.option("--query-tag", default="Lilly", help="Tag for query pages")
+@click.option("--query-tag", default=CONFIG.get("LILLY_TAG", "Lilly"), help="Tag for query pages")
 @click.option("--context-tag", default="Context", help="Tag for context pages")
 @click.option("--kg-tag", default="kg", help="Tag for knowledge graph processing")
 @click.option("--new-tag", default="new", help="Tag to start a new conversation")
+@click.option("--subject-tag", default=CONFIG.get("LILLY_SUBJECT_TAG", "Subject"), help="Tag prefix for subject classification")
+@click.option("--default-subject", default=CONFIG.get("LILLY_DEFAULT_SUBJECT", "General"), help="Default subject if none specified")
+@click.option("--use-subject-dirs/--no-subject-dirs", default=CONFIG.get("LILLY_USE_SUBJECT_DIRS", True), 
+              help="Organize notebooks into subject directories")
+@click.option("--pre-filter-tag", default=CONFIG.get("LILLY_PRE_FILTER_TAG", "HasLilly"), help="Document-level tag for pre-filtering notebooks")
+@click.option("--no-pre-filter", is_flag=True, help="Disable pre-filtering with document-level tag")
 @click.option("--mcp-tools", default="", help="Comma-separated list of MCP tools to support as tags")
-@click.option("--claude-command", default="/home/ryan/.claude/local/claude", help="Command to run Claude with context by default")
-@click.option("--poll-interval", default=60, help="Poll interval in seconds")
+@click.option("--claude-command", default=CONFIG.get("CLAUDE_COMMAND", "/home/ryan/.claude/local/claude"), help="Command to run Claude with context by default")
+@click.option("--poll-interval", default=CONFIG.get("LILLY_POLLING_INTERVAL", 60), help="Poll interval in seconds")
 @click.option("--highlighting/--no-highlighting", default=True, 
               help="Enable syntax highlighting for code")
 @click.option("--remove-tags/--keep-tags", default=True,
               help="Remove tags after processing")
 @click.option("--use-conversation-ids/--no-conversation-ids", default=True,
               help="Use separate conversation IDs per notebook")
-def penpal(query_tag, context_tag, kg_tag, new_tag, mcp_tools, claude_command, 
-           poll_interval, highlighting, remove_tags, use_conversation_ids):
+def penpal(query_tag, context_tag, kg_tag, new_tag, subject_tag, default_subject, use_subject_dirs,
+           pre_filter_tag, no_pre_filter, mcp_tools, claude_command, poll_interval, highlighting, 
+           remove_tags, use_conversation_ids):
     """Start the Claude Penpal monitoring service."""
     from inklink.services.claude_penpal_service import ClaudePenpalService
     import logging
@@ -711,12 +718,31 @@ def penpal(query_tag, context_tag, kg_tag, new_tag, mcp_tools, claude_command,
     click.echo(f"Tag removal after processing: {'Enabled' if remove_tags else 'Disabled'}")
     click.echo(f"Conversation tracking: {'Per notebook' if use_conversation_ids else 'Simple context'}")
     
+    # Directory structure information
+    if use_subject_dirs:
+        click.echo(f"Directory structure: Organizing by subject (/{subject_tag}:name/)")
+        click.echo(f"Default subject: '{default_subject}'")
+    else:
+        click.echo("Directory structure: Flat organization (no subjects)")
+    
+    # If no_pre_filter flag is set, disable pre-filtering
+    actual_pre_filter_tag = None if no_pre_filter else pre_filter_tag
+    
+    if no_pre_filter:
+        click.echo("Pre-filtering disabled - will check all notebooks")
+    else:
+        click.echo(f"Using pre-filter tag '{pre_filter_tag}' to optimize notebook selection")
+        
     service = ClaudePenpalService(
         claude_command=claude_command,
         query_tag=query_tag,
         context_tag=context_tag,
         knowledge_graph_tag=kg_tag,
         new_conversation_tag=new_tag,
+        subject_tag=subject_tag,
+        default_subject=default_subject,
+        use_subject_dirs=use_subject_dirs,
+        pre_filter_tag=actual_pre_filter_tag,
         mcp_tool_tags=mcp_tool_tags,
         poll_interval=poll_interval,
         syntax_highlighting=highlighting,

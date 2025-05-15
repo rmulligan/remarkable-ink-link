@@ -45,6 +45,10 @@ from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
 
+# Import adapters
+from inklink.adapters.handwriting_adapter import HandwritingAdapter
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -94,7 +98,36 @@ class Container:
         provider.register(IDocumentService, DocumentService)
         provider.register(IPDFService, PDFService)
         provider.register(IRemarkableService, RemarkableService)
-        provider.register(IHandwritingRecognitionService, HandwritingRecognitionService)
+        
+        # Set up Handwriting Recognition with Claude CLI
+        claude_command = normalized_config.get("claude_command", "claude")
+        claude_model = normalized_config.get("claude_model", "")
+        
+        # Create and register Claude Vision adapter
+        claude_vision_adapter = ClaudeVisionAdapter(
+            claude_command=claude_command,
+            model=claude_model
+        )
+        
+        # Create and register Handwriting adapter
+        handwriting_adapter = HandwritingAdapter(
+            claude_command=claude_command,
+            model=claude_model
+        )
+        
+        # Create and register Handwriting recognition service
+        handwriting_recognition_service = HandwritingRecognitionService(
+            claude_command=claude_command,
+            model=claude_model,
+            handwriting_adapter=handwriting_adapter
+        )
+        
+        # Register services and adapters
+        provider.register_instance(ClaudeVisionAdapter, claude_vision_adapter)
+        provider.register_instance(HandwritingAdapter, handwriting_adapter)
+        provider.register_instance(IHandwritingRecognitionService, handwriting_recognition_service)
+        provider.register_instance(HandwritingRecognitionService, handwriting_recognition_service)
+        
         provider.register(IGoogleDocsService, GoogleDocsService)
 
         # Register services that don't have interfaces yet
@@ -129,9 +162,8 @@ class Container:
         )
 
         # Create and register knowledge graph integration service
-        handwriting_service = provider.resolve(IHandwritingRecognitionService)
         knowledge_graph_integration_service = KnowledgeGraphIntegrationService(
-            handwriting_service=handwriting_service,
+            handwriting_service=handwriting_recognition_service,
             knowledge_graph_service=knowledge_graph_service,
         )
         provider.register_factory(
