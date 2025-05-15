@@ -3,8 +3,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-
-from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
