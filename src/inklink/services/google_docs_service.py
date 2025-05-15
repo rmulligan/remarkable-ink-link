@@ -1,6 +1,7 @@
 """Google Docs integration service."""
 
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.google_adapter import GoogleAPIAdapter
@@ -146,9 +147,7 @@ class GoogleDocsService(IGoogleDocsService):
             return []
 
     @staticmethod
-    def _build_error_response(
-        url_or_id: str, error_message: str
-    ) -> Dict[str, Any]:
+    def _build_error_response(url_or_id: str, error_message: str) -> Dict[str, Any]:
         """
         Build a standardized error response.
 

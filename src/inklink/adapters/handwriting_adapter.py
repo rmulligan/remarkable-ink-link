@@ -4,10 +4,10 @@ This module provides an adapter for handwriting recognition services
 like MyScript iink SDK.
 """
 
-import os
-import logging
 import json
-from typing import Dict, Any, Optional, List, Tuple
+import logging
+import os
+from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.adapter import Adapter
 
@@ -56,8 +56,7 @@ class HandwritingAdapter(Adapter):
         try:
             # Import here to handle case where MyScript SDK is not installed
             try:
-                from iink.iink import InkModel
-                from iink.iink import IInkConfiguration
+                from iink.iink import IInkConfiguration, InkModel
             except ImportError:
                 logger.warning("MyScript iink SDK not installed")
                 return False
@@ -153,7 +152,7 @@ class HandwritingAdapter(Adapter):
         try:
             # Import MyScript SDK
             try:
-                from iink.iink import InkModel, Point, InkStroke, PointerEventType
+                from iink.iink import InkModel, InkStroke, Point, PointerEventType
             except ImportError:
                 logger.error("MyScript iink SDK not installed")
                 return {}
@@ -225,12 +224,13 @@ class HandwritingAdapter(Adapter):
             # Import SDK
             try:
                 from iink.iink import (
-                    InkModel,
+                    Configuration,
                     ContentBlock,
                     ContentPackage,
                     ContentPart,
+                    InkModel,
+                    MimeType,
                 )
-                from iink.iink import MimeType, Configuration
             except ImportError:
                 logger.error("MyScript iink SDK not installed")
                 return {"error": "SDK not installed"}
@@ -269,9 +269,8 @@ class HandwritingAdapter(Adapter):
             logger.error(f"Failed to recognize handwriting: {e}")
             return {"error": str(e)}
 
-    def export_content(
-        self, content_id: str, format_type: str = "text"
-    ) -> Dict[str, Any]:
+    @staticmethod
+    def export_content(content_id: str, format_type: str = "text") -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
 

@@ -261,9 +261,7 @@ class PDFAdapter(Adapter):
             return []
 
     @staticmethod
-    def add_watermark(
-        pdf_path: str, watermark_path: str, output_path: str
-    ) -> bool:
+    def add_watermark(pdf_path: str, watermark_path: str, output_path: str) -> bool:
         """
         Add watermark (like a QR code) to each page of a PDF.
 

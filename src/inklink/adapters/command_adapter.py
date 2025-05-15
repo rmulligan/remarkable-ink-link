@@ -6,6 +6,7 @@ consistent error handling, retries, and output processing.
 
 import logging
 import os
+import shlex
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -170,9 +171,7 @@ class CommandAdapter(Adapter):
             return False, str(e)
 
     @staticmethod
-    def parse_key_value_output(
-        output: str, delimiter: str = ":"
-    ) -> Dict[str, str]:
+    def parse_key_value_output(output: str, delimiter: str = ":") -> Dict[str, str]:
         """
         Parse key-value output from a command.
 

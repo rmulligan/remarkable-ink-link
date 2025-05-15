@@ -3,6 +3,7 @@
 This module provides adapters for CLI-based AI tools (Claude, GitHub Copilot CLI, OpenAI Codex).
 """
 
+import json
 import logging
 import os
 import subprocess
@@ -10,6 +11,8 @@ import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
+from inklink.adapters.ai_adapter import AIAdapter
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 
