@@ -2,8 +2,6 @@
 
 This module provides adapters for CLI-based AI tools (Claude, GitHub Copilot CLI, OpenAI Codex).
 """
-
-import json
 import logging
 import os
 import subprocess

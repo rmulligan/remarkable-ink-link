@@ -533,9 +533,6 @@ class AugmentedNotebookService:
                 for i, source in enumerate(include_sources):
                     formatted_response += f"\n{i + 1}. {source['value']}"
 
-            # Create markdown content
-            import time
-
             timestamp = int(time.time())
             md_filename = f"response_{timestamp}.md"
             md_path = os.path.join(self.temp_dir, md_filename)
