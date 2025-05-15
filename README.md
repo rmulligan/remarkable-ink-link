@@ -7,6 +7,9 @@ InkLink connects your reMarkable with powerful AI tooling for handwritten workfl
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-brightgreen)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=active+issues&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=code+coverage&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=resolved+issues&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
 
 ---
 
@@ -18,7 +21,7 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 
 - **🧠 AI-Augmented Notes:** Ask questions directly from handwritten notes. Receive structured, editable responses in `.rm` format.
 - **🌐 Web-to-Ink Sharing:** Send web content to your tablet and convert it to editable *native ink*, not static text or PDFs. Move, resize, clip, and restructure AI-generated or imported text as if you'd written it by hand.
-- **✍️ Hybrid Handwriting Recognition:** Fast, accurate transcription powered by MyScript iink SDK, with optional verification using local vision models for improved accuracy.
+- **✍️ Claude Vision Handwriting Recognition:** Fast, accurate transcription powered by Claude's vision capabilities, recognizing text directly from handwritten notes without requiring a separate API service.
 - **🏷️ UI-Based Tag Actions:** Tag content through the user interface and trigger workflows like summarization, calendar integration, and more.
 - **📅 Task & Calendar Integration:** Detect tasks in your notes and sync them with your calendar (e.g. Motion, org-agenda).
 - **🗂 Smart Indexing:** Generate and maintain table of contents, index pages, and note links using symbols or QR codes.
@@ -34,8 +37,9 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - Send a web article or AI-generated summary to your reMarkable and edit it as ink — rearrange, clip, highlight, and remix it freely without breaking your writing flow.
 - Write a to-do list by hand and sync tasks with your calendar automatically.
 - Ask a handwritten question and receive an answer in native ink format — ready to move, rephrase, or expand with a pen.
-- Add `#summarize` to a dense page and get a clean summary beside it, ready to rearrange in ink.
-- Use `#calendar` in a note and have appointments sync to your external calendar.
+- Add `#summarize` to a page and get a clean summary beside it, ready to rearrange in ink.
+- Use `#task` to automatically extract actionable items from your notes.
+- Write `#entity` to identify key concepts for your knowledge graph.
 - Explore your evolving thoughts in a live visual knowledge graph powered by your handwriting.
 
 ---
@@ -45,10 +49,10 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - Languages: Python + Ruby (CLI + backend utilities)
 - One-click Device Link setup via reMarkable Cloud API
 - Ink rendering via `drawj2d` to preserve native editing experience
-- Handwriting recognition with **MyScript** (primary), plus optional **vision model verification**
+- Handwriting recognition with **Claude Vision** capabilities for direct image-to-text conversion
 - AI orchestration using Flowise, LangChain, or OpenAI APIs
 - Modular messaging via MCP (Multi-Connection Protocol)
-- Tag-based AI triggers (`#summarize`, `#calendar`, `#index`, etc.)
+- Tag-based AI triggers (`#summarize`, `#task`, `#entity`, etc.)
 - Background sync engine with customizable frequency and event-based triggers
 - Optional integrations: Emacs/org-roam/org-agenda, Motion, Apple Shortcuts
 
@@ -60,6 +64,7 @@ Make sure you have:
 - Node.js and Yarn
 - Python 3.10 or higher
 - Docker and Docker Compose (optional)
+- Claude CLI (for handwriting recognition)
 
 To install dependencies and set up the local environment, run:
 
@@ -95,7 +100,7 @@ This will build the Docker image and start the container.
 
 ### Deploying on a Raspberry Pi
 
-You can deploy InkLink to a remote Raspberry Pi (e.g., Pi 5 running Ubuntu 24) using the provided script:
+You can deploy InkLink to a remote Raspberry Pi (e.g., Pi 5 running Ubuntu 24) using the provided script:
 
 ```bash
 chmod +x scripts/deploy_to_pi.sh
@@ -118,7 +123,7 @@ Once installed, you can:
 
 Follow these steps to authenticate your reMarkable account:
 
-1. Start the InkLink server (default on port 9999):
+1. Start the InkLink server (default on port 9999):
 
    ```bash
    docker-compose up -d inklink
@@ -192,6 +197,31 @@ GET /download/filename.rm
 
 This allows you to save and review documents locally without requiring a reMarkable device.
 
+## 📝 Handwriting Recognition with Lilly
+
+InkLink uses Claude Vision capabilities through a personified assistant named "Lilly" that processes handwritten content from your reMarkable tablet.
+
+### Features
+
+- Direct handwriting recognition from `.rm` files
+- Special tag processing (`#summarize`, `#task`, `#entity`, etc.)
+- Knowledge graph integration
+- Personalized responses based on context
+
+### Example Commands
+
+Process a single page:
+```bash
+python -m inklink.main process path/to/file.rm
+```
+
+Process an entire notebook:
+```bash
+python -m inklink.main process-notebook path/to/notebook/directory
+```
+
+See [Claude Vision Integration](docs/integrations/claude-vision/usage.md) for detailed setup and usage instructions.
+
 ---
 
 ## 🔌 Integrations
@@ -202,6 +232,7 @@ Available integrations:
 - `GitHub MCP`: Integrated GitHub repository management directly accessible via Claude. See [GitHub Integration](docs/github_integration.md).
 - `Knowledge Graph`: A powerful knowledge graph system for entity extraction, relationship mapping, and semantic search across all content types. See documentation in the codebase.
 - `Limitless Integration`: Automatic syncing of Limitless Pendant life logs into the knowledge graph for entity extraction, relationship mapping, and semantic search. See [Limitless Integration](docs/limitless_integration.md).
+- `Claude Vision`: Handwriting recognition powered by Claude's vision capabilities. See [Claude Vision Integration](docs/integrations/claude-vision/usage.md).
 
 > Want to build your own? Stay tuned for the `inklink-mcp-template` to roll your own plug-ins.
 
@@ -210,13 +241,13 @@ Available integrations:
 ## 🧪 Roadmap
 
 - [x] Core infrastructure and Docker environment setup
-- [x] Web-to-ink conversion for articles and webpages  
+- [x] Web-to-ink conversion for articles and webpages
 - [x] PDF-to-ink conversion with source linking
 - [x] reMarkable Cloud authentication UI
 - [x] Service-level Google Docs integration
-- [ ] AI Q&A roundtrip via `.rm` files
-- [ ] Handwriting recognition (MyScript iink SDK integration)
-- [ ] UI-based tag action system: `#summarize`, `#calendar`, `#index`, etc.
+- [x] Handwriting recognition with Claude Vision capabilities
+- [x] Personified AI assistant (Lilly) for processing handwritten content
+- [x] Tag-based action system: `#summarize`, `#task`, `#entity`, etc.
 - [ ] Calendar sync module
 - [x] Visual knowledge graph builder
 - [x] First MCP integration: Limitless Pendant life log sync
@@ -237,6 +268,61 @@ Available integrations:
 
 MIT License — permissive and open.  
 You are free to use, modify, extend, and build commercial or personal tools on top of InkLink. We may provide a hosted version in the future, but the core will always remain open and community-driven.
+
+## 🗂 Repository Organization
+
+The repository has been reorganized for improved maintainability and clarity:
+
+```
+inklink/
+├── docs/               # Project documentation 
+├── notebooks/          # Sample reMarkable notebooks
+├── scripts/            # Utility and maintenance scripts
+├── src/                # Source code
+│   └── inklink/        # Main package
+│       ├── adapters/   # Integration adapters
+│       ├── api/        # API endpoints
+│       ├── di/         # Dependency injection
+│       ├── services/   # Core services
+│       └── utils/      # Helper utilities
+├── tests/              # Test suite organized by component
+│   ├── adapters/       # Tests for adapters
+│   ├── api/            # Tests for API endpoints
+│   ├── extraction/     # Tests for content extraction
+│   ├── integration/    # End-to-end tests
+│   ├── mocks/          # Test mocks and fixtures
+│   └── services/       # Tests for services
+├── tools/              # Repository maintenance tools
+└── web/                # Web interface components
+```
+
+### Submodules
+
+This repository includes the following Git submodules:
+
+- `src/models/handwriting_model/deep_scribe_original`: Original DeepScribe handwriting model
+- `src/models/handwriting_model/maxio`: MaxIO reMarkable integration library
+
+When cloning the repository, use the `--recursive` flag to also clone submodules:
+
+```bash
+git clone --recursive https://github.com/remarkable-ink-link/inklink.git
+```
+
+If you've already cloned the repository without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Organization Principles
+
+The codebase follows these organization principles:
+
+1. **Separation of Concerns**: Clear separation between adapters (external integrations), services (core business logic), and API layers
+2. **Component-based Testing**: Test files are organized by component type for easier maintenance
+3. **Documentation-centric**: Comprehensive documentation in the `docs/` directory organized by topic
+4. **Modular Design**: Each component is designed to be modular and replaceable
 
 ## 💡 Configuration Options
 
@@ -261,6 +347,20 @@ yarn start
 When using `outline` mode, you can also configure:
 - `INKLINK_PDF_PAGE`: Which page to render (default: 1)
 - `INKLINK_PDF_SCALE`: Scale factor for rendering (default: 1.0)
+
+### Handwriting Recognition
+
+InkLink uses Claude Vision capabilities through the Claude CLI for handwriting recognition.
+
+To configure, add Claude CLI settings to your environment:
+
+```bash
+# Add to your .env file
+CLAUDE_COMMAND=claude  # Path to Claude CLI if not in PATH
+CLAUDE_MODEL=claude-3-opus-20240229  # Your preferred Claude model with vision capabilities
+```
+
+See [Claude Vision Integration](docs/integrations/claude-vision/usage.md) for detailed setup instructions.
 
 ## 🐞 Troubleshooting
 

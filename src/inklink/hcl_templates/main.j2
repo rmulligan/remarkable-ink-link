@@ -1,5 +1,110 @@
-resource "{{ resource_type }}" "{{ resource_name }}" {
-{% for key, value in attributes.items() %}
-  {{ key }} = "{{ value }}"
-{% endfor %}
+// HCL template for Claude Penpal response pages
+{
+  output: {
+    default: {
+      extension: "rm"
+    }
+  },
+  landscape: false,
+  page: {
+    margin: {horizontal: 20, vertical: 16}
+  },
+  content: [
+    {%- for item in content %}
+      {%- if item.type == "h1" %}
+    {
+      type: "heading",
+      content: "{{ item.content }}",
+      headingLevel: 1,
+      style: {
+        fontSize: 20,
+        color: "black"
+      }
+    },
+      {%- elif item.type == "h2" %}
+    {
+      type: "heading",
+      content: "{{ item.content }}",
+      headingLevel: 2,
+      style: {
+        fontSize: 16,
+        color: "black"
+      }
+    },
+      {%- elif item.type == "h3" %}
+    {
+      type: "heading",
+      content: "{{ item.content }}",
+      headingLevel: 3,
+      style: {
+        fontSize: 14,
+        color: "black"
+      }
+    },
+      {%- elif item.type == "paragraph" %}
+    {
+      type: "paragraph",
+      content: "{{ item.content|replace('"', '\\"')|replace('\n', '\\n') }}",
+      style: {
+        fontSize: 11,
+        color: "black",
+        textAlignment: "left"
+      }
+    },
+      {%- elif item.type == "code_block" %}
+    {
+      type: "codeBlock",
+      content: "{{ item.content|replace('"', '\\"')|replace('\n', '\\n') }}",
+      language: "{{ item.language|default('text') }}",
+      style: {
+        fontSize: 10,
+        {% if highlighting %}
+        fontFamily: "monospace",
+        syntaxHighlighting: true,
+        {% if item.language == "python" %}
+        color: "#0000ff",
+        backgroundColor: "#f0f0f0"
+        {% elif item.language == "javascript" %}
+        color: "#8a2be2",
+        backgroundColor: "#f8f8f8"
+        {% elif item.language == "html" %}
+        color: "#ff4500",
+        backgroundColor: "#fffaf0"
+        {% elif item.language == "css" %}
+        color: "#2e8b57",
+        backgroundColor: "#f0fff0"
+        {% elif item.language == "json" %}
+        color: "#8b0000",
+        backgroundColor: "#fff5ee"
+        {% elif item.language == "bash" or item.language == "shell" %}
+        color: "#556b2f",
+        backgroundColor: "#f5f5dc"
+        {% else %}
+        color: "#000000",
+        backgroundColor: "#f8f8f8"
+        {% endif %}
+        {% else %}
+        color: "#000000"
+        {% endif %}
+      }
+    },
+      {%- elif item.type == "list" %}
+    {
+      type: "list",
+      items: [
+        {%- for list_item in item.items %}
+        "{{ list_item|replace('"', '\\"')|replace('\n', '\\n') }}"{% if not loop.last %},{% endif %}
+        {%- endfor %}
+      ],
+      style: {
+        fontSize: 11,
+        color: "black",
+        textAlignment: "left",
+        listType: "{{ item.list_type|default('unordered') }}"
+      }
+    },
+      {%- endif %}
+      {%- if not loop.last %},{% endif %}
+    {%- endfor %}
+  ]
 }

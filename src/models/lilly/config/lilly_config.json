@@ -1,0 +1,31 @@
+{
+  "name": "Lilly",
+  "version": "1.0.0",
+  "description": "reMarkable Ink Link assistant with Claude vision capabilities",
+  "workspace_dir": "/home/ryan/dev/remarkable-ink-link/lilly/workspace",
+  "memories_dir": "/home/ryan/dev/remarkable-ink-link/lilly/memories",
+  "tools_dir": "/home/ryan/dev/remarkable-ink-link/lilly/tools",
+  "claude_command": "claude",
+  "mcp_enabled": true,
+  "knowledge_graph": {
+    "enabled": true,
+    "database_name": "lilly_knowledge"
+  },
+  "capabilities": [
+    "handwriting_recognition",
+    "knowledge_extraction",
+    "document_processing",
+    "task_management",
+    "note_organization"
+  ],
+  "integrations": {
+    "remarkable": {
+      "enabled": true,
+      "sync_frequency_minutes": 30
+    },
+    "limitless": {
+      "enabled": true,
+      "sync_frequency_minutes": 60
+    }
+  }
+}

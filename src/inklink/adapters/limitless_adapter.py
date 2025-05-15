@@ -5,8 +5,11 @@ It handles authentication, pagination, and error handling for API requests.
 """
 
 import logging
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+import requests
 
 from inklink.adapters.adapter import Adapter
 from inklink.adapters.http_adapter import HTTPAdapter
@@ -67,7 +70,7 @@ class LimitlessAdapter(Adapter):
         limit: int = 10,
         cursor: Optional[str] = None,
         from_date: Optional[datetime] = None,
-    ) -> Tuple[bool, Union[List[Dict[str, Any]], str]]:
+    ) -> Tuple[bool, Union[Dict[str, Any], str]]:
         """
         Get life logs from the Limitless API with pagination support.
 
@@ -77,7 +80,7 @@ class LimitlessAdapter(Adapter):
             from_date: Only retrieve logs created after this date
 
         Returns:
-            Tuple of (success, life_logs_or_error)
+            Tuple of (success, response_or_error)
         """
         params = {"limit": min(limit, 10)}  # API limit is 10 per request
 
@@ -129,13 +132,66 @@ class LimitlessAdapter(Adapter):
             if not success:
                 return False, result
 
-            # Extract logs and cursor from response
-            logs = result.get("data", [])
-            all_logs.extend(logs)
+            # Extract logs based on the API response format with updated handling
+            logs = []
+            if isinstance(result, dict):
+                if "data" in result:
+                    if isinstance(result["data"], list):
+                        # Format: {"data": [logs...]}
+                        logs = result["data"]
+                    elif isinstance(result["data"], dict):
+                        if "lifelogs" in result["data"]:
+                            # Format: {"data": {"lifelogs": [logs...]}}
+                            logs = result["data"]["lifelogs"]
+                        elif "items" in result["data"]:
+                            # Format: {"data": {"items": [logs...]}}
+                            logs = result["data"]["items"]
+                elif "lifelogs" in result:
+                    # Format: {"lifelogs": [logs...]}
+                    logs = result["lifelogs"]
+                elif "items" in result:
+                    # Format: {"items": [logs...]}
+                    logs = result["items"]
 
-            # Check if there are more pages
-            pagination = result.get("pagination", {})
-            cursor = pagination.get("next_cursor")
+                # Log the response structure for debugging
+                logger.debug(f"Response structure: keys={result.keys()}")
+                if "data" in result and isinstance(result["data"], dict):
+                    logger.debug(f"Data structure: keys={result['data'].keys()}")
+
+            # Add logs to our collection
+            if isinstance(logs, list):
+                all_logs.extend(logs)
+
+            # Check if there are more pages with enhanced pagination handling
+            pagination = None
+            if isinstance(result, dict):
+                # Try different pagination formats
+                pagination = result.get("pagination", {})
+
+                # Check in meta if not found directly
+                if not pagination and "meta" in result:
+                    meta = result.get("meta", {})
+                    if isinstance(meta, dict):
+                        pagination = meta.get("pagination", {})
+
+                # Check in data.meta if not found elsewhere
+                if (
+                    not pagination
+                    and "data" in result
+                    and isinstance(result["data"], dict)
+                ):
+                    data = result["data"]
+                    if "meta" in data and isinstance(data["meta"], dict):
+                        pagination = data["meta"].get("pagination", {})
+
+            cursor = None
+            if isinstance(pagination, dict):
+                # Try different cursor key formats
+                cursor = pagination.get("next_cursor")
+                if not cursor:
+                    cursor = pagination.get("nextCursor")
+                if not cursor:
+                    cursor = pagination.get("cursor")
 
             if not cursor:
                 break

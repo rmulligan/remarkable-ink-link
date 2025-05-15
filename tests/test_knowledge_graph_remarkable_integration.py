@@ -1,9 +1,11 @@
 """Tests for integration between knowledge graph and reMarkable notebooks."""
 
-from unittest.mock import MagicMock
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from inklink.adapters.handwriting_adapter import HandwritingAdapter
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
