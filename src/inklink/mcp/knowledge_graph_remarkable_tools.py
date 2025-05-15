@@ -7,7 +7,6 @@ interact with reMarkable notebooks and the knowledge graph.
 """
 
 import logging
-import json
 from typing import Dict, Any, List, Optional
 
 from inklink.services.knowledge_graph_integration_service import (

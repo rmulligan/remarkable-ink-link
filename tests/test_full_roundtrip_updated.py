@@ -31,8 +31,6 @@ from inklink.services.interfaces import (
 
 # Import controllers
 from inklink.controllers.share_controller import ShareController
-from inklink.controllers.ingest_controller import IngestController
-from inklink.controllers.process_controller import ProcessController
 
 # Check if neo4j is installed
 neo4j_installed = importlib.util.find_spec("neo4j") is not None

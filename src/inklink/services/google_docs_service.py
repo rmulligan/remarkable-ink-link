@@ -1,6 +1,4 @@
 """Google Docs integration service."""
-
-import os
 import logging
 from typing import Dict, Any, Optional, List, Tuple
 

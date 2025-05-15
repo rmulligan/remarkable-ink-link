@@ -7,7 +7,6 @@ consistent error handling, retries, and output processing.
 import os
 import logging
 import subprocess
-import shlex
 from typing import Dict, Any, Optional, List, Tuple, Union
 
 from inklink.adapters.adapter import Adapter

@@ -1,8 +1,6 @@
 """Tests for the round-trip workflow."""
-
-import os
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,

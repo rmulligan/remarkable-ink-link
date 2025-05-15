@@ -1,6 +1,4 @@
 """Tests for the Knowledge Index Service."""
-
-import os
 import tempfile
 from unittest import mock
 

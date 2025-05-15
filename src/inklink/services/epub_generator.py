@@ -10,11 +10,8 @@ import re
 import logging
 import tempfile
 from typing import Dict, Any, List, Tuple, Optional
-
-import ebooklib
 from ebooklib import epub
 from markdown import markdown
-from bs4 import BeautifulSoup
 
 from inklink.utils.common import sanitize_filename
 

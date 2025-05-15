@@ -7,7 +7,6 @@ import logging
 from typing import Dict, Any, Optional
 
 from inklink.pipeline.pipeline import Pipeline
-from inklink.pipeline.processor import Processor, PipelineContext
 from inklink.pipeline.processors import (
     URLProcessor,
     QRProcessor,
@@ -17,14 +16,6 @@ from inklink.pipeline.processors import (
     AIProcessor,
 )
 from inklink.pipeline.processors.ingest_processor import IngestProcessor
-from inklink.services.interfaces import (
-    IQRCodeService,
-    IWebScraperService,
-    IDocumentService,
-    IPDFService,
-    IRemarkableService,
-)
-from inklink.services.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 

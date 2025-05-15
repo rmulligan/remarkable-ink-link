@@ -1,8 +1,6 @@
 import os
-import shutil
-from io import BytesIO
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from inklink.services.pdf_service import PDFService
 from inklink.adapters.pdf_adapter import PDFAdapter

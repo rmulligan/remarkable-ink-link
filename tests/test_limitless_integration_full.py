@@ -25,8 +25,7 @@ import logging
 import pytest
 from datetime import datetime, timedelta
 import tempfile
-import threading
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService

@@ -1,7 +1,7 @@
 """Tests for the AI Service and AI Adapter."""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from typing import Dict, Any, List, Tuple, Optional, Union
 from urllib.parse import urlparse
 

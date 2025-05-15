@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import time
-import tempfile
 from typing import Dict, List, Any, Optional, Tuple
 
 from inklink.services.handwriting_recognition_service import (

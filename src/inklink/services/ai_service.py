@@ -1,7 +1,6 @@
 """AI Service for interacting with AI models."""
 
 import logging
-import os
 from typing import Optional, Dict, Any, List, Union
 
 from inklink.services.interfaces import IAIService

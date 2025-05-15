@@ -1,10 +1,8 @@
 """Controller for knowledge graph-related HTTP endpoints."""
-
-import json
 import logging
 from typing import Dict, Any, Optional, List, Union
 
-from fastapi import Request, Body, HTTPException, Depends, File, UploadFile
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 
 from inklink.controllers.base_controller import BaseController

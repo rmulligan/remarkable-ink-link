@@ -1,8 +1,6 @@
 import io
 import json
-import tempfile
-from http.server import HTTPServer
-from inklink.server import URLHandler, run_server
+from inklink.server import URLHandler
 
 import pytest
 

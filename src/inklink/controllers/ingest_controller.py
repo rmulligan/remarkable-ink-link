@@ -10,7 +10,6 @@ from typing import Dict, Any, List
 from inklink.controllers.base_controller import BaseController
 from inklink.pipeline.factory import PipelineFactory
 from inklink.pipeline.processor import PipelineContext
-from inklink.utils import is_safe_url
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,6 @@
 
 This module provides a controller for handling Limitless Life Log API endpoints.
 """
-
-import json
 import logging
 from typing import Dict, Any, List, Optional, Tuple, Union
 

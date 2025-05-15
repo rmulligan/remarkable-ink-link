@@ -1,6 +1,4 @@
 """Integration service for knowledge graph and reMarkable notebooks."""
-
-import os
 import logging
 from typing import Dict, List, Any, Optional, Tuple
 

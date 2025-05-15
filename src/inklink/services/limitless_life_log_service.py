@@ -5,7 +5,6 @@ them with the knowledge graph system.
 """
 
 import logging
-import time
 from typing import Dict, List, Any, Optional, Tuple, Union
 from datetime import datetime, timedelta
 import json

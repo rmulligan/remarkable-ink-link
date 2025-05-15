@@ -1,10 +1,8 @@
 """Round-trip service for handling Q&A workflow."""
 
 import os
-import json
 import logging
 import time
-import tempfile
 from typing import Dict, Any, Optional, Tuple
 
 from inklink.services.handwriting_recognition_service import (

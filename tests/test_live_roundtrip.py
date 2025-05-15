@@ -18,12 +18,9 @@ import logging
 import tempfile
 import shutil
 import importlib.util
-import asyncio
 import subprocess
 import platform
-import json
 import time
-from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple, Union
 
 # Import core modules (early import to avoid E402 errors)
@@ -35,9 +32,7 @@ from inklink.services.remarkable_service import RemarkableService
 from inklink.services.ai_service import AIService
 from inklink.controllers.share_controller import ShareController
 from inklink.controllers.ingest_controller import IngestController
-from inklink.controllers.process_controller import ProcessController
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.controllers.knowledge_graph_controller import KnowledgeGraphController
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

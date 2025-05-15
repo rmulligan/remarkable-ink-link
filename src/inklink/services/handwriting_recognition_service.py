@@ -3,7 +3,6 @@
 from typing import List, Dict, Any, Optional, Tuple
 import os
 import logging
-import time
 import re
 
 from inklink.services.interfaces import IHandwritingRecognitionService

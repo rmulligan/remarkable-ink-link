@@ -1,13 +1,10 @@
 """Tests for integration between knowledge graph and reMarkable notebooks."""
-
-import os
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.handwriting_recognition_service import HandwritingRecognitionService
 from inklink.services.round_trip_service import RoundTripService
-from inklink.adapters.handwriting_adapter import HandwritingAdapter
 
 
 @pytest.fixture

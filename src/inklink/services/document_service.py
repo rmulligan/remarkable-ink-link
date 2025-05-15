@@ -5,7 +5,6 @@ using a configurable set of content converters and renderers.
 """
 
 import os
-import time
 import logging
 import threading
 from typing import Dict, Any, Optional, List
@@ -13,14 +12,12 @@ from typing import Dict, Any, Optional, List
 from inklink.services.interfaces import (
     IDocumentService,
     IContentConverter,
-    IDocumentRenderer,
-)
+    )
 from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.html_converter import HTMLConverter
 from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_rcu_available
-from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

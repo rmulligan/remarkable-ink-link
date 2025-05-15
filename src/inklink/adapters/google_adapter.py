@@ -7,7 +7,6 @@ import os
 import logging
 from typing import Dict, Any, Optional, List, Tuple, BinaryIO, Union
 import re
-import tempfile
 from urllib.parse import urlparse
 
 from inklink.adapters.adapter import Adapter

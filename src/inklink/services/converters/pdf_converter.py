@@ -10,7 +10,6 @@ import logging
 from typing import Dict, Any, Optional, List, Union, Tuple
 
 from inklink.services.converters.base_converter import BaseConverter
-from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
