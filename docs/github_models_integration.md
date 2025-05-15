@@ -56,13 +56,13 @@ For GitHub Actions workflow integration with GitHub Models, you need to:
 2. Add the PAT to your repository secrets:
    - Go to your repository settings
    - Navigate to Secrets and variables > Actions
-   - Create a new repository secret named `GITHUB_MODELS_PAT`
+   - Create a new repository secret named `PAT_TOKEN`
    - Paste your PAT as the value
 
 3. The workflow will use this secret to authenticate with GitHub Models API:
    ```yaml
    env:
-     GITHUB_TOKEN: ${{ secrets.GITHUB_MODELS_PAT || secrets.GITHUB_TOKEN }}
+     GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
    ```
 
 **Note**: If no PAT is provided, the workflow will automatically fall back to a basic local analysis using pattern matching and code statistics. This provides a baseline code review even without access to GitHub Models API.
@@ -206,7 +206,7 @@ The workflow is configured in `.github/workflows/code-review-github-models.yml`
 2. **Model Access**:
    - Ensure PAT has models:read permission
    - Verify Copilot subscription is active
-   - Check repository secrets for `GITHUB_MODELS_PAT`
+   - Check repository secrets for `PAT_TOKEN`
 
 3. **Rate Limits**:
    - GitHub models have usage limits

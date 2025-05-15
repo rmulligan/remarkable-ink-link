@@ -34,7 +34,7 @@ jobs:
       - name: Review Code with GitHub Models
         env:
           # Try PAT first, fallback to regular token
-          GITHUB_TOKEN: ${{ secrets.GITHUB_MODELS_PAT || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
