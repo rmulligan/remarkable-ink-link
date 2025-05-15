@@ -85,9 +85,9 @@ jobs:
         uses: mattzcarey/shippie@v0.14.0
         with:
           MODEL_STRING: github:gpt-4.1-mini
+          GITHUB_TOKEN: ${{ github.token }}
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          GITHUB_TOKEN: ${{ github.token }}
 
   build-and-push:
     name: Build and Push Docker Image
