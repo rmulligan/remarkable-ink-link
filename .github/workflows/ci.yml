@@ -49,9 +49,15 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create true
           poetry install --no-interaction --no-ansi
-      - name: Run tests
+      - name: Run tests with coverage
         # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
         run: poetry run pytest --maxfail=1 --disable-warnings -q
+      - name: Report test coverage to DeepSource
+        uses: deepsourcelabs/test-coverage-action@master
+        with:
+          key: python
+          coverage-file: coverage.xml
+          dsn: ${{ secrets.DEEPSOURCE_DSN }}
 
   code-review:
     name: Code Review GPT
