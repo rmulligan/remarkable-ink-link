@@ -1,31 +1,36 @@
-# DeepSource configuration file
-# Learn how to configure: https://docs.deepsource.com/docs/configuration
 version = 1
-exclude_patterns = ["venv", "node_modules", "bower_components", "out", "bin", "build", "dist"]
-test_patterns = ["**/test_*.py", "**/__tests__/**", "**/*.spec.ts", "**/*.spec.js", "**/*.test.ts", "**/*.test.js", "**/*_test.go"]
+
+test_patterns = [
+  "**/test_*.py",
+  "**/__tests__/**",
+  "**/*.spec.ts",
+  "**/*.spec.js",
+  "**/*.test.ts",
+  "**/*.test.js",
+  "**/*_test.go"
+]
+
+exclude_patterns = [
+  "venv",
+  "node_modules",
+  "bower_components",
+  "out",
+  "bin",
+  "build",
+  "dist"
+]
 
 [[analyzers]]
-  name = "python"
-  enabled = true
+name = "python"
 
   [analyzers.meta]
   runtime_version = "3.x.x"
 
 [[analyzers]]
-  name = "javascript"
-  enabled = true
+name = "javascript"
 
 [[analyzers]]
-  name = "shell"
-  enabled = true
-
-[[analyzers]]
-  name = "go"
-  enabled = true
-
-[[analyzers]]
-  name = "rust"
-  enabled = true
+name = "shell"
 
 [[transformers]]
 name = "isort"
