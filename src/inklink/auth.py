@@ -45,13 +45,25 @@ def auth_submit(code: str = Form(...)):
     # reMarkable pairing codes are typically 6-8 alphanumeric characters
     import re
 
-    if not code or not re.match(r"^[a-zA-Z0-9]{6,8}$", code.strip()):
+    code = code.strip() if code else ""
+
+    # Strict validation - only allow exactly 6-8 alphanumeric characters
+    if not re.match(r"^[a-zA-Z0-9]{6,8}$", code):
         return HTMLResponse(
             "<html><body><h2>Invalid pairing code format</h2></body></html>",
             status_code=400,
         )
 
-    code = code.strip()
+    # Additional sanitization - create a new string with only allowed characters
+    # This ensures the input is completely sanitized
+    sanitized_code = "".join(c for c in code if c.isalnum())
+
+    # Verify the sanitized code matches the original (redundant but explicit)
+    if sanitized_code != code:
+        return HTMLResponse(
+            "<html><body><h2>Invalid pairing code</h2></body></html>",
+            status_code=400,
+        )
 
     # Run ddvk rmapi pairing using the provided pairing code
     # Path to rmapi executable
@@ -77,11 +89,13 @@ def auth_submit(code: str = Form(...)):
             status_code=500,
         )
 
-    # Build command with validated inputs
-    cmd = [rmapi, "config", "--pairing-code", code]
+    # Build command with validated and sanitized inputs
+    # Use the sanitized_code variable to ensure it's been fully validated
+    cmd = [rmapi, "config", "--pairing-code", sanitized_code]
 
     try:
         # Execute rmapi with security restrictions
+        # Note: sanitized_code has been fully validated to contain only alphanumeric chars
         result = subprocess.run(
             cmd,
             capture_output=True,
