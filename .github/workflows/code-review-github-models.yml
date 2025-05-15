@@ -57,10 +57,11 @@ jobs:
               headers = {
                   "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
                   "Content-Type": "application/json",
+                  "Accept": "application/json"
               }
               
-              # Using GitHub Models endpoint
-              url = "https://api.github.com/models/gpt-4.1-mini/generations"
+              # Using GitHub Models endpoint (Azure AI Inference)
+              url = "https://models.inference.ai.azure.com/chat/completions"
               
               prompt = f"""You are an expert code reviewer. Please review the following git diff and provide:
               1. A brief summary of the changes
@@ -75,7 +76,7 @@ jobs:
               """
               
               payload = {
-                  "model": "gpt-4.1-mini",
+                  "model": "gpt-4o-mini",  # GitHub Models uses gpt-4o-mini
                   "messages": [
                       {"role": "system", "content": "You are a helpful code reviewer."},
                       {"role": "user", "content": prompt}
@@ -89,6 +90,12 @@ jobs:
                   return response.json()
               else:
                   print(f"Error: {response.status_code} - {response.text}")
+                  # Try to provide more detailed error info
+                  try:
+                      error_data = response.json()
+                      print(f"Error details: {json.dumps(error_data, indent=2)}")
+                  except:
+                      pass
                   return None
 
           def post_review_comment(repo_full_name: str, pr_number: int, review_body: str):
@@ -101,7 +108,7 @@ jobs:
               url = f"https://api.github.com/repos/{repo_full_name}/issues/{pr_number}/comments"
               
               payload = {
-                  "body": f"## 🤖 Code Review by GitHub Models\n\n{review_body}"
+                  "body": f"## 🤖 Code Review by GitHub Models\n\n{review_body}\n\n---\n*Powered by GitHub Models (gpt-4o-mini)*"
               }
               
               response = requests.post(url, headers=headers, json=payload)
@@ -111,18 +118,24 @@ jobs:
               repo_full_name = os.environ.get("GITHUB_REPOSITORY")
               pr_number = int(os.environ.get("PR_NUMBER"))
               
+              print(f"Reviewing PR #{pr_number} in {repo_full_name}")
+              
               # Get PR diff
               diff_content = get_diff_content(repo_full_name, pr_number)
+              print(f"Got diff with {len(diff_content)} characters")
               
               # Review with GitHub Models
+              print("Sending to GitHub Models for review...")
               review_result = review_with_github_models(diff_content)
               
               if review_result:
                   # Extract review from response
                   try:
                       review_content = review_result["choices"][0]["message"]["content"]
+                      print("Successfully generated review")
                   except (KeyError, IndexError):
                       review_content = "Failed to generate review content."
+                      print(f"Unexpected response format: {json.dumps(review_result, indent=2)}")
                   
                   # Post review
                   success = post_review_comment(repo_full_name, pr_number, review_content)
