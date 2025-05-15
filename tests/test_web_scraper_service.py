@@ -1,14 +1,15 @@
 """Tests for the web scraper service."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 from bs4 import BeautifulSoup
 
-from inklink.services.web_scraper_service import WebScraperService
 from inklink.adapters.http_adapter import HTTPAdapter
+from inklink.services.web_scraper_service import WebScraperService
 from inklink.utils.html_processor import (
-    extract_title_from_html,
     extract_structured_content,
+    extract_title_from_html,
 )
 
 

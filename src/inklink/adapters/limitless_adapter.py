@@ -5,10 +5,8 @@ It handles authentication, pagination, and error handling for API requests.
 """
 
 import logging
-import time
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
-from datetime import datetime, timedelta
-import requests
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
 from inklink.adapters.http_adapter import HTTPAdapter

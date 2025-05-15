@@ -1,9 +1,10 @@
 """Tests for RCU (reMarkable Content Uploader) integration."""
 
 import os
-import pytest
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+
+import pytest
 
 # Import the modules directly from the package to ensure proper testing
 import inklink.utils.rcu as rcu

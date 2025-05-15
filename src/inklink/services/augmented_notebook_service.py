@@ -4,21 +4,20 @@ import logging
 import os
 import re
 import time
-import tempfile
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+from inklink.config import CONFIG
+from inklink.services.ai_service import AIService
+from inklink.services.document_service import DocumentService
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.knowledge_graph_integration_service import (
     KnowledgeGraphIntegrationService,
 )
-from inklink.services.ai_service import AIService
-from inklink.services.document_service import DocumentService
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.remarkable_service import RemarkableService
 from inklink.services.web_scraper_service import WebScraperService
-from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

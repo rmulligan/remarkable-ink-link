@@ -7,13 +7,12 @@ interact with reMarkable notebooks and the knowledge graph.
 """
 
 import logging
-import json
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
+from inklink.di.container import Container
 from inklink.services.knowledge_graph_integration_service import (
     KnowledgeGraphIntegrationService,
 )
-from inklink.di.container import Container
 
 logger = logging.getLogger(__name__)
 

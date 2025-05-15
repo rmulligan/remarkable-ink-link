@@ -1,15 +1,14 @@
 """Controller for knowledge graph-related HTTP endpoints."""
 
-import json
 import logging
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from fastapi import Request, Body, HTTPException, Depends, File, UploadFile
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from inklink.controllers.base_controller import BaseController
-from inklink.services.interfaces import IKnowledgeGraphService, IKnowledgeIndexService
 from inklink.di.service_provider import ServiceProvider
+from inklink.services.interfaces import IKnowledgeGraphService, IKnowledgeIndexService
 
 logger = logging.getLogger(__name__)
 
