@@ -104,7 +104,7 @@ def initialize_graph() -> None:
     """Initialize the knowledge graph with entity and relationship types."""
     # First switch to the Lilly knowledge graph
     command = """
-Using the neo4j-knowledge MCP tool, please switch to a database named "lilly_knowledge" 
+Using the neo4j-knowledge MCP tool, please switch to a database named "lilly_knowledge"
 and create it if it doesn't exist. Then, confirm the current database name.
 """
     print("Switching to Lilly's knowledge graph database...")

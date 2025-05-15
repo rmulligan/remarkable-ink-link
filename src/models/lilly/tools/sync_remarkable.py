@@ -225,7 +225,7 @@ def main():
         if notebook["type"] == "directory":
             continue  # Skip directories for now
 
-        print(f"Syncing notebook {i+1}/{len(notebooks)}: {notebook['name']}...")
+        print(f"Syncing notebook {i + 1}/{len(notebooks)}: {notebook['name']}...")
         notebook_path = download_notebook(notebook["id"], SYNC_DIR)
 
         if notebook_path and notebook_path.endswith(".zip"):

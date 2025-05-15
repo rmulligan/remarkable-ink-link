@@ -870,9 +870,9 @@ class ProtonCalendarAdapter:
             Tuple of (success, events/error_message)
         """
         # Calculate today's start and end
-        today = datetime.datetime.now().replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        # today = datetime.datetime.now().replace(  # Unused variable
+        #     hour=0, minute=0, second=0, microsecond=0
+        # )
         # tomorrow = today + datetime.timedelta(days=1)  # Unused variable
 
         # Get events for today

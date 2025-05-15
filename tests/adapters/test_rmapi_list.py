@@ -26,7 +26,7 @@ print(f"Found {len(documents)} documents")
 
 # Debug output for each document
 for i, doc in enumerate(documents):
-    print(f"Document {i+1}:")
+    print(f"Document {i + 1}:")
     print(f"  ID: {doc.get('ID', 'N/A')}")
     print(f"  Name: {doc.get('VissibleName', 'N/A')}")
     print(f"  Type: {doc.get('Type', 'N/A')}")

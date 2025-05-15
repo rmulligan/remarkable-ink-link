@@ -119,7 +119,7 @@ class LimitlessLiveTest:
 
         # Print log details
         for i, log in enumerate(logs):
-            logger.info(f"Log {i+1}:")
+            logger.info(f"Log {i + 1}:")
             logger.info(f"  ID: {log.get('id')}")
             logger.info(f"  Title: {log.get('title')}")
             logger.info(f"  Time: {log.get('startTime')} to {log.get('endTime')}")

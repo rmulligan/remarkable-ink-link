@@ -11,7 +11,7 @@ from datetime import datetime
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.."))
 
-from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.adapters.limitless_adapter import LimitlessAdapter  # noqa: E402
 
 
 def main():
@@ -48,10 +48,10 @@ def main():
                 for i, log in enumerate(logs):
                     if isinstance(log, dict):
                         print(
-                            f"- Log {i+1}: {log.get('id', 'No ID')} - {log.get('title', 'No Title')}"
+                            f"- Log {i + 1}: {log.get('id', 'No ID')} - {log.get('title', 'No Title')}"
                         )
                     else:
-                        print(f"- Log {i+1}: {log} (type: {type(log)})")
+                        print(f"- Log {i + 1}: {log} (type: {type(log)})")
 
                 if logs and isinstance(logs[0], dict):
                     # Get a specific log

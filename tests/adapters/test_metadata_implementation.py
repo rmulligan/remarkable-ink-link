@@ -188,7 +188,7 @@ def insert_response_after_query(
             json.dump(metadata, f, indent=2)
 
         # Create response page file
-        page_dir = os.path.dirname(content_file_path)
+        # page_dir = os.path.dirname(content_file_path)  # Unused variable
         notebook_id = os.path.splitext(os.path.basename(content_file_path))[0]
         notebook_dir = os.path.join(temp_dir, notebook_id)
         os.makedirs(notebook_dir, exist_ok=True)

@@ -16,7 +16,7 @@ def create_claude_prompt(image_path: str, content_type: str = "text") -> str:
     """Create a prompt for Claude based on the content type."""
     prompts = {
         "text": """
-Please transcribe the handwritten text in this image. 
+Please transcribe the handwritten text in this image.
 Maintain the formatting structure as much as possible.
 If there are multiple sections or paragraphs, preserve them.
 If any text is unclear, indicate with [?].
