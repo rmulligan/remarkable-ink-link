@@ -146,7 +146,7 @@ class KnowledgeIndexService:
             # Add additional info to result
             result["entity_count"] = len(filtered_entities)
             result["entity_types"] = list(
-                set(e.get("type", "Other") for e in filtered_entities)
+                {e.get("type", "Other") for e in filtered_entities}
             )
 
             return True, result
