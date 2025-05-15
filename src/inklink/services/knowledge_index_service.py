@@ -5,16 +5,16 @@ This service creates knowledge index notebooks in EPUB format,
 organizing entities, topics, and notebook references for easy navigation.
 """
 
+import logging
 import os
 import re
-import logging
 import tempfile
-from typing import Dict, Any, List, Optional, Tuple, Set
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
+from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.services.epub_generator import EPUBGenerator
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.adapters.remarkable_adapter import RemarkableAdapter
 
 logger = logging.getLogger(__name__)
 
