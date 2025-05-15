@@ -53,6 +53,22 @@ jobs:
         # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
         run: poetry run pytest --maxfail=1 --disable-warnings -q
 
+  code-review:
+    name: Code Review GPT
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Code Review GPT
+        uses: mattzcarey/shippie@v0.14.0
+
   build-and-push:
     name: Build and Push Docker Image
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
