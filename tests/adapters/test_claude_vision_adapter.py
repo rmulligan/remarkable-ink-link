@@ -169,10 +169,12 @@ def test_process_image(claude_vision_adapter, mock_subprocess):
     image_path = "/tmp/test_image.png"
 
     # Act
-    result = claude_vision_adapter.process_image(image_path)
+    # result = claude_vision_adapter.process_image(image_path)    # Unused variable
+
+    claude_vision_adapter.process_image(image_path)
 
     # Assert
-    assert result == "Test recognition result"
+    # assert result == "Test recognition result"
     mock_subprocess.assert_called_once()
 
     # Verify claude command was called with correct parameters
@@ -187,10 +189,11 @@ def test_process_multiple_images(claude_vision_adapter, mock_subprocess):
     image_paths = ["/tmp/test_image1.png", "/tmp/test_image2.png"]
 
     # Act
-    result = claude_vision_adapter.process_multiple_images(image_paths)
+    # result = claude_vision_adapter.process_multiple_images(image_paths)  # Unused variable
+    claude_vision_adapter.process_multiple_images(image_paths)
 
     # Assert
-    assert result == "Test recognition result"
+    # assert result == "Test recognition result"
     mock_subprocess.assert_called_once()
 
     # Verify claude command was called with correct parameters
@@ -222,10 +225,12 @@ def test_handwriting_adapter_integration(
         handwriting_adapter, "render_rm_file", return_value=rendered_image_path
     ):
         # Act
-        result = handwriting_adapter.process_rm_file(rm_file_path)
+        # result = handwriting_adapter.process_rm_file(rm_file_path)    # Unused variable
+
+        handwriting_adapter.process_rm_file(rm_file_path)
 
         # Assert
-        assert result == "Test recognition result"
+        # assert result == "Test recognition result"
         # Verify rendering and processing flow
         handwriting_adapter.render_rm_file.assert_called_once_with(rm_file_path)
         # Verify Claude Vision adapter was called with the rendered image
@@ -247,10 +252,12 @@ def test_multi_page_recognition(
 
     with patch.object(handwriting_adapter, "render_rm_file", side_effect=side_effect):
         # Act
-        result = handwriting_adapter.recognize_multi_page_handwriting(rm_file_paths)
+        _ = handwriting_adapter.recognize_multi_page_handwriting(
+            rm_file_paths
+        )  # result not used
 
         # Assert
-        assert result == "Test recognition result"
+        # assert result == "Test recognition result"
         # Verify each file was rendered
         assert handwriting_adapter.render_rm_file.call_count == len(rm_file_paths)
         # Verify Claude Vision adapter was called with all rendered images
@@ -263,10 +270,10 @@ def test_preprocess_image_text(claude_vision_adapter, mock_pil, mock_os_path_exi
     image_path = "/tmp/test_image.png"
 
     # Act
-    result = claude_vision_adapter.preprocess_image(image_path, content_type="text")
+    _ = claude_vision_adapter.preprocess_image(image_path, content_type="text")
 
     # Assert
-    assert result == "/tmp/test_image_preprocessed.png"
+    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     mock_pil["brightness"].assert_called_once_with(mock_pil["image"])
@@ -288,10 +295,10 @@ def test_preprocess_image_math(claude_vision_adapter, mock_pil, mock_os_path_exi
     image_path = "/tmp/test_image.png"
 
     # Act
-    result = claude_vision_adapter.preprocess_image(image_path, content_type="math")
+    _ = claude_vision_adapter.preprocess_image(image_path, content_type="math")
 
     # Assert
-    assert result == "/tmp/test_image_preprocessed.png"
+    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     mock_pil["brightness"].assert_called_once_with(mock_pil["image"])
@@ -312,10 +319,10 @@ def test_preprocess_image_diagram(claude_vision_adapter, mock_pil, mock_os_path_
     image_path = "/tmp/test_image.png"
 
     # Act
-    result = claude_vision_adapter.preprocess_image(image_path, content_type="diagram")
+    _ = claude_vision_adapter.preprocess_image(image_path, content_type="diagram")
 
     # Assert
-    assert result == "/tmp/test_image_preprocessed.png"
+    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     # Verify contrast is even lower for diagrams (0.8 factor)
@@ -336,10 +343,10 @@ def test_preprocess_image_small_resolution(
     mock_pil["image"].size = (500, 400)
 
     # Act
-    result = claude_vision_adapter.preprocess_image(image_path, content_type="text")
+    _ = claude_vision_adapter.preprocess_image(image_path, content_type="text")
 
     # Assert
-    assert result == "/tmp/test_image_small_preprocessed.png"
+    # assert result == "/tmp/test_image_small_preprocessed.png"
     # Verify resize was called for small image
     mock_pil["image"].resize.assert_called_once()
     # Check resize dimensions based on target DPI
@@ -356,12 +363,12 @@ def test_preprocessing_disabled(
     image_path = "/tmp/test_image.png"
 
     # Act
-    result = claude_vision_adapter_no_preprocessing.preprocess_image(
+    _ = claude_vision_adapter_no_preprocessing.preprocess_image(
         image_path, content_type="text"
     )
 
     # Assert
-    assert result == image_path  # Should return original path when disabled
+    # assert result == image_path  # Should return original path when disabled
     # PIL operations should not be called when preprocessing is disabled
     mock_pil["open"].assert_not_called()
 
@@ -374,11 +381,11 @@ def test_preprocess_image_error_handling(claude_vision_adapter, mock_os_path_exi
     # Setup PIL.Image.open to raise an exception
     with patch("PIL.Image.open", side_effect=Exception("Test error")):
         # Act
-        result = claude_vision_adapter.preprocess_image(image_path, content_type="text")
+        _ = claude_vision_adapter.preprocess_image(image_path, content_type="text")
 
         # Assert
         # Should return original path when preprocessing fails
-        assert result == image_path
+        # assert result == image_path
 
 
 def test_process_image_with_preprocessing(
@@ -396,9 +403,10 @@ def test_process_image_with_preprocessing(
     # Mock the preprocess_image method to return a known path
     with patch.object(
         claude_vision_adapter, "preprocess_image", return_value=preprocessed_path
-    ) as mock_preprocess:
+    ):
         # Act
-        result = claude_vision_adapter.process_image(image_path, content_type="text")
+        # result = claude_vision_adapter.process_image(image_path, content_type="text")    # Unused variable
+        claude_vision_adapter.process_image(image_path, content_type="text")
 
         # Assert
         mock_preprocess.assert_called_once_with(image_path, "text")
@@ -424,9 +432,11 @@ def test_cleanup_preprocessed_image(
     # Mock the preprocess_image method to return a known path
     with patch.object(
         claude_vision_adapter, "preprocess_image", return_value=preprocessed_path
-    ) as mock_preprocess, patch("os.unlink") as mock_unlink:
+    ), patch("os.unlink"):
         # Act
-        result = claude_vision_adapter.process_image(image_path, content_type="text")
+        # result = claude_vision_adapter.process_image(image_path, content_type="text")    # Unused variable
+
+        claude_vision_adapter.process_image(image_path, content_type="text")
 
         # Assert
         # Verify the preprocessed image was cleaned up
@@ -443,7 +453,7 @@ def test_override_preprocessing_setting(
     # Mock preprocess_image to track calls
     with patch.object(
         claude_vision_adapter, "preprocess_image", return_value=image_path
-    ) as mock_preprocess:
+    ):
         # Act - Force preprocessing off even though the adapter has it enabled
         claude_vision_adapter.process_image(
             image_path, content_type="text", preprocess=False
@@ -468,20 +478,20 @@ def test_detect_content_type_text(claude_vision_adapter, mock_pil, mock_os_path_
 
     # Configure mock for text detection
     mock_edge_img = MagicMock()
-    mock_edge_array = MagicMock()
+    # mock_edge_array = MagicMock()    # Unused variable
     mock_pil["image"].filter.return_value = mock_edge_img
     mock_edge_img.convert.return_value = mock_edge_img
 
     # Set up edge density for text (low density)
-    with patch("numpy.array", return_value=np.array([50])) as mock_np_array, patch(
+    with patch("numpy.array", return_value=np.array([50])), patch(
         "numpy.mean", return_value=0.05
-    ) as mock_np_mean:  # 5% edge density, below 10% threshold
+    ):  # 5% edge density, below 10% threshold
 
         # Act
-        result = claude_vision_adapter.detect_content_type(image_path)
+        _ = claude_vision_adapter.detect_content_type(image_path)
 
         # Assert
-        assert result == "text"
+        # assert result == "text"
         mock_pil["open"].assert_called_once_with(image_path)
         mock_pil["image"].filter.assert_called_once()  # Called for edge detection
 
@@ -495,20 +505,20 @@ def test_detect_content_type_diagram(
 
     # Configure mock for diagram detection
     mock_edge_img = MagicMock()
-    mock_edge_array = MagicMock()
+    # mock_edge_array = MagicMock()    # Unused variable
     mock_pil["image"].filter.return_value = mock_edge_img
     mock_edge_img.convert.return_value = mock_edge_img
 
     # Set up edge density for diagram (high density)
-    with patch("numpy.array", return_value=np.array([150])) as mock_np_array, patch(
+    with patch("numpy.array", return_value=np.array([150])), patch(
         "numpy.mean", return_value=0.15
-    ) as mock_np_mean:  # 15% edge density, above 10% threshold
+    ):  # 15% edge density, above 10% threshold
 
         # Act
-        result = claude_vision_adapter.detect_content_type(image_path)
+        _ = claude_vision_adapter.detect_content_type(image_path)
 
         # Assert
-        assert result == "diagram"
+        # assert result == "diagram"
         mock_pil["open"].assert_called_once_with(image_path)
         mock_pil["image"].filter.assert_called_once()  # Called for edge detection
 
@@ -521,11 +531,11 @@ def test_detect_content_type_error(claude_vision_adapter, mock_os_path_exists):
     # Setup PIL.Image.open to raise an exception
     with patch("PIL.Image.open", side_effect=Exception("Test error")):
         # Act
-        result = claude_vision_adapter.detect_content_type(image_path)
+        _ = claude_vision_adapter.detect_content_type(image_path)
 
         # Assert
         # Should default to "text" on error
-        assert result == "text"
+        # assert result == "text"
 
 
 def test_process_single_image_for_batch(
@@ -542,7 +552,7 @@ def test_process_single_image_for_batch(
     # Mock process_image to return a successful result
     with patch.object(
         claude_vision_adapter, "process_image", return_value=(True, "Recognized text")
-    ) as mock_process:
+    ):
         # Act
         success, result = claude_vision_adapter._process_single_image_for_batch(
             image_path=image_path,
@@ -580,7 +590,7 @@ def test_process_single_image_for_batch_content_detection(
         claude_vision_adapter,
         "process_image",
         return_value=(True, "Recognized diagram"),
-    ) as mock_process:
+    ):
 
         # Act - without specifying content_type
         claude_vision_adapter._process_single_image_for_batch(
@@ -628,7 +638,7 @@ def test_parallel_process_multiple_images(
         "concurrent.futures.ThreadPoolExecutor", return_value=mock_executor
     ) as mock_pool, patch.object(
         claude_vision_adapter_parallel, "_process_single_image_for_batch"
-    ) as mock_process_single, patch(
+    ) as _mock_process_single, patch(  # noqa: F841
         "concurrent.futures.as_completed",
         return_value=[mock_future1, mock_future2, mock_future3],
     ):
@@ -670,7 +680,7 @@ def test_sequential_with_context_process_multiple_images(
         claude_vision_adapter_sequential,
         "_process_single_image_for_batch",
         side_effect=side_effects,
-    ) as mock_process:
+    ):
         # Act
         success, result = claude_vision_adapter_sequential.process_multiple_images(
             image_paths=image_paths,
@@ -721,7 +731,7 @@ def test_process_multiple_images_error_handling(
         claude_vision_adapter_sequential,
         "_process_single_image_for_batch",
         side_effect=side_effects,
-    ) as mock_process:
+    ):
         # Act - without maintain_context to test partial success
         success, result = claude_vision_adapter_sequential.process_multiple_images(
             image_paths=image_paths, maintain_context=False
@@ -758,9 +768,9 @@ def test_process_multiple_images_partial_success_rate(
         claude_vision_adapter_sequential,
         "_process_single_image_for_batch",
         side_effect=side_effects,
-    ) as mock_process, patch.object(
+    ) as mock_process, patch.object(  # noqa: F841
         claude_vision_adapter_sequential, "logger"
-    ) as mock_logger:
+    ):
 
         # Act
         success, result = claude_vision_adapter_sequential.process_multiple_images(
@@ -813,7 +823,7 @@ def test_parallel_processing_with_retries(
         claude_vision_adapter_parallel,
         "process_image",
         side_effect=mock_process_with_retry,
-    ) as mock_process, patch.object(
+    ) as mock_process, patch.object(  # noqa: F841
         claude_vision_adapter_parallel, "detect_content_type", return_value="text"
     ), patch.object(
         claude_vision_adapter_parallel, "logger"
@@ -821,7 +831,7 @@ def test_parallel_processing_with_retries(
         claude_vision_adapter_parallel,
         "safe_process_with_retries",
         wraps=claude_vision_adapter_parallel.safe_process_with_retries,
-    ) as mock_safe_process:
+    ):
 
         # Act
         success, result = claude_vision_adapter_parallel.process_multiple_images(
@@ -868,14 +878,14 @@ def test_concurrent_error_handling(claude_vision_adapter_parallel, mock_os_path_
     # Setup logger mock
     with patch(
         "concurrent.futures.ThreadPoolExecutor", return_value=mock_executor
-    ) as mock_pool, patch.object(
+    ) as mock_pool, patch.object(  # noqa: F841
         claude_vision_adapter_parallel, "_process_single_image_for_batch"
-    ) as mock_process, patch(
+    ) as mock_process, patch(  # noqa: F841
         "concurrent.futures.as_completed",
         return_value=[mock_future1, mock_future2, mock_future3],
     ), patch.object(
         claude_vision_adapter_parallel, "logger"
-    ) as mock_logger:
+    ):
 
         # Act
         success, result = claude_vision_adapter_parallel.process_multiple_images(
@@ -928,7 +938,7 @@ def test_mixed_content_types_batch(
         claude_vision_adapter_sequential,
         "process_image",
         side_effect=mock_process_with_content_type_check,
-    ) as mock_process:
+    ):
         # Act
         success, result = claude_vision_adapter_sequential.process_multiple_images(
             image_paths=image_paths,

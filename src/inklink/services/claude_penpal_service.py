@@ -1268,13 +1268,13 @@ class ClaudePenpalService:
                 # Create a response with the summary of KG processing
                 summary = f"""
                 # Knowledge Graph Processing Results
-                
+
                 Notebook: {notebook_name}
                 Page: {kg_page.get('metadata', {}).get('visibleName', 'Page')}
-                
+
                 ## Extracted Entities
                 {", ".join([e["name"] for e in structured_data.get("entities", [])])}
-                
+
                 ## Extracted Relationships
                 {", ".join([f"{r['from']} {r['type']} {r['to']}" for r in structured_data.get("relationships", [])])}
 

@@ -23,7 +23,7 @@ from lilly.auth.authentication import (  # noqa: E402
     SERVICE_GOOGLE_DRIVE,
     AuthenticationError,
 )
-from lilly.auth.config import load_dotenv
+from lilly.auth.config import load_dotenv  # noqa: E402
 
 
 def main():

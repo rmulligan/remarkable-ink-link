@@ -311,6 +311,10 @@ class ClaudeVisionAdapter(Adapter):
             # Open the image
             img = Image.open(image_path)
 
+            # Convert to grayscale for analysis
+            # img_gray = img.convert("L")  # TODO: Remove if not used
+            # img_array = np.array(img_gray)  # TODO: Remove if not needed
+
             # Simple heuristic detection:
             # 1. Calculate edge density (for diagrams)
             edge_img = img.filter(ImageFilter.FIND_EDGES)
@@ -318,8 +322,8 @@ class ClaudeVisionAdapter(Adapter):
             edge_density = np.mean(edge_array > 50) * 100  # Percentage of edge pixels
 
             # 2. Calculate line-like structures (for math)
-            # horizontal_kernel = np.ones((1, 15), np.uint8)  # Currently unused
-            # vertical_kernel = np.ones((15, 1), np.uint8)  # Currently unused
+            # horizontal_kernel = np.ones((1, 15), np.uint8)  # TODO: Remove if not needed
+            # vertical_kernel = np.ones((15, 1), np.uint8)  # TODO: Remove if not needed
 
             # Simplified structural analysis
             # Higher values suggest more structured content like math
@@ -715,108 +719,3 @@ class ClaudeVisionAdapter(Adapter):
                 attempt += 1
 
         return False, "Failed after multiple retry attempts"
-
-    def _get_persona_content(self) -> str:
-        """Get Lilly persona content."""
-        # Check for environment variable first
-        persona_path = os.environ.get("LILLY_PERSONA_PATH")
-
-        if not persona_path:
-            # Check common locations
-            base_dir = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            )
-            persona_locations = [
-                os.path.join(base_dir, "models", "lilly", "config", "lilly_persona.md"),
-                os.path.join(
-                    base_dir, "src", "models", "lilly", "config", "lilly_persona.md"
-                ),
-                os.path.join(os.path.expanduser("~"), ".lilly", "persona.md"),
-                "/models/lilly/config/lilly_persona.md",
-            ]
-
-            for location in persona_locations:
-                if os.path.exists(location):
-                    persona_path = location
-                    break
-
-        # If found, read the file
-        if persona_path and os.path.exists(persona_path):
-            try:
-                with open(persona_path, "r") as f:
-                    return f.read()
-            except Exception as e:
-                self.logger.warning(f"Failed to read persona file: {e}")
-
-        # Return default persona if file not found
-        return """# Lilly: reMarkable Companion
-
-## Core Responsibilities
-As your reMarkable companion, I help you:
-- Process handwritten notes and convert them to digital text
-- Create summaries and insights from your notebooks
-- Integrate your handwritten content with other tools and services
-- Maintain a knowledge graph of your ideas and notes
-
-## Voice and Tone
-- Helpful and supportive
-- Clear and concise
-- Professional yet friendly
-- Proactive in suggesting improvements
-"""
-
-    def _get_workflow_examples(self) -> str:
-        """Get workflow examples."""
-        # Check for environment variable first
-        workflow_path = os.environ.get("LILLY_WORKFLOW_PATH")
-
-        if not workflow_path:
-            # Check common locations
-            base_dir = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            )
-            workflow_locations = [
-                os.path.join(
-                    base_dir, "models", "lilly", "memories", "workflow_examples.md"
-                ),
-                os.path.join(
-                    base_dir,
-                    "src",
-                    "models",
-                    "lilly",
-                    "memories",
-                    "workflow_examples.md",
-                ),
-                os.path.join(os.path.expanduser("~"), ".lilly", "workflows.md"),
-                "/models/lilly/memories/workflow_examples.md",
-            ]
-
-            for location in workflow_locations:
-                if os.path.exists(location):
-                    workflow_path = location
-                    break
-
-        # If found, read the file
-        if workflow_path and os.path.exists(workflow_path):
-            try:
-                with open(workflow_path, "r") as f:
-                    return f.read()
-            except Exception as e:
-                self.logger.warning(f"Failed to read workflow file: {e}")
-
-        # Return default workflows if file not found
-        return """# Example Workflows
-
-## #summarize Tag
-When you see a #summarize tag on a notebook page:
-1. Process the handwritten content
-2. Create a concise summary of the key points
-3. Save the summary to the knowledge graph
-4. Optionally send to other configured services
-
-## Daily Review
-1. Process all notes from the day
-2. Extract action items and tasks
-3. Update task management systems
-4. Create a daily summary report
-"""

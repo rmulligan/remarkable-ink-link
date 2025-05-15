@@ -28,10 +28,10 @@ if project_root not in sys.path:
 
 # Import necessary components from the project
 from src.inklink.adapters.limitless_adapter import LimitlessAdapter  # noqa: E402
-from src.inklink.services.limitless_life_log_service import (
+from src.inklink.services.limitless_life_log_service import (  # noqa: E402
     LimitlessLifeLogService,
-)  # noqa: E402
-from src.inklink.services.limitless_scheduler_service import (
+)
+from src.inklink.services.limitless_scheduler_service import (  # noqa: E402
     LimitlessSchedulerService,
 )  # noqa: E402
 

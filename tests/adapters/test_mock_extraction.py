@@ -22,7 +22,9 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import the adapter for testing
-from src.inklink.adapters.handwriting_web_adapter import HandwritingWebAdapter
+from src.inklink.adapters.handwriting_web_adapter import (  # noqa: E402
+    HandwritingWebAdapter,
+)
 
 
 def mock_strokes() -> List[Dict[str, Any]]:

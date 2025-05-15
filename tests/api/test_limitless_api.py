@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Import Limitless components
-from src.inklink.adapters.limitless_adapter import LimitlessAdapter
-from test_kg_mock import MockKnowledgeGraphService
+from src.inklink.adapters.limitless_adapter import LimitlessAdapter  # noqa: E402
+from test_kg_mock import MockKnowledgeGraphService  # noqa: E402
 
 
 class LimitlessIntegrationTester:

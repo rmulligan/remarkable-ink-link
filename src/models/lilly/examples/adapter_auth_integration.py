@@ -22,12 +22,12 @@ from lilly.auth.authentication import (  # noqa: E402
     SERVICE_PROTON_CALENDAR,
     SERVICE_GOOGLE_DRIVE,
 )
-from lilly.auth.config import load_dotenv
+from lilly.auth.config import load_dotenv  # noqa: E402
 
 # Import adapters
-from lilly.adapters.proton_mail_adapter import ProtonMailAdapter
-from lilly.adapters.proton_calendar_adapter import ProtonCalendarAdapter
-from lilly.adapters.google_drive_adapter import GoogleDriveAdapter
+from lilly.adapters.proton_mail_adapter import ProtonMailAdapter  # noqa: E402
+from lilly.adapters.proton_calendar_adapter import ProtonCalendarAdapter  # noqa: E402
+from lilly.adapters.google_drive_adapter import GoogleDriveAdapter  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

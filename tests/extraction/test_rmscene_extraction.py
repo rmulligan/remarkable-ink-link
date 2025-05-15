@@ -26,9 +26,9 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import the handwriting web adapter for testing
-from src.inklink.adapters.handwriting_web_adapter import (
+from src.inklink.adapters.handwriting_web_adapter import (  # noqa: E402
     HandwritingWebAdapter,
-)  # noqa: E402
+)
 
 
 def create_test_strokes():
