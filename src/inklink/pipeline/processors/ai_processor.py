@@ -62,7 +62,8 @@ class AIProcessor(Processor):
 
         return context
 
-    def _extract_main_text(self, content: Dict[str, Any]) -> str:
+    @staticmethod
+    def _extract_main_text(content: Dict[str, Any]) -> str:
         """
         Extract main text from content.
 

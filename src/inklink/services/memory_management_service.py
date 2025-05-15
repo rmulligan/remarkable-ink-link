@@ -112,7 +112,8 @@ class MemoryManagementService:
 
                 self.content_hash_index[content_hash].append(notebook_id)
 
-    def _compute_content_hash(self, content: Dict[str, Any]) -> str:
+    @staticmethod
+    def _compute_content_hash(content: Dict[str, Any]) -> str:
         """
         Compute hash of notebook content for deduplication.
 
@@ -193,7 +194,8 @@ class MemoryManagementService:
             logger.error(f"Error compressing notebook: {e}")
             return json.dumps(content).encode("utf-8")
 
-    def _decompress_notebook(self, compressed_data: bytes) -> Dict[str, Any]:
+    @staticmethod
+    def _decompress_notebook(compressed_data: bytes) -> Dict[str, Any]:
         """
         Decompress notebook content.
 

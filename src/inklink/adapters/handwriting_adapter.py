@@ -1,48 +1,37 @@
 """Handwriting recognition adapter for InkLink.
 
 This module provides an adapter for handwriting recognition services
-using Claude's vision capabilities through the CLI tool.
+like MyScript iink SDK.
 """
 
+import json
 import logging
 import os
-import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.adapter import Adapter
-from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 
 logger = logging.getLogger(__name__)
 
 
 class HandwritingAdapter(Adapter):
-    """Adapter for handwriting recognition using Claude Vision CLI."""
+    """Adapter for MyScript iink SDK or other handwriting recognition services."""
 
-    def __init__(self, claude_command: str = None, model: str = None, **kwargs):
+    def __init__(self, application_key: str = None, hmac_key: str = None):
         """
-        Initialize with CLI command info.
+        Initialize with API keys.
 
         Args:
-            claude_command: Command to invoke Claude CLI
-            model: Claude model to use (if needed)
+            application_key: Application key for MyScript API
+            hmac_key: HMAC key for MyScript API
         """
-        self.claude_command = claude_command or os.environ.get(
-            "CLAUDE_COMMAND", "claude"
-        )
-        self.model = model
+        self.application_key = application_key
+        self.hmac_key = hmac_key
+        self.initialized = False
 
-        # Create the Claude Vision adapter
-        self.vision_adapter = ClaudeVisionAdapter(
-            claude_command=self.claude_command, model=self.model
-        )
-        self.initialized = self.vision_adapter.is_available()
-
-        if self.initialized:
-            logger.info("Claude Vision adapter initialized successfully")
-        else:
-            logger.warning(
-                "Claude Vision adapter initialization failed or CLI not available"
-            )
+        # Initialize SDK if keys provided
+        if application_key and hmac_key:
+            self.initialize_sdk(application_key, hmac_key)
 
     def ping(self) -> bool:
         """
@@ -51,44 +40,56 @@ class HandwritingAdapter(Adapter):
         Returns:
             True if available and initialized, False otherwise
         """
-        return self.vision_adapter.is_available() if self.vision_adapter else False
+        return self.initialized
 
-    def initialize_sdk(self, claude_command: str, model: str = None) -> bool:
+    def initialize_sdk(self, application_key: str, hmac_key: str) -> bool:
         """
-        Initialize the adapter with a new command/model.
+        Initialize the MyScript iink SDK with authentication keys.
 
         Args:
-            claude_command: Command to invoke Claude CLI
-            model: Claude model to use (optional)
+            application_key: Application key for MyScript API
+            hmac_key: HMAC key for MyScript API
 
         Returns:
             True if initialized successfully, False otherwise
         """
-        # Store the values
-        self.claude_command = claude_command
-        if model:
-            self.model = model
+        try:
+            # Import here to handle case where MyScript SDK is not installed
+            try:
+                from iink.iink import IInkConfiguration, InkModel
+            except ImportError:
+                logger.warning("MyScript iink SDK not installed")
+                return False
 
-        # Reinitialize the adapter
-        self.vision_adapter = ClaudeVisionAdapter(
-            claude_command=self.claude_command, model=self.model
-        )
-        self.initialized = self.vision_adapter.is_available()
+            # Initialize SDK
+            configuration = IInkConfiguration()
+            configuration.setStringProperty("configuration-manager.search-path", ".")
+            configuration.setStringProperty(
+                "configuration-manager.application-key", application_key
+            )
+            configuration.setStringProperty("configuration-manager.hmac-key", hmac_key)
+            configuration.setStringProperty("content-package.temp-directory", ".")
 
-        if self.initialized:
-            logger.info("Claude Vision adapter initialized successfully")
-            return True
-        else:
-            logger.warning("Claude Vision adapter initialization failed")
+            # Check if initialization is successful
+            try:
+                # Create a test model to check if SDK is initialized correctly
+                InkModel()  # Just instantiate to check if it works
+                self.initialized = True
+                self.application_key = application_key
+                self.hmac_key = hmac_key
+                logger.info("MyScript iink SDK initialized successfully")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to create ink model: {e}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Failed to initialize MyScript iink SDK: {e}")
             return False
 
     def extract_strokes_from_rm_file(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
-
-        This function is maintained for compatibility with existing code,
-        but the Claude Vision approach will render the file to an image
-        rather than use the strokes directly.
 
         Args:
             rm_file_path: Path to .rm file
@@ -100,227 +101,192 @@ class HandwritingAdapter(Adapter):
             # Import rmscene for parsing .rm files
             try:
                 import rmscene
-                from rmscene.scene_items import Line
-                from rmscene.scene_stream import read_tree
             except ImportError:
                 logger.error("rmscene not installed - cannot parse .rm files")
                 return []
 
-            # Parse .rm file using current rmscene API (v0.7.0+)
+            # Parse .rm file
             with open(rm_file_path, "rb") as f:
-                try:
-                    # Try using the newer rmscene API
-                    scene_tree = read_tree(f)
+                scene = rmscene.Scene.from_bytes(f.read())
 
-                    # Convert strokes to a simple format
-                    strokes = []
+            # Convert strokes to the format needed for iink SDK
+            strokes = []
+            for layer in scene.layers:
+                for line in layer.lines:
+                    stroke = {
+                        "points": [],
+                        "width": line.width,
+                        "color": line.color,
+                        "timestamp": line.timestamp_ms,
+                    }
 
-                    # Find all Line items in the tree
-                    for item_id, item in scene_tree.items.items():
-                        if isinstance(item, Line):
-                            # Extract x, y, pressure and timestamps for each point
-                            x_points = []
-                            y_points = []
-                            pressures = []
-                            timestamps = []
-
-                            for point in item.points:
-                                x_points.append(point.x)
-                                y_points.append(point.y)
-                                pressures.append(point.pressure)
-                                # Use 't' attribute for timestamp in newer API
-                                timestamps.append(point.t if hasattr(point, "t") else 0)
-
-                            # Create stroke in simple format
-                            stroke = {
-                                "id": str(item_id),
-                                "x": x_points,
-                                "y": y_points,
-                                "p": pressures,
-                                "t": timestamps,
-                                "color": (
-                                    str(item.color)
-                                    if hasattr(item, "color")
-                                    else "#000000"
-                                ),
-                                "width": (
-                                    float(item.pen.value)
-                                    if hasattr(item, "pen")
-                                    else 2.0
-                                ),
+                    # Convert points
+                    for point in line.points:
+                        stroke["points"].append(
+                            {
+                                "x": point.x,
+                                "y": point.y,
+                                "pressure": point.pressure,
+                                "timestamp": point.timestamp_ms,
                             }
-
-                            strokes.append(stroke)
-
-                    if strokes:
-                        logger.info(
-                            f"Extracted {len(strokes)} strokes using current rmscene API"
-                        )
-                        return strokes
-                    else:
-                        logger.warning(
-                            "No strokes found in file using current rmscene API"
                         )
 
-                except Exception as scene_tree_error:
-                    logger.error(
-                        f"Failed to use current rmscene API: {scene_tree_error}"
-                    )
-                    return []
+                    strokes.append(stroke)
 
-            return []
+            return strokes
 
         except Exception as e:
             logger.error(f"Failed to extract strokes from .rm file: {e}")
             return []
 
-    def render_rm_file(self, rm_file_path: str) -> str:
+    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Render a reMarkable file to a PNG image.
+        Convert reMarkable strokes to iink SDK compatible format.
 
         Args:
-            rm_file_path: Path to the .rm file
+            strokes: List of stroke dictionaries from reMarkable
 
         Returns:
-            Path to the rendered PNG image
+            Formatted data for iink SDK
         """
         try:
-            # Use RmScene to process Remarkable files
-            from pathlib import Path
+            # Import MyScript SDK
+            try:
+                from iink.iink import InkModel, InkStroke, Point, PointerEventType
+            except ImportError:
+                logger.error("MyScript iink SDK not installed")
+                return {}
 
-            import numpy as np
-            from PIL import Image
-            from rmscene import read_v5_scene
+            # Create ink model
+            model = InkModel()
 
-            # Create temp file for output
-            fd, output_path = tempfile.mkstemp(suffix=".png")
-            os.close(fd)
+            # Add strokes to model
+            for stroke in strokes:
+                ink_stroke = InkStroke()
 
-            # Use default reMarkable dimensions
-            width = 1404  # Default reMarkable width
-            height = 1872  # Default reMarkable height
+                # Add points to stroke
+                for i, point in enumerate(stroke["points"]):
+                    # Set event type based on point position in stroke
+                    if i == 0:
+                        event_type = PointerEventType.DOWN
+                    elif i == len(stroke["points"]) - 1:
+                        event_type = PointerEventType.UP
+                    else:
+                        event_type = PointerEventType.MOVE
 
-            # Read the .rm file using RmScene
-            with open(rm_file_path, "rb") as f:
-                # scene = read_v5_scene(f)  # TODO: Implement scene processing
-                read_v5_scene(f)
+                    # Add point
+                    ink_point = Point()
+                    ink_point.x = point["x"]
+                    ink_point.y = point["y"]
+                    ink_point.pressure = (
+                        point["pressure"] if "pressure" in point else 1.0
+                    )
+                    ink_point.timestamp = (
+                        point["timestamp"] if "timestamp" in point else 0
+                    )
+                    ink_point.eventType = event_type
 
-            # Create a blank white image
-            img = Image.new("RGB", (width, height), "white")
-            img_array = np.array(img)
+                    ink_stroke.addPoint(ink_point)
 
-            # For now, just save a placeholder image
-            # TODO: Implement proper stroke rendering
+                # Add stroke to model
+                model.addStroke(ink_stroke)
 
-            im = Image.fromarray(img_array)
-            im.save(output_path)
-            logger.info(f"Rendered .rm file to {output_path}")
-
-            return output_path
+            # Convert model to JSON for easier manipulation
+            return json.loads(model.toJson())
 
         except Exception as e:
-            logger.error(f"Error rendering .rm file: {e}")
-            raise
+            logger.error(f"Failed to convert to iink format: {e}")
+            return {}
 
     def recognize_handwriting(
         self,
-        image_path: str,
+        iink_data: Dict[str, Any],
         content_type: str = "Text",
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
-        Process image and return recognition results.
+        Process ink data through the iink SDK and return recognition results.
 
         Args:
-            image_path: Path to the rendered image
+            iink_data: Ink data in iink format
             content_type: Content type (Text, Diagram, Math, etc.)
             language: Language code
 
         Returns:
             Recognition results
         """
-        # Get appropriate prompt based on content type
-        prompt = self._get_content_type_prompt(content_type, language)
+        try:
+            # Check if SDK is initialized
+            if not self.initialized:
+                logger.error("MyScript iink SDK not initialized")
+                return {"error": "SDK not initialized"}
 
-        # Process with Claude Vision
-        success, result = self.vision_adapter.process_image(
-            image_path, prompt, content_type
-        )
+            # Import SDK
+            try:
+                from iink.iink import (
+                    Configuration,
+                    ContentBlock,
+                    ContentPackage,
+                    ContentPart,
+                    InkModel,
+                    MimeType,
+                )
+            except ImportError:
+                logger.error("MyScript iink SDK not installed")
+                return {"error": "SDK not installed"}
 
-        if success:
-            import time
+            # Create ink model from JSON
+            model = InkModel.fromJson(json.dumps(iink_data))
 
-            result_id = f"vision-{int(time.time())}"
-            return {
-                "success": True,
-                "content_id": result_id,
-                "result": result,
-                "content_type": content_type,
-            }
-        else:
-            return {"success": False, "error": result}
+            # Create content package
+            package = ContentPackage()
 
-    def _get_content_type_prompt(self, content_type: str, language: str) -> str:
-        """
-        Get appropriate prompt based on content type and language.
+            # Set configuration
+            config = Configuration()
+            config.setStringProperty("lang", language)
 
-        Args:
-            content_type: Content type (Text, Diagram, Math)
-            language: Language code
+            # Create content part
+            part = package.createContentPart(content_type, config)
 
-        Returns:
-            Tailored prompt for Claude
-        """
-        lang_prefix = ""
-        if language and language != "en_US":
-            lang_prefix = f"The content is written in {language}. "
+            # Import ink model
+            part.getContent().importInkModel(model)
 
-        if not content_type or content_type.lower() == "text":
-            return f"{lang_prefix}Please transcribe the handwritten text in this image. Maintain the formatting structure as much as possible."
-        elif content_type.lower() == "math":
-            return f"{lang_prefix}Please transcribe the handwritten mathematical content in this image. Represent equations using LaTeX notation."
-        elif content_type.lower() == "diagram":
-            return f"{lang_prefix}Please describe the diagram or drawing in this image. Identify key elements, connections, and any labeled components."
-        else:
-            return f"{lang_prefix}Please transcribe the content in this image, preserving its structure and meaning."
+            # Perform recognition
+            part.getContent().processInk()
 
-    def export_content(
-        self, content_id: str, format_type: str = "text"
-    ) -> Dict[str, Any]:
+            # Export results as JIIX (JSON Interactive Ink Exchange)
+            jiix = part.getContent().export_(MimeType.JIIX)
+
+            # Parse JIIX
+            recognition_result = json.loads(jiix)
+
+            # Close package
+            package.close()
+
+            return recognition_result
+
+        except Exception as e:
+            logger.error(f"Failed to recognize handwriting: {e}")
+            return {"error": str(e)}
+
+    @staticmethod
+    def export_content(content_id: str, format_type: str = "text") -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
 
         Args:
             content_id: Content ID from recognition result
-            format_type: Format type (text, json, etc.)
+            format_type: Format type (text, JIIX, etc.)
 
         Returns:
             Exported content
         """
         try:
-            # If content_id is a string, try to parse it as JSON
-            if isinstance(content_id, str):
-                try:
-                    import json
+            # This is a simplified version assuming content_id is already a JIIX result
+            # In a real implementation, we would use MyScript SDK to export the content
 
-                    content = json.loads(content_id)
-                except (json.JSONDecodeError, TypeError):
-                    # If not valid JSON, return as is
-                    return {"content": content_id, "format": format_type}
-            else:
-                content = content_id
-
-            # Extract the main recognition result
-            text = ""
-            if isinstance(content, dict):
-                if "result" in content:
-                    text = content["result"]
-                elif "content" in content:
-                    text = content["content"]
-            else:
-                text = str(content)
-
-            return {"content": text, "format": format_type}
+            # For now, just return the content_id as is
+            return {"content": content_id, "format": format_type}
 
         except Exception as e:
             logger.error(f"Failed to export content: {e}")
@@ -346,17 +312,24 @@ class HandwritingAdapter(Adapter):
                 logger.error(f"File not found: {rm_file_path}")
                 return {"error": "File not found"}
 
-            # Render the .rm file to an image
-            image_path = self.render_rm_file(rm_file_path)
+            # Extract strokes
+            strokes = self.extract_strokes_from_rm_file(rm_file_path)
 
-            try:
-                # Process the image with Claude Vision
-                result = self.recognize_handwriting(image_path, content_type, language)
-                return result
-            finally:
-                # Clean up the temporary image file
-                if os.path.exists(image_path):
-                    os.unlink(image_path)
+            if not strokes:
+                logger.error("No strokes found in file")
+                return {"error": "No strokes found"}
+
+            # Convert to iink format
+            iink_data = self.convert_to_iink_format(strokes)
+
+            if not iink_data:
+                logger.error("Failed to convert to iink format")
+                return {"error": "Failed to convert to iink format"}
+
+            # Recognize handwriting
+            result = self.recognize_handwriting(iink_data, content_type, language)
+
+            return result
 
         except Exception as e:
             logger.error(f"Failed to process .rm file: {e}")

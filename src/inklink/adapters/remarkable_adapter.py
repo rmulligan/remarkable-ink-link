@@ -237,7 +237,8 @@ class RemarkableAdapter(Adapter):
             logger.error(f"Error downloading file: {str(e)}")
             return False, str(e)
 
-    def _sanitize_filename(self, filename: str) -> str:
+    @staticmethod
+    def _sanitize_filename(filename: str) -> str:
         """
         Sanitize filename for reMarkable.
 

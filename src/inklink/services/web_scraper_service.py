@@ -133,7 +133,8 @@ class WebScraperService(IWebScraperService):
 
         return success, response
 
-    def _build_error_response(self, url: str, error_message: str) -> Dict[str, Any]:
+    @staticmethod
+    def _build_error_response(url: str, error_message: str) -> Dict[str, Any]:
         """
         Build a standardized error response.
 

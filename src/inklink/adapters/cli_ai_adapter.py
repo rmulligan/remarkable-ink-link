@@ -10,6 +10,8 @@ import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
+from inklink.adapters.ai_adapter import AIAdapter
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 
@@ -401,8 +403,8 @@ class CLIAIAdapter(Adapter):
             temperature=temperature,
         )
 
+    @staticmethod
     def _build_prompt_with_context(
-        self,
         query_text: str,
         context: Optional[Dict[str, Any]] = None,
         structured_content: Optional[

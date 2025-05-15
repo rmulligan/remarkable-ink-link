@@ -48,11 +48,13 @@ class BaseConverter(IContentConverter, ABC):
         self.body_font = self.config.get("BODY_FONT", "Liberation Sans")
         self.code_font = self.config.get("CODE_FONT", "DejaVu Sans Mono")
 
-    def _get_timestamp(self) -> str:
+    @staticmethod
+    def _get_timestamp() -> str:
         """Return formatted timestamp."""
         return time.strftime("%Y-%m-%d %H:%M:%S")
 
-    def _escape_hcl(self, text: str) -> str:
+    @staticmethod
+    def _escape_hcl(text: str) -> str:
         """Escape special characters for HCL."""
         if not text:
             return ""

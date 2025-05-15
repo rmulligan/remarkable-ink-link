@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.config import CONFIG
@@ -156,7 +157,8 @@ class KnowledgeGraphService(IKnowledgeGraphService):
             logger.error(f"Error extracting entities from text: {e}")
             return False, {"error": f"Entity extraction failed: {str(e)}"}
 
-    def _extract_entities_heuristic(self, text: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _extract_entities_heuristic(text: str) -> List[Dict[str, Any]]:
         """
         Simple heuristic-based entity extraction as fallback.
 

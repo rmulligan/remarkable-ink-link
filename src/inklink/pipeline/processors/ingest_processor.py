@@ -69,8 +69,9 @@ class IngestProcessor(Processor):
 
         return context
 
+    @staticmethod
     def _process_content_by_type(
-        self, content_type: str, content: Any
+        content_type: str, content: Any
     ) -> List[Dict[str, Any]]:
         """
         Process content based on its type.

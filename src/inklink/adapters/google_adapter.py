@@ -6,6 +6,7 @@ This module provides an adapter for Google APIs including Google Drive and Googl
 import logging
 import os
 import re
+import tempfile
 from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
@@ -127,7 +128,8 @@ class GoogleAPIAdapter(Adapter):
         except Exception as e:
             logger.error(f"Google API authentication failed: {e}")
 
-    def extract_doc_id(self, url_or_id: str) -> str:
+    @staticmethod
+    def extract_doc_id(url_or_id: str) -> str:
         """
         Extract document ID from Google Docs URL, or return as-is.
 

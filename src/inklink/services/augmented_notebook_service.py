@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import tempfile
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -469,7 +470,8 @@ class AugmentedNotebookService:
         except Exception as e:
             logger.error(f"Error categorizing correspondence: {e}")
 
-    def _extract_sources(self, text: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _extract_sources(text: str) -> List[Dict[str, Any]]:
         """
         Extract sources from response text.
 
@@ -530,9 +532,6 @@ class AugmentedNotebookService:
                 formatted_response += "\n\n# Sources\n"
                 for i, source in enumerate(include_sources):
                     formatted_response += f"\n{i + 1}. {source['value']}"
-
-            # Create markdown content
-            import time
 
             timestamp = int(time.time())
             md_filename = f"response_{timestamp}.md"
