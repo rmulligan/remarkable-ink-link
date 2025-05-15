@@ -88,7 +88,8 @@ class AIAdapter(Adapter):
         if not self.model:
             self.model = self._get_default_model(self.provider)
 
-    def _get_default_model(self, provider: str) -> str:
+    @staticmethod
+    def _get_default_model(provider: str) -> str:
         """Get default model for a provider."""
         defaults = {
             "openai": "gpt-3.5-turbo",
@@ -103,7 +104,8 @@ class AIAdapter(Adapter):
         if not self.api_base:
             self.api_base = self._get_default_api_base(self.provider)
 
-    def _get_default_api_base(self, provider: str) -> str:
+    @staticmethod
+    def _get_default_api_base(provider: str) -> str:
         """Get default API base URL for a provider."""
         defaults = {
             "openai": "https://api.openai.com/v1",
@@ -204,10 +206,9 @@ class AIAdapter(Adapter):
                 if validation_success:
                     # Return ensemble result
                     return True, self._combine_responses(result, validation_result)
-                else:
-                    logger.warning(f"Validation failed: {validation_result}")
-                    # Still return original result if validation fails
-                    return True, result
+                logger.warning(f"Validation failed: {validation_result}")
+                # Still return original result if validation fails
+                return True, result
 
             return success, result
 
@@ -349,7 +350,7 @@ class AIAdapter(Adapter):
         messages: Optional[List[Dict[str, str]]] = None,
     ) -> Tuple[bool, str]:
         """Generate completion from a specific provider."""
-        if provider == "openai" or provider == "github":
+        if provider in ("openai", "github"):
             # GitHub uses OpenAI-compatible API
             url = f"{api_base}/chat/completions"
             headers = {
@@ -403,7 +404,8 @@ class AIAdapter(Adapter):
             return "openai/gpt-4.1"
         return self.model
 
-    def _create_validation_prompt(self, original_prompt: str, response: str) -> str:
+    @staticmethod
+    def _create_validation_prompt(original_prompt: str, response: str) -> str:
         """Create a prompt for validating the primary model's response."""
         return f"""Please review this AI response and provide your analysis:
 
@@ -419,8 +421,9 @@ Please evaluate:
 
 Provide a brief analysis and any corrections or enhancements needed."""
 
+    @staticmethod
     def _combine_responses(
-        self, primary_response: str, validation_response: str
+        primary_response: str, validation_response: str
     ) -> str:
         """Combine primary and validation responses into an ensemble result."""
         return f"""{primary_response}

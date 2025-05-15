@@ -8,8 +8,6 @@ import logging
 import os
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-from inklink.config import CONFIG
 from inklink.services.converters.base_converter import BaseConverter
 
 logger = logging.getLogger(__name__)
@@ -66,9 +64,8 @@ class PDFConverter(BaseConverter):
             if use_drawj2d:
                 # Convert using HCL method
                 return self._convert_pdf_legacy(pdf_path, title, qr_path, images)
-            else:
-                logger.error("drawj2d not available for PDF conversion")
-                return None
+            logger.error("drawj2d not available for PDF conversion")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting PDF: {str(e)}")
@@ -116,9 +113,8 @@ class PDFConverter(BaseConverter):
             if result.returncode == 0 and os.path.exists(rm_path):
                 logger.info(f"Legacy PDF conversion successful: {rm_path}")
                 return rm_path
-            else:
-                logger.error(f"Legacy PDF conversion failed: {result.stderr}")
-                return None
+            logger.error(f"Legacy PDF conversion failed: {result.stderr}")
+            return None
 
         except Exception as e:
             logger.error(f"Error in legacy PDF conversion: {str(e)}")
