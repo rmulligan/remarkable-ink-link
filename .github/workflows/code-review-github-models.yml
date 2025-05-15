@@ -73,11 +73,11 @@ jobs:
               security_issues = []
               has_tests = False
               
-              for line in lines:
+              for i, line in enumerate(lines):
                   if line.startswith('+'):
                       for pattern in security_patterns:
                           if pattern in line:
-                              security_issues.append(f"Potential security concern: {pattern} found")
+                              security_issues.append((i, pattern, line))
                       for pattern in test_patterns:
                           if pattern in line:
                               has_tests = True
@@ -95,19 +95,30 @@ jobs:
               
               if security_issues:
                   review += "\n#### ⚠️ Security Concerns\n"
-                  for issue in security_issues:
-                      review += f"- {issue}\n"
+                  for line_num, pattern, line in security_issues:
+                      review += f"\n**Issue**: Potential security concern - `{pattern}` found\n"
+                      review += f"**Line**: `{line.strip()}`\n"
+                      review += f"**Suggestion**: Consider using safer alternatives\n"
+                      
+                      # Provide specific suggestions for common patterns
+                      if pattern == 'eval(':
+                          review += "```python\n# Instead of eval(), use ast.literal_eval() for safe evaluation\nimport ast\nresult = ast.literal_eval(user_input)\n```\n"
+                      elif pattern == 'os.system':
+                          review += "```python\n# Instead of os.system(), use subprocess.run() with proper sanitization\nimport subprocess\nresult = subprocess.run(['command', 'arg'], capture_output=True, text=True)\n```\n"
               
               review += f"\n#### Testing\n"
               if has_tests:
                   review += "✅ Test changes detected\n"
               else:
-                  review += "⚠️ No test changes detected - consider adding tests\n"
+                  review += "⚠️ No test changes detected\n"
+                  review += "**Suggestion**: Add tests for your changes\n"
+                  review += "```python\ndef test_your_new_function():\n    # Add test cases here\n    assert your_function(input) == expected_output\n```\n"
               
-              review += "\n### Recommendations\n"
+              review += "\n### General Recommendations\n"
               review += "- Review the changes for logic errors and edge cases\n"
               review += "- Ensure proper error handling is in place\n"
               review += "- Verify that the changes align with project standards\n"
+              review += "- Add docstrings to new functions and classes\n"
               
               return review
 
@@ -132,6 +143,14 @@ jobs:
               2. Any potential issues or bugs
               3. Suggestions for improvements
               4. Code quality assessment
+              5. When you identify issues, provide specific code suggestions to fix them. Use markdown code blocks with the language specified.
+
+              Format your response with clear sections and include code suggestions in this format:
+              **Issue**: [Description of the issue]
+              **Suggestion**: [Explanation of the fix]
+              ```language
+              [Corrected code]
+              ```
 
               Please be concise and focus on actionable feedback.
 
@@ -142,11 +161,11 @@ jobs:
               payload = {
                   "model": "gpt-4.1",  # Changed to gpt-4.1 for enhanced code review
                   "messages": [
-                      {"role": "system", "content": "You are a helpful code reviewer."},
+                      {"role": "system", "content": "You are an expert code reviewer who provides detailed feedback with specific code suggestions."},
                       {"role": "user", "content": prompt}
                   ],
-                  "temperature": 0.3,
-                  "max_tokens": 1500
+                  "temperature": 0.2,  # Lower temperature for more focused suggestions
+                  "max_tokens": 2500  # Increased to accommodate code suggestions
               }
               
               response = requests.post(url, headers=headers, json=payload)

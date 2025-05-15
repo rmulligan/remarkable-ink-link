@@ -181,16 +181,64 @@ The project includes an automated code review workflow that runs on pull request
 - Identifies potential bugs and issues
 - Suggests improvements and best practices
 - Provides code quality assessment
+- **Generates specific code suggestions** to fix identified issues
+- Includes formatted code blocks with corrections
 
 #### Fallback Local Analysis (No PAT Required)
 - Basic change statistics (lines added/removed)
 - Security pattern detection (eval, exec, etc.)
 - Test coverage detection
 - General recommendations
+- **Basic code suggestions** for common security issues
+- Template suggestions for missing tests
 
 ### Configuration
 
 The workflow is configured in `.github/workflows/code-review-github-models.yml`
+
+### Example Code Review Output
+
+When the workflow detects issues, it provides specific code suggestions:
+
+```markdown
+## 🤖 Code Review by GitHub Models
+
+### Summary
+The changes introduce a new authentication mechanism but contain potential security vulnerabilities.
+
+### Issues and Suggestions
+
+**Issue**: SQL injection vulnerability in user query
+**Suggestion**: Use parameterized queries to prevent SQL injection
+```python
+# Instead of:
+query = f"SELECT * FROM users WHERE id = {user_id}"
+
+# Use:
+query = "SELECT * FROM users WHERE id = ?"
+cursor.execute(query, (user_id,))
+```
+
+**Issue**: Missing error handling
+**Suggestion**: Add try-catch blocks for database operations
+```python
+try:
+    result = cursor.execute(query, (user_id,))
+    return result.fetchone()
+except sqlite3.Error as e:
+    logger.error(f"Database error: {e}")
+    return None
+```
+
+### Code Quality Assessment
+- Security: ⚠️ Needs improvement
+- Error Handling: ⚠️ Missing in critical areas
+- Documentation: ✅ Well documented
+- Test Coverage: ⚠️ No tests added
+
+---
+*Powered by GitHub Models (gpt-4.1)*
+```
 
 ## Troubleshooting
 
