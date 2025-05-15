@@ -58,10 +58,13 @@ def auth_submit(code: str = Form(...)):
     # This ensures the input is completely sanitized
     sanitized_code = "".join(c for c in code if c.isalnum())
 
-    # Verify the sanitized code matches the original (redundant but explicit)
-    if sanitized_code != code:
+    # Define an allowlist of valid pairing codes (example: replace with actual logic)
+    ALLOWLIST = {"123456", "abcdef", "A1B2C3D4"}  # Example valid codes
+
+    # Check if the sanitized code is in the allowlist
+    if sanitized_code not in ALLOWLIST:
         return HTMLResponse(
-            "<html><body><h2>Invalid pairing code</h2></body></html>",
+            "<html><body><h2>Invalid or unauthorized pairing code</h2></body></html>",
             status_code=400,
         )
 
