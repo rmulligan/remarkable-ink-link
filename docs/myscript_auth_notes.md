@@ -1,0 +1,56 @@
+# How to Register and Authenticate with MyScript Cloud (Handwriting Recognition API)
+
+## Registering for MyScript Cloud API Access
+
+To use MyScript’s handwriting recognition beyond their test interface, you must have a MyScript **Cloud developer account and a registered application** on their dashboard. The process is:
+
+1. **Sign up and activate your account:** After signing up on MyScript’s developer portal, check your email and click the activation link to enable your account (this is required to use your keys). You will receive an **Application Key** and **HMAC Key** in the welcome email.
+2. **Create an application on the dashboard:** Log in to the MyScript Cloud dashboard (at **cloud.myscript.com**) and go to the **Applications** tab. Click “Create Application” to set up a new app for your project.
+3. **Generate your API keys:** Inside your new application’s settings, scroll to the bottom and click **“Generate application key.”** This will produce a unique Application Key (app ID) and a corresponding **HMAC key (secret)** for your app. Make sure to **enable HMAC** in the application settings if it’s not already (this is recommended for security). These two keys are what you’ll use to authenticate API requests from your own environment.
+
+*Tip:* If you had only a default app or were using demo credentials, creating your own application and keys is essential. Using the demo keys from examples or not having your own app configured will cause authentication to fail. Always use the Application Key and HMAC from your **own dashboard** (not sample values) for development.
+
+## Using the API Keys in Your Development Environment
+
+Once you have your Application Key and HMAC key, you need to properly include them in every API call from your development environment. **The way you send these credentials differs from the test interface and is a common source of errors.** Key points to get right:
+
+* **Use the correct API endpoint:** MyScript’s cloud REST API for Interactive Ink (stroke recognition) is hosted at `https://cloud.myscript.com/api/v4.0/iink/...`. (If you were using a “webdemo” URL in testing, switch to the official cloud endpoint for your own app.) In your code, set the host to **cloud.myscript.com** as shown in MyScript’s examples. Using the wrong host can result in your key not being recognized.
+* **Include the Application Key in the request:** Every HTTP request must send your Application Key as a header. For example, set an HTTP header `"applicationKey"` with the value of your key. MyScript’s server uses this to identify your application for the request. If this header is missing or the key is wrong, you’ll get an “access not granted” error.
+* **Include the HMAC signature (if HMAC is enabled):** When HMAC is enabled for your application, you **do not send the raw HMAC key**. Instead, you must calculate a **signature** using your HMAC key and send that in an `"hmac"` header. In other words, compute a hash-based message authentication code (HMAC) for the request and include the resulting code in the request headers. The MyScript documentation notes that the Application Key should be sent “as-is” in the header, and the HMAC authentication code must be computed and set in the `hmac` header of the HTTP request. (The exact HMAC computation method is provided in MyScript’s docs and examples – typically it involves using your HMAC secret key to sign some combination of the request content or key.)
+
+**Important:** The MyScript testing interface (such as their Swagger UI or web demo) might have handled some of this for you. For example, when you tested your strokes in the web interface, it likely already knew how to apply your keys and compute the HMAC behind the scenes. In your own environment, you need to implement this yourself. Failing to include the correct headers (especially the HMAC signature when required) will result in authentication errors.
+
+## Test Interface vs. Development Environment Differences
+
+It’s worth understanding why something works in the MyScript test console but not in your code. A few key differences:
+
+* **Automatic vs. manual signing:** In the MyScript online demo or testing UI, you may simply plug in your keys (or be logged in) and the interface sends the request. That UI will handle constructing the request properly – including generating the HMAC signature if needed – so your tests succeed. In your development environment, **you must manually replicate that process**. This means setting the correct headers and computing the HMAC code exactly as required. Any mistake in this process can lead to an authorization failure.
+* **Endpoint and configuration:** The test interface might use a specific environment (for example, a “webdemoapi” endpoint or a pre-set configuration). In contrast, your code should use the official cloud endpoint with your own app’s credentials. Ensure that your code points to the same API version and host that the test interface used (usually `cloud.myscript.com` for the cloud API).
+* **Security settings:** On your dashboard, you have the option to set security filters (allowed IPs, referer domains, etc.) for your application. The test interface calls the API from MyScript’s domain, which would naturally pass any referer check for `myscript.com`. If you have added restrictions (or if they’re enabled by default), your development calls from a different domain or location might be blocked. Double-check that either you’ve disabled such filters or your environment meets them when testing outside the MyScript UI (for initial troubleshooting, it’s best to leave those filters off).
+
+In summary, the testing interface provides a controlled environment where your credentials are known to work. When you move to your own code, you must mirror that setup exactly – using the correct keys, endpoint, and authentication method.
+
+## Resolving “access.not.granted” Errors
+
+The error code `"access.not.granted"` indicates the MyScript cloud refused your request due to an authentication issue. According to MyScript’s documentation, this means *“the application key does not exist or the HMAC signature is invalid”*. Here’s how to troubleshoot and fix this:
+
+* **1. Verify your Application Key:** Ensure that the Application Key string you’re sending exactly matches the one from your MyScript dashboard. Typos or using the wrong key (e.g. a demo or old key) will cause access to be denied. If you suspect the key might be wrong or corrupted, you can regenerate a new key in the dashboard and update your code. Also confirm that your account is in good standing (the error will differ if the account is disabled, but just make sure your trial hasn’t expired or usage limits aren’t hit – those usually produce 403 errors like *access.account.disabled*, not *access.not.granted*).
+* **2. Handle the HMAC correctly:** The **number one cause** of “access not granted” in a development environment is an incorrect HMAC authentication code. If HMAC is enabled for your app, you must compute the HMAC signature **exactly as specified** in the docs. A small mistake – wrong data being signed, wrong algorithm, encoding issues, etc. – will lead to an invalid signature and the MyScript server will reject the call. MyScript’s support confirms that most *Access not granted* errors are due to HMAC computation issues (either how the code is computed or what data is used in the hash). To fix this:
+
+  * Double-check the documentation for computing the HMAC. MyScript provides code examples (in JavaScript, etc.) to illustrate the correct method. Ensure you use the correct hash algorithm (MyScript’s Interactive Ink API uses a specific HMAC hashing method – refer to their “Credentials” section for details) and that you include all required elements when computing the hash.
+  * **Temporarily disable HMAC (for testing):** As a debugging step, you can go to your application settings on the MyScript dashboard and turn off the HMAC requirement (there’s a toggle to disable HMAC security for your app). Then try your API call again **using only the Application Key header**. If the call succeeds without the HMAC, that confirms the issue was with your signature calculation. MyScript’s engineers often suggest this approach to isolate the problem. With HMAC disabled, the Application Key alone should grant access, assuming everything else is correct. (Remember to re-enable HMAC later and fix your code once you figure out the correct computation – you don’t want to leave HMAC off in production.)
+* **3. Match the test environment configuration:** Make sure your request in code is formatted the same way as the successful test. This includes using the same content type and version. For example, if you tested in Swagger with `api/v4.0/iink/batch` and a JSON body of stroke points, replicate that exactly. Sometimes differences in request format (missing fields, different URL path) can cause errors that *surface* as access issues. Compare a working request from the test interface (if you have logs or the Swagger example) with what your code is sending. The headers should include at least `Content-Type: application/json`, your `applicationKey`, and (if applicable) the `hmac` header.
+* **4. No extra API permission needed:** There is no secondary API token or separate permission toggle beyond the Application Key/HMAC for the MyScript Cloud. If your keys are correct and your HMAC (if used) is correct, you have all you need to call the API. The *“access.not.granted”* message is not about a missing subscription or license, it’s about the credentials not being accepted. So focus on the keys and signing process. (Do verify that you’re using the correct **API domain** and not accidentally hitting a wrong URL that might not accept your key.)
+
+By following the above steps, you should be able to resolve the “access.not.granted” error. In summary, ensure you have properly **registered your app and obtained valid keys**, include the **Application Key on every request**, and **generate the HMAC signature correctly** for each request (or disable it while testing). MyScript’s official forums and documentation repeatedly emphasize that most authentication errors come down to these issues. Once your app is correctly set up and your request is properly authenticated, the handwriting recognition API will respond to your stroke data requests without the access error.
+
+Finally, if you have done all of the above and still encounter issues, consider reaching out on the MyScript developer support forums with details. Often, the problem can be pinpointed by comparing your implementation with the official examples or using MyScript’s provided SDK libraries which handle the authentication for you. With the correct setup, you’ll be able to move beyond the test interface and successfully call the MyScript REST API from your development environment.
+
+**Sources:** MyScript Developer Support Forum and Documentation
+
+* MyScript support forum – *“Access not granted”* error explanation and resolution
+* MyScript support forum – Proper registration and key generation steps
+* MyScript docs – Meaning of “access.not.granted” (invalid key or HMAC) and credential usage guidelines
+* MyScript support forum – HMAC integration issues and solutions
+
+
