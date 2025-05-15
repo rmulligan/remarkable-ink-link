@@ -27,9 +27,14 @@ echo "${bold}${blue}║               InkLink Limitless Integration Demo        
 echo "${bold}${blue}╚════════════════════════════════════════════════════════════╝${reset}"
 echo ""
 
+# Debug environment variables
+echo "Current environment variables:"
+env | grep LIMITLESS
+
 # Check for API key in argument or environment
 API_KEY=$1
 if [ -z "$API_KEY" ]; then
+  echo "Trying to use environment variable LIMITLESS_API_KEY: '$LIMITLESS_API_KEY'"
   API_KEY=$LIMITLESS_API_KEY
 fi
 
@@ -37,7 +42,7 @@ fi
 if [ -z "$API_KEY" ]; then
   echo "${yellow}Limitless API key not found.${reset}"
   read -p "Please enter your Limitless API key: " API_KEY
-  
+
   if [ -z "$API_KEY" ]; then
     echo "${bold}No API key provided. Exiting.${reset}"
     exit 1

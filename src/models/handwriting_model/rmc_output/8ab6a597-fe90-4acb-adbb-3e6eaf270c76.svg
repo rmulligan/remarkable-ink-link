@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" height="596.70796460177" width="447.6106194690265" viewBox="-223.64601769911505 0.0 447.6106194690265 596.70796460177">
+	<g id="p1" style="display:inline">
+		<g class="root-text" style="display:inline">
+            <style>
+                text.heading {
+                    font: 14pt serif;
+                }
+                text.bold {
+                    font: 8pt sans-serif bold;
+                }
+                text, text.plain {
+                    font: 7pt sans-serif;
+                }
+            </style>
+			<text x="-149.09734513274336" y="68.8141592920354" class="plain"># Introductions</text>
+			<text x="-149.09734513274336" y="113.41592920353982" class="plain">> **Ryan:**</text>
+			<text x="-149.09734513274336" y="135.71681415929203" class="plain">> Hi Claude,</text>
+			<text x="-149.09734513274336" y="158.01769911504425" class="plain">></text>
+			<text x="-149.09734513274336" y="180.31858407079645" class="plain">> Ryan here and this is my handwriting. People say I have pretty neat handwriting, so I hope that you don't have any trouble understanding me.</text>
+			<text x="-149.09734513274336" y="224.9203539823009" class="plain">---</text>
+			<text x="-149.09734513274336" y="269.5221238938053" class="plain">> **Claude:**</text>
+			<text x="-149.09734513274336" y="291.82300884955754" class="plain">> Hi Ryan!</text>
+			<text x="-149.09734513274336" y="314.1238938053097" class="plain">></text>
+			<text x="-149.09734513274336" y="336.42477876106193" class="plain">> I can read your handwriting perfectly fine. It is indeed very neat and clear. Thanks for creating this notebook for our conversation.</text>
+			<text x="-149.09734513274336" y="358.72566371681415" class="plain">></text>
+			<text x="-149.09734513274336" y="381.0265486725664" class="plain">> I'm excited to work with you on the handwriting recognition project!</text>
+		</g>
+		<g id="CrdtId(0, 1)" transform="translate(0.0, 0.0)">
+		<g id="CrdtId(0, 11)" transform="translate(0.0, 0.0)">
+		</g>
+		</g>
+	</g>
+</svg>

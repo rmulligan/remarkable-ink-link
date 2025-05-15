@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Optimal Handwriting Sample Text</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 2;
+            margin: 50px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        .alphabet {
+            letter-spacing: 3px;
+            font-size: 20px;
+            line-height: 2.5;
+        }
+        .special {
+            letter-spacing: 2px;
+            font-size: 18px;
+        }
+        .instructions {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-style: italic;
+            margin-top: 40px;
+            page-break-before: always;
+        }
+        @media print {
+            body {
+                margin: 0.5in;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Optimal Handwriting Sample Text</h1>
+    
+    <div class="section">
+        <div class="section-title">Pangrams (All 26 Letters)</div>
+        <p>The quick brown fox jumps over a lazy dog.</p>
+        <p>Five boxing wizards jump quickly.</p>
+        <p>Pack my box with five dozen liquor jugs.</p>
+        <p>How vexingly quick daft zebras jump!</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Complete Alphabet</div>
+        <p class="alphabet">ABCDEFGHIJKLM<br>NOPQRSTUVWXYZ</p>
+        <p class="alphabet">abcdefghijklm<br>nopqrstuvwxyz</p>
+        <p class="alphabet">0123456789</p>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <div class="section">
+        <div class="section-title">Consonant-Heavy Phrases</div>
+        <p>She sells seashells by the seashore. The shells she sells are surely seashells.</p>
+        <p>Peter Piper picked a peck of pickled peppers. Did Peter Piper pick a peck of pickled peppers?</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Rare Letter Combinations</div>
+        <p>We promptly judged antique ivory buckles for the next prize.</p>
+        <p>Crazy Fredrick bought many very exquisite opal jewels.</p>
+        <p>The five boxing wizards jump quickly.</p>
+        <p>Amazingly few discotheques provide jukeboxes.</p>
+        <p>My girl wove six dozen plaid jackets before she quit.</p>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <div class="section">
+        <div class="section-title">Additional Rare Letter Combinations</div>
+        <p>Sixty zippers were quickly picked from the woven jute bag.</p>
+        <p>Playing jazz vibe chords quickly excites my wife.</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Numbers and Special Characters</div>
+        <p class="special">1234567890</p>
+        <p class="special">!@#$%^&*()</p>
+        <p class="special">-_=+[]{};:'",.<>/?</p>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <div class="section">
+        <div class="section-title">Common Words and Phrases</div>
+        <p>January February March April May June July August September October November December</p>
+        <p>Monday Tuesday Wednesday Thursday Friday Saturday Sunday</p>
+        <p>1st 2nd 3rd 4th 5th 10th 21st 22nd 23rd 30th</p>
+        <p>$19.99 25% #42 7:30pm</p>
+    </div>
+    
+    <div class="instructions">
+        <h3>Instructions for Optimal Dataset Creation:</h3>
+        <p>1. Write each section on a separate page in your natural cursive handwriting.</p>
+        <p>2. Do not try to make it artificially perfect - natural variations are actually helpful for training.</p>
+        <p>3. Use this exact text as the transcription for each page.</p>
+        <p>4. For best results, write each section multiple times with slight variations in your handwriting.</p>
+    </div>
+</body>
+</html>
