@@ -140,7 +140,7 @@ jobs:
               """
               
               payload = {
-                  "model": "gpt-4o-mini",  # GitHub Models uses gpt-4o-mini
+                  "model": "gpt-4.1",  # Changed to gpt-4.1 for enhanced code review
                   "messages": [
                       {"role": "system", "content": "You are a helpful code reviewer."},
                       {"role": "user", "content": prompt}
@@ -178,7 +178,7 @@ jobs:
               
               if is_ai_review:
                   title = "## 🤖 Code Review by GitHub Models"
-                  footer = "*Powered by GitHub Models (gpt-4o-mini)*"
+                  footer = "*Powered by GitHub Models (gpt-4.1)*"
               else:
                   title = "## 📋 Automated Code Review"
                   footer = "*This is a basic automated analysis. Consider having a human review these changes.*"

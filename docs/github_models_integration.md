@@ -177,7 +177,7 @@ The project includes an automated code review workflow that runs on pull request
 ### Workflow Features
 
 #### With GitHub Models (PAT Required)
-- Comprehensive code review using AI
+- Comprehensive code review using AI (gpt-4.1)
 - Identifies potential bugs and issues
 - Suggests improvements and best practices
 - Provides code quality assessment
