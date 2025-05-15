@@ -20,8 +20,8 @@ project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.inklink.adapters.rmapi_adapter import RmapiAdapter
-from src.inklink.services.remarkable_service import RemarkableService
+from src.inklink.adapters.rmapi_adapter import RmapiAdapter  # noqa: E402
+from src.inklink.services.remarkable_service import RemarkableService  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

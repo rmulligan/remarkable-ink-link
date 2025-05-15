@@ -58,7 +58,7 @@ Claude AI offers several key benefits for handwriting recognition:
 
 This demonstration shows the complete workflow:
 - Notebook with HasLilly tag: ✓
-- Page with Lilly tag: ✓  
+- Page with Lilly tag: ✓
 - Query extraction: ✓
 - Response generation: ✓
 - Response upload: ✓

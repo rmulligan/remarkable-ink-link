@@ -27,7 +27,7 @@ def add_response_to_svg(
     # Extract SVG dimensions
     width = float(root.attrib.get("width", 1404))
     height = float(root.attrib.get("height", 1872))
-    viewBox = root.attrib.get("viewBox", f"0 0 {width} {height}")
+    # viewBox = root.attrib.get("viewBox", f"0 0 {width} {height}")  # Unused variable
 
     # Create new SVG with same dimensions
     # Find the main group element (usually with id="p1")

@@ -22,10 +22,9 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-# Import custom modules
-from model import RemarkableLSTM, CharacterPredictor
-from preprocessing import extract_strokes_from_rm_file
-from dataset import create_synthetic_dataset
+from model import RemarkableLSTM, CharacterPredictor  # noqa: E402
+from preprocessing import extract_strokes_from_rm_file  # noqa: E402
+from dataset import create_synthetic_dataset  # noqa: E402
 
 
 def plot_stroke(stroke: Dict[str, List[float]], title: str = "Stroke"):

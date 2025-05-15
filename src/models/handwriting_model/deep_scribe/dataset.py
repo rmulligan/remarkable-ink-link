@@ -18,7 +18,7 @@ from pathlib import Path
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from preprocessing import extract_strokes_from_rm_file
+from preprocessing import extract_strokes_from_rm_file  # noqa: E402
 
 
 class StrokeDataset(Dataset):

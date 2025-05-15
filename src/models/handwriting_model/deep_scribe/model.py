@@ -325,10 +325,10 @@ def train_model(
 
         # Print metrics
         print(
-            f"Epoch {epoch+1}/{num_epochs}, "
-            f"Train Loss: {train_loss/len(train_loader):.4f}, "
-            f"Val Loss: {val_loss/len(val_loader):.4f}, "
-            f"Val Accuracy: {100*correct/total:.2f}%"
+            f"Epoch {epoch + 1}/{num_epochs}, "
+            f"Train Loss: {train_loss / len(train_loader):.4f}, "
+            f"Val Loss: {val_loss / len(val_loader):.4f}, "
+            f"Val Accuracy: {100 * correct / total:.2f}%"
         )
 
     return model
