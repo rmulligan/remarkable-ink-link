@@ -87,13 +87,16 @@ jobs:
       - name: Install Dependencies
         run: |
           poetry install --no-interaction --no-ansi
-      - name: Code Review GPT
-        uses: mattzcarey/shippie@v0.14.0
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
-        with:
-          MODEL_STRING: openai:gpt-4.1-mini
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ github.token }}
+      # Code Review with Shippie (requires OPENAI_API_KEY)
+      # Note: Shippie does not support GitHub Models directly
+      # Uncomment below to enable when OPENAI_API_KEY is set
+      # - name: Code Review GPT
+      #   uses: mattzcarey/shippie@v0.14.0
+      #   if: ${{ secrets.OPENAI_API_KEY != '' }}
+      #   with:
+      #     MODEL_STRING: openai:gpt-4.1-mini
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     GITHUB_TOKEN: ${{ github.token }}
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
