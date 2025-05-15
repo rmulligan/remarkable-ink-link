@@ -145,8 +145,9 @@ class GoogleDocsService(IGoogleDocsService):
             logger.error(f"Failed to list Google Docs documents: {e}")
             return []
 
+    @staticmethod
     def _build_error_response(
-        self, url_or_id: str, error_message: str
+        url_or_id: str, error_message: str
     ) -> Dict[str, Any]:
         """
         Build a standardized error response.

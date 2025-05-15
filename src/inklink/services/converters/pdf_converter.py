@@ -128,7 +128,8 @@ class PDFConverter(BaseConverter):
             logger.error(f"Error in legacy PDF conversion: {str(e)}")
             return None
 
-    def get_image_dimensions(self, image_path: str) -> Tuple[int, int]:
+    @staticmethod
+    def get_image_dimensions(image_path: str) -> Tuple[int, int]:
         """
         Get the dimensions of an image using PIL.
         Args:

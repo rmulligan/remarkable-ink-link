@@ -150,7 +150,8 @@ class CommandAdapter(Adapter):
             logger.error(f"Command failed after retries: {str(e)}")
             return False, str(e)
 
-    def parse_json_output(self, output: str) -> Tuple[bool, Dict[str, Any]]:
+    @staticmethod
+    def parse_json_output(output: str) -> Tuple[bool, Dict[str, Any]]:
         """
         Parse JSON output from a command.
 
@@ -168,8 +169,9 @@ class CommandAdapter(Adapter):
             logger.error(f"Failed to parse JSON output: {str(e)}")
             return False, str(e)
 
+    @staticmethod
     def parse_key_value_output(
-        self, output: str, delimiter: str = ":"
+        output: str, delimiter: str = ":"
     ) -> Dict[str, str]:
         """
         Parse key-value output from a command.

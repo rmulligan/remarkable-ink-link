@@ -280,10 +280,12 @@ def mock_controller():
     """Create a mock HTTP handler for testing the controller."""
 
     class MockHandler:
-        def get_query_params(self):
+        @staticmethod
+        def get_query_params():
             return {}
-
-        def get_body(self):
+        
+        @staticmethod
+        def get_body():
             return {}
 
         def send_response(self, status_code, headers=None):
@@ -322,8 +324,9 @@ def mock_limitless_controller(
 # Test classes
 class TestLimitlessMockIntegration:
     """Mock integration tests for Limitless using fake data and mocked services."""
-
-    def test_adapter_ping(self, mock_limitless_adapter, mock_http_adapter):
+    
+    @staticmethod
+    def test_adapter_ping(mock_limitless_adapter, mock_http_adapter):
         """Test the adapter ping method."""
         # Setup mock response
         mock_http_adapter.get.return_value = (True, {"data": []})
@@ -334,8 +337,9 @@ class TestLimitlessMockIntegration:
         # Test failed ping
         mock_http_adapter.get.return_value = (False, "Error")
         assert mock_limitless_adapter.ping() is False
-
-    def test_adapter_get_life_logs(self, mock_limitless_adapter, mock_http_adapter):
+    
+    @staticmethod
+    def test_adapter_get_life_logs(mock_limitless_adapter, mock_http_adapter):
         """Test fetching life logs."""
         # Setup mock response for a single page
         mock_http_adapter.get.return_value = (
@@ -349,8 +353,9 @@ class TestLimitlessMockIntegration:
         assert success is True
         assert "data" in result
         assert result["data"] == SAMPLE_LIFE_LOGS
-
-    def test_adapter_pagination(self, mock_limitless_adapter, mock_http_adapter):
+    
+    @staticmethod
+    def test_adapter_pagination(mock_limitless_adapter, mock_http_adapter):
         """Test pagination handling in the adapter."""
         # Setup mock responses for pagination
         response1 = {
@@ -373,10 +378,9 @@ class TestLimitlessMockIntegration:
         # Reset mock for next test
         mock_http_adapter.get.reset_mock()
         mock_http_adapter.get.side_effect = None
-
-    def test_service_sync_logs(
-        self, mock_limitless_service, mock_limitless_adapter, mock_http_adapter
-    ):
+    
+    @staticmethod
+    def test_service_sync_logs(mock_limitless_service, mock_limitless_adapter, mock_http_adapter):
         """Test synchronizing life logs to the knowledge graph."""
         # Setup mock response for get_all_life_logs
         mock_http_adapter.get.return_value = (
@@ -389,8 +393,9 @@ class TestLimitlessMockIntegration:
 
         assert success is True
         assert "Successfully synced" in message
-
-    def test_service_cache(self, mock_limitless_service):
+    
+    @staticmethod
+    def test_service_cache(mock_limitless_service):
         """Test life log caching in the service."""
         # Save a log to cache
         log_id = "test_log_id"
@@ -409,8 +414,9 @@ class TestLimitlessMockIntegration:
 
         assert success is True
         assert "Successfully cleared" in message
-
-    def test_service_entity_extraction(self, mock_limitless_service, mock_kg_service):
+    
+    @staticmethod
+    def test_service_entity_extraction(mock_limitless_service, mock_kg_service):
         """Test entity extraction from life logs."""
         # Process a sample life log
         log = SAMPLE_LIFE_LOGS[0]
@@ -423,8 +429,9 @@ class TestLimitlessMockIntegration:
         mock_kg_service.extract_entities.assert_called_with(log["content"])
         mock_kg_service.extract_relationships.assert_called_with(log["content"])
         mock_kg_service.add_entity.assert_called()
-
-    def test_scheduler_start_stop(self, mock_limitless_scheduler):
+    
+    @staticmethod
+    def test_scheduler_start_stop(mock_limitless_scheduler):
         """Test starting and stopping the scheduler."""
         # Start scheduler
         assert mock_limitless_scheduler.start() is True
@@ -439,10 +446,9 @@ class TestLimitlessMockIntegration:
 
         # Try to stop again (should fail)
         assert mock_limitless_scheduler.stop() is False
-
-    def test_scheduler_trigger_sync(
-        self, mock_limitless_scheduler, mock_limitless_service
-    ):
+    
+    @staticmethod
+    def test_scheduler_trigger_sync(mock_limitless_scheduler, mock_limitless_service):
         """Test manually triggering a sync."""
         # Replace sync_life_logs with mock to avoid actual processing
         mock_limitless_service.sync_life_logs = Mock(
@@ -463,8 +469,9 @@ class TestLimitlessMockIntegration:
         # Test force_full_sync
         mock_limitless_scheduler.trigger_sync(force_full_sync=True)
         mock_limitless_service.sync_life_logs.assert_called_with(force_full_sync=True)
-
-    def test_scheduler_loop(self, mock_limitless_scheduler, mock_limitless_service):
+    
+    @staticmethod
+    def test_scheduler_loop(mock_limitless_scheduler, mock_limitless_service):
         """Test the scheduler loop with a very short interval."""
         # Replace sync_life_logs with mock to avoid actual processing
         mock_limitless_service.sync_life_logs = Mock(
@@ -486,10 +493,9 @@ class TestLimitlessMockIntegration:
 
         # Verify sync was called at least once
         mock_limitless_service.sync_life_logs.assert_called()
-
-    def test_controller_handle_sync(
-        self, mock_limitless_controller, mock_limitless_scheduler
-    ):
+    
+    @staticmethod
+    def test_controller_handle_sync(mock_limitless_controller, mock_limitless_scheduler):
         """Test the sync endpoint in the controller."""
         # Replace trigger_sync with mock
         mock_limitless_scheduler.trigger_sync = Mock(
@@ -507,13 +513,9 @@ class TestLimitlessMockIntegration:
         # Test force sync from body
         mock_limitless_controller.handle_sync("POST", {}, {"force_full_sync": True})
         mock_limitless_scheduler.trigger_sync.assert_called_with(force_full_sync=True)
-
-    def test_controller_handle_status(
-        self,
-        mock_limitless_controller,
-        mock_limitless_service,
-        mock_limitless_scheduler,
-    ):
+    
+    @staticmethod
+    def test_controller_handle_status(mock_limitless_controller, mock_limitless_service, mock_limitless_scheduler):
         """Test the status endpoint in the controller."""
         # Replace get_sync_status and get_status with mocks
         mock_limitless_service.get_sync_status = Mock(
@@ -531,10 +533,9 @@ class TestLimitlessMockIntegration:
             "service": {"test": "service_status"},
             "scheduler": {"test": "scheduler_status"},
         }
-
-    def test_controller_handle_scheduler(
-        self, mock_limitless_controller, mock_limitless_scheduler
-    ):
+    
+    @staticmethod
+    def test_controller_handle_scheduler(mock_limitless_controller, mock_limitless_scheduler):
         """Test the scheduler endpoints in the controller."""
         # Replace start, stop, and get_status with mocks
         mock_limitless_scheduler.start = Mock(return_value=True)
@@ -570,14 +571,16 @@ class TestLimitlessMockIntegration:
 
 class TestLimitlessLiveIntegration:
     """Live integration tests for Limitless with real API calls and Neo4j connections."""
-
-    def test_adapter_connectivity(self, live_limitless_adapter):
+    
+    @staticmethod
+    def test_adapter_connectivity(live_limitless_adapter):
         """Test adapter connectivity to real Limitless API."""
         # Check API reachability
         assert live_limitless_adapter.ping() is True
         logger.info("Limitless API is reachable")
-
-    def test_adapter_fetch_logs(self, live_limitless_adapter):
+    
+    @staticmethod
+    def test_adapter_fetch_logs(live_limitless_adapter):
         """Test fetching life logs from real API."""
         # Get a few logs
         success, result = live_limitless_adapter.get_life_logs(limit=5)
@@ -595,8 +598,9 @@ class TestLimitlessLiveIntegration:
         # Return the first log if available for later tests
         if logs:
             return logs[0]
-
-    def test_knowledge_graph_connectivity(self, live_knowledge_graph_service):
+    
+    @staticmethod
+    def test_knowledge_graph_connectivity(live_knowledge_graph_service):
         """Test connectivity to Neo4j knowledge graph."""
         kg_service, test_source = live_knowledge_graph_service
 
@@ -621,13 +625,9 @@ class TestLimitlessLiveIntegration:
         assert entity_id in entity_ids, "Test entity not found in knowledge graph"
 
         logger.info("Knowledge graph connection successful")
-
-    def test_full_sync_flow(
-        self,
-        live_limitless_adapter,
-        live_limitless_service,
-        live_knowledge_graph_service,
-    ):
+    
+    @staticmethod
+    def test_full_sync_flow(live_limitless_adapter, live_limitless_service, live_knowledge_graph_service):
         """Test the full sync flow with real data and knowledge graph integration."""
         kg_service, test_source = live_knowledge_graph_service
 
@@ -649,8 +649,9 @@ class TestLimitlessLiveIntegration:
         # If we have new entities, the sync extracted something
         # Note: This test is somewhat fragile as it depends on having recent logs with entities
         assert entities_after >= entities_before, "No new entities were created"
-
-    def test_scheduler_integration(self, live_limitless_scheduler):
+    
+    @staticmethod
+    def test_scheduler_integration(live_limitless_scheduler):
         """Test scheduler integration with real services."""
         # Start the scheduler
         assert live_limitless_scheduler.start() is True
@@ -673,8 +674,9 @@ class TestLimitlessLiveIntegration:
         result = live_limitless_scheduler.trigger_sync(force_full_sync=False)
         assert result["success"] is True
         logger.info("Manual sync triggered successfully")
-
-    def test_caching(self, live_limitless_adapter, live_limitless_service):
+    
+    @staticmethod
+    def test_caching(live_limitless_adapter, live_limitless_service):
         """Test caching of life logs."""
         # First get a life log
         success, result = live_limitless_adapter.get_life_logs(limit=1)

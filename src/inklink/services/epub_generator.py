@@ -114,8 +114,9 @@ class EPUBGenerator:
             logger.error(f"Error creating EPUB: {str(e)}")
             return False, {"error": str(e)}
 
+    @staticmethod
     def enhance_markdown_with_hyperlinks(
-        self, markdown_content: str, entity_links: Dict[str, str]
+        markdown_content: str, entity_links: Dict[str, str]
     ) -> str:
         """
         Enhance markdown content with hyperlinks.
@@ -163,7 +164,8 @@ class EPUBGenerator:
         # Join the enhanced lines back into a single string
         return "\n".join(enhanced_lines)
 
-    def _wrap_html_content(self, html_content: str, title: str) -> str:
+    @staticmethod
+    def _wrap_html_content(html_content: str, title: str) -> str:
         """
         Wrap HTML content with proper tags and CSS for better reMarkable display.
 
@@ -212,7 +214,8 @@ class EPUBGenerator:
 
         return wrapped_content
 
-    def create_toc_for_entities(self, entities: List[Dict[str, Any]]) -> str:
+    @staticmethod
+    def create_toc_for_entities(entities: List[Dict[str, Any]]) -> str:
         """
         Create a table of contents markdown for entity links.
 

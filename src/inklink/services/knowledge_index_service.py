@@ -840,7 +840,8 @@ class KnowledgeIndexService:
             logger.error(f"Error uploading to reMarkable: {str(e)}")
             return False, str(e)
 
-    def _create_anchor_id(self, text: str) -> str:
+    @staticmethod
+    def _create_anchor_id(text: str) -> str:
         """
         Create a valid HTML anchor ID from text.
 

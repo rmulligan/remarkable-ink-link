@@ -7,8 +7,8 @@ class HCLTemplateService:
     Service for rendering HCL resources using Jinja2 templates and rmc.
     """
 
+    @staticmethod
     def render(
-        self,
         config: HCLResourceConfig,
         template_path: str = "inklink/hcl_templates/main.j2",
     ) -> str:

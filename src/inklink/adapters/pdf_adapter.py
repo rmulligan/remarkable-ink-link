@@ -52,7 +52,8 @@ class PDFAdapter(Adapter):
             logger.error(f"PDF adapter check failed: {e}")
             return False
 
-    def extract_metadata(self, pdf_path: str) -> Dict[str, Any]:
+    @staticmethod
+    def extract_metadata(pdf_path: str) -> Dict[str, Any]:
         """
         Extract metadata from a PDF file.
 
@@ -164,7 +165,8 @@ class PDFAdapter(Adapter):
             logger.error(f"Error converting PDF to images: {e}")
             return []
 
-    def merge_pdfs(self, pdf_paths: List[str], output_path: str) -> bool:
+    @staticmethod
+    def merge_pdfs(pdf_paths: List[str], output_path: str) -> bool:
         """
         Merge multiple PDFs into a single PDF.
 
@@ -190,7 +192,8 @@ class PDFAdapter(Adapter):
             logger.error(f"Error merging PDFs: {e}")
             return False
 
-    def split_pdf(self, pdf_path: str, output_dir: str) -> List[str]:
+    @staticmethod
+    def split_pdf(pdf_path: str, output_dir: str) -> List[str]:
         """
         Split a PDF into separate pages.
 
@@ -231,7 +234,8 @@ class PDFAdapter(Adapter):
             logger.error(f"Error splitting PDF: {e}")
             return []
 
-    def extract_text(self, pdf_path: str) -> List[str]:
+    @staticmethod
+    def extract_text(pdf_path: str) -> List[str]:
         """
         Extract text from each page of a PDF.
 
@@ -256,8 +260,9 @@ class PDFAdapter(Adapter):
             logger.error(f"Error extracting text from PDF: {e}")
             return []
 
+    @staticmethod
     def add_watermark(
-        self, pdf_path: str, watermark_path: str, output_path: str
+        pdf_path: str, watermark_path: str, output_path: str
     ) -> bool:
         """
         Add watermark (like a QR code) to each page of a PDF.
@@ -297,8 +302,8 @@ class PDFAdapter(Adapter):
             logger.error(f"Error adding watermark to PDF: {e}")
             return False
 
+    @staticmethod
     def generate_graph_pdf(
-        self,
         nodes: List[Dict[str, Any]],
         edges: List[Tuple[str, str]],
         output_path: str,

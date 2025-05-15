@@ -401,8 +401,8 @@ class CLIAIAdapter(Adapter):
             temperature=temperature,
         )
 
+    @staticmethod
     def _build_prompt_with_context(
-        self,
         query_text: str,
         context: Optional[Dict[str, Any]] = None,
         structured_content: Optional[

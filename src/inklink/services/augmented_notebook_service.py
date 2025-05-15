@@ -469,7 +469,8 @@ class AugmentedNotebookService:
         except Exception as e:
             logger.error(f"Error categorizing correspondence: {e}")
 
-    def _extract_sources(self, text: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _extract_sources(text: str) -> List[Dict[str, Any]]:
         """
         Extract sources from response text.
 

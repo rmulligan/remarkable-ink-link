@@ -127,7 +127,8 @@ class GoogleAPIAdapter(Adapter):
         except Exception as e:
             logger.error(f"Google API authentication failed: {e}")
 
-    def extract_doc_id(self, url_or_id: str) -> str:
+    @staticmethod
+    def extract_doc_id(url_or_id: str) -> str:
         """
         Extract document ID from Google Docs URL, or return as-is.
 

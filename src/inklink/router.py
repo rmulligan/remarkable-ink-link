@@ -102,7 +102,8 @@ class Router:
         # No route matched
         return None
 
-    def _parse_path(self, path: str) -> Tuple[str, str]:
+    @staticmethod
+    def _parse_path(path: str) -> Tuple[str, str]:
         """
         Parse path into route and query string.
 
