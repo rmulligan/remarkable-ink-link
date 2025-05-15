@@ -114,21 +114,12 @@ def test_recognize_handwriting(mock_handwriting_adapter):
         handwriting_adapter=mock_handwriting_adapter,
     )
 
-    # Test single page
-    result = service.recognize_handwriting(["/path/to/page1.png"])
+    # Test single page with successful recognition
+    result = service.recognize_handwriting("/path/to/page1.png")
     assert result["success"] is True
-    assert result["content"]["text"] == "Recognized text"
-
-    # Test multiple pages
-    mock_handwriting_adapter.process_multiple_images.return_value = [
-        {"page": 0, "text": "Page 1 text"},
-        {"page": 1, "text": "Page 2 text"},
-    ]
-    result = service.recognize_handwriting(["/path/to/page1.png", "/path/to/page2.png"])
-    assert result["success"] is True
-    assert len(result["content"]) == 2
-    assert result["content"][0]["text"] == "Page 1 text"
-    assert result["content"][1]["text"] == "Page 2 text"
+    assert result["text"] == "Recognized text"
+    assert "content_id" in result
+    assert "raw_result" in result
 
 
 def test_recognize_handwriting_error(mock_handwriting_adapter):
@@ -139,10 +130,11 @@ def test_recognize_handwriting_error(mock_handwriting_adapter):
         handwriting_adapter=mock_handwriting_adapter,
     )
 
-    # Test with processing error
-    mock_handwriting_adapter.process_image.side_effect = Exception(
-        "Vision processing failed"
-    )
-    result = service.recognize_handwriting(["/path/to/page1.png"])
+    # Test with recognition failure
+    mock_handwriting_adapter.recognize_handwriting.return_value = {
+        "success": False,
+        "error": "Vision processing failed",
+    }
+    result = service.recognize_handwriting("/path/to/page1.png")
     assert result["success"] is False
     assert "Vision processing failed" in result["error"]
