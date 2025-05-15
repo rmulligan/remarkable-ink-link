@@ -71,12 +71,12 @@ def mock_handwriting_adapter():
 
 
 def test_init_with_keys():
-    """Test initialization with explicit keys."""
+    """Test initialization with explicit Claude CLI configuration."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key", hmac_key="test_hmac_key"
+        claude_command="/test/claude/cli", model="test-model"
     )
-    assert service.application_key == "test_app_key"
-    assert service.hmac_key == "test_hmac_key"
+    assert service.claude_command == "/test/claude/cli"
+    assert service.model == "test-model"
     assert isinstance(service.adapter, HandwritingAdapter)
 
 
