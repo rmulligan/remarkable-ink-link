@@ -29,7 +29,6 @@ def mock_handwriting_adapter():
     """Create a mock handwriting adapter."""
     adapter = MagicMock(spec=ClaudeVisionAdapter)
     adapter.ping.return_value = True
-    adapter.initialize_sdk.return_value = True
 
     # Mock extract_strokes_from_rm_file to return test strokes
     adapter.extract_strokes_from_rm_file.return_value = [
