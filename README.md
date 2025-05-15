@@ -7,6 +7,9 @@ InkLink connects your reMarkable with powerful AI tooling for handwritten workfl
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-brightgreen)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=active+issues&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=code+coverage&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
+[![DeepSource](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link.svg/?label=resolved+issues&show_trend=true&token=AtrApop5YKPHPWv1MeAGTR0u)](https://app.deepsource.com/gh/rmulligan/remarkable-ink-link/)
 
 ---
 
