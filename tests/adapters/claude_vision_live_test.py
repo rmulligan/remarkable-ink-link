@@ -14,7 +14,15 @@ import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
-import cv2
+import pytest
+
+try:
+    import cv2
+
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+
 import numpy as np
 from PIL import Image
 

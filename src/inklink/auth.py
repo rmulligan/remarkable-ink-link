@@ -48,6 +48,9 @@ def auth_submit(code: str = Form(...)):
             status_code=400,
         )
 
+    # Minimal security: strip whitespace to prevent issues
+    code = code.strip()
+
     # Run ddvk rmapi pairing using the provided pairing code
     # Path to rmapi executable
     rmapi_path = CONFIG.get("RMAPI_PATH", "rmapi")
