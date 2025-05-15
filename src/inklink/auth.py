@@ -9,10 +9,6 @@ from fastapi.responses import HTMLResponse
 
 from inklink.config import CONFIG
 
-<< << << < HEAD
-== == == =
->>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
-
 
 app = FastAPI()
 
@@ -48,7 +44,6 @@ def auth_form():
 def auth_submit(code: str = Form(...)):
     # Validate the pairing code format
     # reMarkable pairing codes are typically 6-8 alphanumeric characters
-    import re
 
     code = code.strip() if code else ""
 

@@ -12,10 +12,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from inklink.config import CONFIG
 from inklink.services.converters.base_converter import BaseConverter
 
-<< << << < HEAD
-== == == =
->>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
-
 logger = logging.getLogger(__name__)
 
 
