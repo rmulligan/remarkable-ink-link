@@ -16,7 +16,6 @@ from src.inklink.config import CONFIG
 @click.group()
 def cli():
     """InkLink CLI entry point."""
-    pass
 
 
 @cli.command()

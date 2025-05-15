@@ -80,8 +80,6 @@ class KnowledgeIndexService:
         Args:
             value: Ignored value
         """
-        # Do nothing - value is ignored
-        pass
 
     def create_entity_index(
         self,

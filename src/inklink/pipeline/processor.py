@@ -100,7 +100,6 @@ class Processor(Generic[T, U], ABC):
         Returns:
             Updated pipeline context
         """
-        pass
 
     def __str__(self) -> str:
         """
