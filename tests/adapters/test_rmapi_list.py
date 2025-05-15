@@ -4,9 +4,11 @@ import sys
 from src.inklink.adapters.rmapi_adapter import RmapiAdapter
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                   stream=sys.stdout)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+)
 
 # Initialize adapter with the path to rmapi
 adapter = RmapiAdapter("/home/ryan/bin/rmapi")

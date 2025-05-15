@@ -50,14 +50,14 @@ def limitless_adapter():
     """Create a real Limitless adapter with API key from environment."""
     api_key = os.environ.get("LIMITLESS_API_KEY")
     base_url = os.environ.get("LIMITLESS_API_URL", "https://api.limitless.ai")
-    
+
     adapter = LimitlessAdapter(
         api_key=api_key,
         base_url=base_url,
         timeout=30,  # Longer timeout for real API calls
         retries=3,
     )
-    
+
     return adapter
 
 
@@ -69,7 +69,7 @@ def knowledge_graph_service():
     import os
 
     # Add the project root to Python path for imports
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
@@ -99,14 +99,14 @@ def limitless_service(limitless_adapter, knowledge_graph_service):
     with tempfile.TemporaryDirectory() as temp_dir:
         storage_path = os.path.join(temp_dir, "limitless")
         os.makedirs(storage_path, exist_ok=True)
-        
+
         service = LimitlessLifeLogService(
             limitless_adapter=limitless_adapter,
             knowledge_graph_service=knowledge_graph_service,
             sync_interval=3600,
             storage_path=storage_path,
         )
-        
+
         yield service
 
 
@@ -116,11 +116,11 @@ def limitless_scheduler(limitless_service):
     scheduler = LimitlessSchedulerService(
         limitless_service=limitless_service,
         sync_interval=60,  # Short interval for testing
-        initial_delay=1,   # Short delay for testing
+        initial_delay=1,  # Short delay for testing
     )
-    
+
     yield scheduler
-    
+
     # Ensure scheduler is stopped after test
     if scheduler.running:
         scheduler.stop()
@@ -128,13 +128,13 @@ def limitless_scheduler(limitless_service):
 
 class TestLimitlessLiveIntegration:
     """Live integration tests for Limitless."""
-    
+
     def test_limitless_adapter_ping(self, limitless_adapter):
         """Test that the adapter can connect to the real Limitless API."""
         logger.info("Testing API connectivity...")
         assert limitless_adapter.ping() is True
         logger.info("API connectivity successful")
-    
+
     def test_limitless_adapter_get_life_logs(self, limitless_adapter):
         """Test fetching life logs from the real API."""
         logger.info("Fetching life logs from API...")
@@ -144,7 +144,9 @@ class TestLimitlessLiveIntegration:
 
         # Debug the actual response format
         logger.info(f"API response type: {type(result)}")
-        logger.info(f"API response keys: {result.keys() if isinstance(result, dict) else 'Not a dict'}")
+        logger.info(
+            f"API response keys: {result.keys() if isinstance(result, dict) else 'Not a dict'}"
+        )
         logger.info(f"Full response: {json.dumps(result, indent=2)}")
 
         # Updated handling for current API response format
@@ -168,7 +170,9 @@ class TestLimitlessLiveIntegration:
                 # Format: {"items": [logs...]}
                 logs = result["items"]
 
-        logger.info(f"Available response keys: {result.keys() if isinstance(result, dict) else type(result)}")
+        logger.info(
+            f"Available response keys: {result.keys() if isinstance(result, dict) else type(result)}"
+        )
         if "data" in result and isinstance(result["data"], dict):
             logger.info(f"Data keys: {result['data'].keys()}")
 
@@ -186,73 +190,79 @@ class TestLimitlessLiveIntegration:
                     logger.info(f"Log type: {type(log)}, Content: {log}")
 
         return logs
-    
+
     def test_limitless_adapter_get_all_life_logs(self, limitless_adapter):
         """Test fetching all life logs with pagination."""
         logger.info("Fetching all life logs from API (with pagination)...")
         # Get logs from the last 30 days to limit the result set
         from_date = datetime.now() - timedelta(days=30)
-        
+
         start_time = time.time()
         success, logs = limitless_adapter.get_all_life_logs(from_date=from_date)
         end_time = time.time()
-        
+
         assert success is True
-        logger.info(f"Successfully fetched {len(logs)} life logs in {end_time - start_time:.2f} seconds")
-    
+        logger.info(
+            f"Successfully fetched {len(logs)} life logs in {end_time - start_time:.2f} seconds"
+        )
+
     def test_limitless_service_sync_logs(self, limitless_service):
         """Test syncing life logs to the knowledge graph."""
         logger.info("Syncing life logs to knowledge graph...")
-        
+
         # Sync logs from the last 7 days
         limitless_service.last_sync_time = datetime.now() - timedelta(days=7)
-        
+
         start_time = time.time()
         success, message = limitless_service.sync_life_logs()
         end_time = time.time()
-        
+
         assert success is True
         logger.info(f"Sync result: {message} in {end_time - start_time:.2f} seconds")
-        
+
         # Check service status
         status = limitless_service.get_sync_status()
         logger.info(f"Service status: {json.dumps(status, indent=2)}")
-    
+
     def test_limitless_scheduler(self, limitless_scheduler):
         """Test starting and stopping the scheduler."""
         logger.info("Testing scheduler start/stop...")
-        
+
         # Start the scheduler
         assert limitless_scheduler.start() is True
         assert limitless_scheduler.running is True
-        
+
         # Get status
         status = limitless_scheduler.get_status()
         logger.info(f"Scheduler status after start: {json.dumps(status, indent=2)}")
-        
+
         # Wait a bit for the first sync to complete
         logger.info("Waiting for initial sync...")
         time.sleep(5)
-        
+
         # Get updated status
         status = limitless_scheduler.get_status()
-        logger.info(f"Scheduler status after initial sync: {json.dumps(status, indent=2)}")
-        
+        logger.info(
+            f"Scheduler status after initial sync: {json.dumps(status, indent=2)}"
+        )
+
         # Stop the scheduler
         assert limitless_scheduler.stop() is True
         assert limitless_scheduler.running is False
-    
+
     def test_limitless_manual_trigger(self, limitless_scheduler):
         """Test manually triggering a sync."""
         logger.info("Testing manual sync trigger...")
-        
+
         # Trigger sync with force=True to sync all logs
         result = limitless_scheduler.trigger_sync(force_full_sync=True)
-        
+
         assert result["success"] is True
         logger.info(f"Manual sync result: {json.dumps(result, indent=2)}")
-    
-    def test_end_to_end_flow(self, limitless_adapter, limitless_service, limitless_scheduler):
+
+    def test_end_to_end_flow(
+        self, limitless_adapter, limitless_service, limitless_scheduler
+    ):
         """Test the complete end-to-end flow of the Limitless integration."""
         logger.info("Running end-to-end flow test...")
 
@@ -262,7 +272,9 @@ class TestLimitlessLiveIntegration:
         assert success, "Failed to fetch life logs"
 
         # Debug response format
-        logger.info(f"API response structure: {json.dumps({k: type(v).__name__ for k, v in logs.items()}, indent=2)}")
+        logger.info(
+            f"API response structure: {json.dumps({k: type(v).__name__ for k, v in logs.items()}, indent=2)}"
+        )
 
         # Updated handling for current API response format
         sample_logs = []
@@ -285,7 +297,9 @@ class TestLimitlessLiveIntegration:
                 # Format: {"items": [logs...]}
                 sample_logs = logs["items"]
 
-        logger.info(f"Available response keys: {logs.keys() if isinstance(logs, dict) else type(logs)}")
+        logger.info(
+            f"Available response keys: {logs.keys() if isinstance(logs, dict) else type(logs)}"
+        )
         if "data" in logs and isinstance(logs["data"], dict):
             logger.info(f"Data keys: {logs['data'].keys()}")
 
@@ -294,18 +308,20 @@ class TestLimitlessLiveIntegration:
         if not sample_logs:
             logger.warning("No logs found in the response, but format is correct")
             # Create a dummy log entry if none are available from the API
-            sample_logs = [{
-                "id": f"dummy-log-{int(time.time())}",
-                "title": "Dummy Log for Testing",
-                "content": "This is a dummy log created for testing when no real logs are available.",
-                "created_at": datetime.now().isoformat()
-            }]
+            sample_logs = [
+                {
+                    "id": f"dummy-log-{int(time.time())}",
+                    "title": "Dummy Log for Testing",
+                    "content": "This is a dummy log created for testing when no real logs are available.",
+                    "created_at": datetime.now().isoformat(),
+                }
+            ]
         logger.info(f"Extracted {len(sample_logs)} logs")
 
         sample_log = sample_logs[0]
         log_id = sample_log["id"]
         logger.info(f"Using log ID: {log_id}")
-        
+
         # 2. Get specific life log
         logger.info("Step 2: Getting specific life log...")
         if log_id.startswith("dummy-log"):
@@ -318,24 +334,26 @@ class TestLimitlessLiveIntegration:
 
         assert success, f"Failed to get life log with ID {log_id}"
         logger.info(f"Successfully retrieved log: {log.get('title')}")
-        
+
         # 3. Process the life log
         logger.info("Step 3: Processing life log...")
         success, message = limitless_service._process_life_log(log)
         assert success, f"Failed to process life log: {message}"
         logger.info(f"Processing result: {message}")
-        
+
         # 4. Save to cache
         logger.info("Step 4: Saving life log to cache...")
         limitless_service._save_life_log(log_id, log)
-        
+
         # 5. Retrieve from cache
         logger.info("Step 5: Retrieving life log from cache...")
         success, cached_log = limitless_service.get_life_log(log_id)
         assert success, "Failed to retrieve log from cache"
 
         # Debug the structure of the cached log
-        logger.info(f"Cached log structure: {json.dumps({k: type(v).__name__ for k, v in cached_log.items()}, indent=2)}")
+        logger.info(
+            f"Cached log structure: {json.dumps({k: type(v).__name__ for k, v in cached_log.items()}, indent=2)}"
+        )
         logger.info(f"Cached log keys: {list(cached_log.keys())}")
 
         # Extract the log ID based on the nested structure
@@ -346,129 +364,140 @@ class TestLimitlessLiveIntegration:
             elif "data" in cached_log and isinstance(cached_log["data"], dict):
                 if "id" in cached_log["data"]:
                     cached_id = cached_log["data"]["id"]
-                elif "lifelog" in cached_log["data"] and isinstance(cached_log["data"]["lifelog"], dict):
+                elif "lifelog" in cached_log["data"] and isinstance(
+                    cached_log["data"]["lifelog"], dict
+                ):
                     cached_id = cached_log["data"]["lifelog"].get("id")
             elif "lifelog" in cached_log and isinstance(cached_log["lifelog"], dict):
                 cached_id = cached_log["lifelog"].get("id")
 
             logger.info(f"Found ID in cached log: {cached_id}")
             if cached_id:
-                assert cached_id == log_id, f"Cache returned wrong log: {cached_id} != {log_id}"
+                assert (
+                    cached_id == log_id
+                ), f"Cache returned wrong log: {cached_id} != {log_id}"
             else:
                 # Skip ID check for now, just print warning
-                logger.warning("Could not find ID in cached log structure, skipping check")
+                logger.warning(
+                    "Could not find ID in cached log structure, skipping check"
+                )
                 # Print the full path to the ID to help debug
                 for key, value in cached_log.items():
                     if isinstance(value, dict) and key == "data":
                         logger.info(f"data keys: {list(value.keys())}")
                         if "lifelog" in value and isinstance(value["lifelog"], dict):
-                            logger.info(f"data.lifelog keys: {list(value['lifelog'].keys())}")
+                            logger.info(
+                                f"data.lifelog keys: {list(value['lifelog'].keys())}"
+                            )
         except Exception as e:
             logger.exception(f"Error checking cached log ID: {e}")
             # Skip this assertion for now
             pass
         logger.info("Successfully retrieved log from cache")
-        
+
         # 6. Start scheduler
         logger.info("Step 6: Starting scheduler...")
         limitless_scheduler.start()
         time.sleep(2)  # Wait for scheduler to initialize
-        
+
         # 7. Get scheduler status
         logger.info("Step 7: Getting scheduler status...")
         status = limitless_scheduler.get_status()
         logger.info(f"Scheduler status: {json.dumps(status, indent=2)}")
-        
+
         # 8. Stop scheduler
         logger.info("Step 8: Stopping scheduler...")
         limitless_scheduler.stop()
-        
+
         # 9. Clear cache
         logger.info("Step 9: Clearing cache...")
         success, message = limitless_service.clear_cache()
         assert success, f"Failed to clear cache: {message}"
         logger.info(f"Cache clearing result: {message}")
-        
+
         logger.info("End-to-end flow test completed successfully!")
 
 
-@pytest.mark.skipif(not os.environ.get("TEST_HTTP_API", False), 
-                   reason="Skipping HTTP API tests (set TEST_HTTP_API=1 to run)")
+@pytest.mark.skipif(
+    not os.environ.get("TEST_HTTP_API", False),
+    reason="Skipping HTTP API tests (set TEST_HTTP_API=1 to run)",
+)
 class TestLimitlessHTTPAPI:
     """Tests for the Limitless HTTP API endpoints.
-    
+
     These tests require the server to be running locally on port 9999.
     """
-    
+
     BASE_URL = "http://localhost:9999"
-    
+
     def test_api_status_endpoint(self):
         """Test the /limitless/status endpoint."""
         response = requests.get(f"{self.BASE_URL}/limitless/status")
         assert response.status_code == 200
-        
+
         data = response.json()
         logger.info(f"Status endpoint response: {json.dumps(data, indent=2)}")
-        
+
         assert "service" in data
         assert "scheduler" in data
-    
+
     def test_api_sync_endpoint(self):
         """Test the /limitless/sync endpoint."""
-        response = requests.post(f"{self.BASE_URL}/limitless/sync", 
-                                json={"force_full_sync": False})
-        
+        response = requests.post(
+            f"{self.BASE_URL}/limitless/sync", json={"force_full_sync": False}
+        )
+
         assert response.status_code == 200
-        
+
         data = response.json()
         logger.info(f"Sync endpoint response: {json.dumps(data, indent=2)}")
-        
+
         assert "success" in data
         assert "message" in data
-    
+
     def test_api_scheduler_endpoints(self):
         """Test the /limitless/scheduler endpoints."""
         # Get scheduler status
         response = requests.get(f"{self.BASE_URL}/limitless/scheduler")
         assert response.status_code == 200
-        
+
         status = response.json()
         logger.info(f"Scheduler status: {json.dumps(status, indent=2)}")
-        
+
         # Start scheduler
         response = requests.post(f"{self.BASE_URL}/limitless/scheduler?action=start")
         assert response.status_code == 200
-        
+
         result = response.json()
         logger.info(f"Start scheduler response: {json.dumps(result, indent=2)}")
-        
+
         # Wait a bit
         time.sleep(2)
-        
+
         # Stop scheduler
         response = requests.post(f"{self.BASE_URL}/limitless/scheduler?action=stop")
         assert response.status_code == 200
-        
+
         result = response.json()
         logger.info(f"Stop scheduler response: {json.dumps(result, indent=2)}")
-    
+
     def test_api_get_log_endpoint(self):
         """Test the /limitless/logs/{log_id} endpoint."""
         # First get logs from the adapter to get a valid ID
         api_key = os.environ.get("LIMITLESS_API_KEY")
         adapter = LimitlessAdapter(api_key=api_key)
-        
+
         success, result = adapter.get_life_logs(limit=1)
         assert success and result.get("data"), "Failed to fetch life logs"
-        
+
         log_id = result["data"][0]["id"]
-        
+
         # Now test the API endpoint
         response = requests.get(f"{self.BASE_URL}/limitless/logs/{log_id}")
         assert response.status_code == 200
-        
+
         data = response.json()
         logger.info(f"Get log endpoint response: {json.dumps(data, indent=2)}")
-        
+
         assert "log" in data
         assert data["log"]["id"] == log_id
