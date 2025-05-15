@@ -32,7 +32,7 @@ def test_auth_form():
 )
 def test_auth_submit(monkeypatch, returncode, stderr, expected):
     # Fake subprocess.run to simulate rmapi pairing
-    def fake_run(cmd, capture_output, text):
+    def fake_run(cmd, capture_output, text, shell=False):
         return subprocess.CompletedProcess(cmd, returncode, stdout="", stderr=stderr)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
