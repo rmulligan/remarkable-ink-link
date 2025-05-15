@@ -1,13 +1,9 @@
 """Tests for the HandwritingRecognitionService using Claude Vision."""
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-
-from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
-from inklink.adapters.handwriting_adapter import HandwritingAdapter
-from inklink.config import get_config
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
