@@ -50,16 +50,48 @@ def auth_submit(code: str = Form(...)):
 
     # Run ddvk rmapi pairing using the provided pairing code
     # Path to rmapi executable
-    rmapi = CONFIG.get("RMAPI_PATH", "rmapi")
+    rmapi_path = CONFIG.get("RMAPI_PATH", "rmapi")
 
-    # Ensure rmapi path exists to prevent path traversal
-    if not os.path.exists(rmapi):
+    # Validate and resolve the rmapi path to prevent path traversal
+    if os.path.isabs(rmapi_path):
+        # If absolute path, validate it exists
+        rmapi = os.path.realpath(rmapi_path)  # Resolve symlinks
+    else:
+        # If relative path, look in PATH or use which to find it
+        import shutil
+
+        rmapi = shutil.which(rmapi_path)
+        if not rmapi:
+            return HTMLResponse(
+                "<html><body><h2>Configuration error: rmapi not found</h2></body></html>",
+                status_code=500,
+            )
+        rmapi = os.path.realpath(rmapi)  # Resolve symlinks
+
+    # Define allowed directories for rmapi executable
+    allowed_dirs = [
+        "/usr/bin",
+        "/usr/local/bin",
+        "/opt",
+        os.path.expanduser("~/.local/bin"),
+        os.path.expanduser("~/bin"),
+    ]
+
+    # Check if the rmapi path is in an allowed directory
+    if not any(rmapi.startswith(allowed_dir) for allowed_dir in allowed_dirs):
         return HTMLResponse(
-            "<html><body><h2>Configuration error</h2></body></html>",
+            "<html><body><h2>Security error: rmapi path not allowed</h2></body></html>",
+            status_code=403,
+        )
+
+    # Ensure the resolved path exists and is executable
+    if not os.path.exists(rmapi) or not os.access(rmapi, os.X_OK):
+        return HTMLResponse(
+            "<html><body><h2>Configuration error: rmapi not executable</h2></body></html>",
             status_code=500,
         )
 
-    # Use shlex to properly escape the arguments and prevent command injection
+    # Use the validated absolute path
     cmd = [rmapi, "config", "--pairing-code", code]
 
     try:
