@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.handwriting_adapter import HandwritingAdapter

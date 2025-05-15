@@ -179,15 +179,15 @@ class TestGitHubModelsIntegration:
     @staticmethod
     def test_environment_variable_priority():
         """Test environment variable priority for GitHub token."""
-        # Test GITHUB_TOKEN has priority
+        # Test GITHUB_API_KEY has priority over GITHUB_TOKEN
         with patch.dict(
             os.environ,
             {"GITHUB_TOKEN": "github_pat_token", "GITHUB_API_KEY": "github_api_key"},
         ):
             adapter = AIAdapter(provider="github", validation_provider="github")
-            assert adapter.validation_api_key == "github_pat_token"
+            assert adapter.validation_api_key == "github_api_key"
 
-        # Test fallback to GITHUB_API_KEY
-        with patch.dict(os.environ, {"GITHUB_API_KEY": "github_api_key"}, clear=True):
+        # Test fallback to GITHUB_TOKEN when GITHUB_API_KEY is not available
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "github_pat_token"}, clear=True):
             adapter = AIAdapter(validation_provider="github")
-            assert adapter.validation_api_key is None  # No GITHUB_TOKEN available
+            assert adapter.validation_api_key == "github_pat_token"

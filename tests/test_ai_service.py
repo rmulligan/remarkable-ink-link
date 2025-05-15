@@ -103,7 +103,7 @@ def mock_adapter():
 @pytest.fixture
 def ai_service(mock_adapter):
     """Create an AIService with a mock adapter."""
-    return AIService(ai_adapter=mock_adapter)
+    return AIService(adapter=mock_adapter)
 
 
 def test_ask_success(ai_service, mock_adapter):
