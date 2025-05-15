@@ -49,7 +49,6 @@ def create_test_file():
         # If reportlab isn't available, try to use a sample PDF from the project
         sample_files = [
             "/home/ryan/dev/remarkable-ink-link/docs/Remarkable Pro Terminal Research.pdf",
-            "/home/ryan/dev/remarkable-ink-link/handwriting_model/cursive_sample_text.pdf",
         ]
 
         for file_path in sample_files:
