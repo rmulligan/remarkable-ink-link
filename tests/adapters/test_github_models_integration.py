@@ -28,7 +28,8 @@ class TestGitHubModelsIntegration:
         """Create AI adapter with GitHub validation."""
         return AIAdapter(provider="anthropic", validation_provider="github")
 
-    def test_github_validation_initialization(self, ai_adapter_with_validation):
+    @staticmethod
+    def test_github_validation_initialization(ai_adapter_with_validation):
         """Test that GitHub validation is properly initialized."""
         adapter = ai_adapter_with_validation
 
@@ -82,7 +83,8 @@ class TestGitHubModelsIntegration:
         # Should have made two API calls
         assert mock_post.call_count == 2
 
-    def test_validation_prompt_creation(self, ai_adapter_with_validation):
+    @staticmethod
+    def test_validation_prompt_creation(ai_adapter_with_validation):
         """Test the validation prompt creation."""
         original_prompt = "Explain Python decorators"
         response = "Decorators are functions that modify other functions..."
@@ -99,7 +101,8 @@ class TestGitHubModelsIntegration:
         assert "evaluate" in validation_prompt.lower()
         assert "accuracy" in validation_prompt.lower()
 
-    def test_response_combination(self, ai_adapter_with_validation):
+    @staticmethod
+    def test_response_combination(ai_adapter_with_validation):
         """Test how responses are combined."""
         primary = "Primary response from Claude"
         validation = "Validation insights from GitHub"
@@ -137,7 +140,8 @@ class TestGitHubModelsIntegration:
         # Should not contain validation section
         assert "Validation Check" not in result
 
-    def test_github_model_selection(self):
+    @staticmethod
+    def test_github_model_selection():
         """Test GitHub model selection and configuration."""
         # Test with custom model
         with patch.dict(os.environ, {"GITHUB_MODEL": "openai/gpt-4"}):
@@ -148,7 +152,8 @@ class TestGitHubModelsIntegration:
         adapter = AIAdapter(provider="github")
         assert adapter.model == "openai/gpt-4.1"
 
-    def test_github_api_compatibility(self):
+    @staticmethod
+    def test_github_api_compatibility():
         """Test that GitHub uses OpenAI-compatible API format."""
         adapter = AIAdapter(provider="github")
 
@@ -171,7 +176,8 @@ class TestGitHubModelsIntegration:
             assert "Authorization" in call_args[1]["headers"]
             assert call_args[1]["json"]["model"] == "openai/gpt-4.1"
 
-    def test_environment_variable_priority(self):
+    @staticmethod
+    def test_environment_variable_priority():
         """Test environment variable priority for GitHub token."""
         # Test GITHUB_TOKEN has priority
         with patch.dict(

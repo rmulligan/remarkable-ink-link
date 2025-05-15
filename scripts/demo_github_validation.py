@@ -65,7 +65,7 @@ I've recognized this handwritten code. Please review it for correctness and sugg
 ```
 """
 
-    print(f"\nHandwritten Code:")
+    print("\nHandwritten Code:")
     print(handwritten_code)
     print("\nValidating with GitHub models...")
 
