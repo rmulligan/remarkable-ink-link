@@ -91,13 +91,13 @@ class LillyMonitor(CassidyMonitor):
         if not prompt:
             prompt = """
             Please analyze this handwritten note from a reMarkable tablet.
-            
+
             1. Transcribe the handwritten text, maintaining the formatting structure
             2. Identify any key concepts, entities, or topics mentioned
             3. Extract any tasks or action items
             4. Identify any questions that need answers
             5. Provide thoughtful insights or helpful information based on the content
-            
+
             Structure your response clearly with appropriate headings.
             """
 

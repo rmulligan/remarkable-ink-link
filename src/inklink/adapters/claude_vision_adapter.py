@@ -383,7 +383,7 @@ class ClaudeVisionAdapter(Adapter):
             page_prompt += f"""
             For context, here is content from previous pages:
             {context}
-            
+
             Continue the transcription from where this left off.
             """
 

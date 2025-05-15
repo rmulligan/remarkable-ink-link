@@ -20,10 +20,10 @@ from typing import List, Dict, Any, Optional, Tuple
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def run_docker_rmapi(cmd_args: List[str]) -> Tuple[bool, str]:
     """
@@ -39,12 +39,16 @@ def run_docker_rmapi(cmd_args: List[str]) -> Tuple[bool, str]:
 
     # Build Docker command
     docker_cmd = [
-        "docker", "run",
-        "-v", f"{home_dir}/.config/rmapi/:/home/app/.config/rmapi/",
+        "docker",
+        "run",
+        "-v",
+        f"{home_dir}/.config/rmapi/:/home/app/.config/rmapi/",
     ]
 
     # Use a directory that should be accessible by Docker
-    output_path = os.path.join(home_dir, "dev/remarkable-ink-link/handwriting_model/docker_temp")
+    output_path = os.path.join(
+        home_dir, "dev/remarkable-ink-link/handwriting_model/docker_temp"
+    )
     os.makedirs(output_path, exist_ok=True)
     docker_cmd.extend(["-v", f"{output_path}:/output"])
 
@@ -54,12 +58,7 @@ def run_docker_rmapi(cmd_args: List[str]) -> Tuple[bool, str]:
     logger.info(f"Running command: {' '.join(docker_cmd)}")
 
     try:
-        result = subprocess.run(
-            docker_cmd,
-            capture_output=True,
-            text=True,
-            check=False
-        )
+        result = subprocess.run(docker_cmd, capture_output=True, text=True, check=False)
 
         if result.returncode != 0:
             logger.error(f"rmapi command failed: {result.stderr}")
@@ -102,7 +101,9 @@ def find_notebook_by_name(notebook_name: str) -> Optional[str]:
                 logger.info(f"Found notebook: '{notebook_name_found}'")
 
                 # Use special command to get the ID by name
-                success, id_output = run_docker_rmapi(["find", "/", notebook_name_found])
+                success, id_output = run_docker_rmapi(
+                    ["find", "/", notebook_name_found]
+                )
                 if success and id_output.strip():
                     # Extract the ID from the find result
                     for result_line in id_output.strip().split("\n"):
@@ -133,10 +134,14 @@ def download_notebook(notebook_id: str) -> Optional[str]:
 
     # Get the output path in the mounted volume
     home_dir = os.path.expanduser("~")
-    output_path = os.path.join(home_dir, "dev/remarkable-ink-link/handwriting_model/docker_temp/notebook.zip")
+    output_path = os.path.join(
+        home_dir, "dev/remarkable-ink-link/handwriting_model/docker_temp/notebook.zip"
+    )
 
     # Download notebook
-    success, output = run_docker_rmapi(["get", notebook_id, "/output/notebook.zip", "--format", "zip"])
+    success, output = run_docker_rmapi(
+        ["get", notebook_id, "/output/notebook.zip", "--format", "zip"]
+    )
 
     if not success:
         logger.error(f"Failed to download notebook: {output}")
@@ -153,27 +158,27 @@ def download_notebook(notebook_id: str) -> Optional[str]:
 def extract_notebook(zip_path: str) -> Optional[str]:
     """
     Extract the notebook zip file.
-    
+
     Args:
         zip_path: Path to the downloaded .zip file
-        
+
     Returns:
         Path to the directory with extracted content or None if failed
     """
     logger.info(f"Extracting notebook: {zip_path}")
-    
+
     # Create extraction directory
     extract_dir = tempfile.mkdtemp(prefix="remarkable_content_")
-    
+
     try:
         # Extract the zip file
         subprocess.run(
             ["unzip", "-o", zip_path, "-d", extract_dir],
             check=True,
             capture_output=True,
-            text=True
+            text=True,
         )
-        
+
         logger.info(f"Extracted notebook to {extract_dir}")
         return extract_dir
     except Exception as e:
@@ -184,55 +189,57 @@ def extract_notebook(zip_path: str) -> Optional[str]:
 def find_rm_files(extract_dir: str) -> List[str]:
     """
     Find all .rm files in the extracted notebook.
-    
+
     Args:
         extract_dir: Path to the directory with extracted content
-        
+
     Returns:
         List of paths to .rm files
     """
     logger.info(f"Finding .rm files in {extract_dir}")
-    
+
     # Find all .rm files
     rm_files = list(Path(extract_dir).glob("**/*.rm"))
-    
+
     if not rm_files:
         logger.warning("No .rm files found in the notebook")
     else:
         logger.info(f"Found {len(rm_files)} .rm files")
-    
+
     return [str(f) for f in rm_files]
 
 
 def render_rm_file_to_png(rm_file: str, output_dir: str) -> Optional[str]:
     """
     Render an .rm file to PNG.
-    
+
     Args:
         rm_file: Path to the .rm file
         output_dir: Directory to save the PNG file
-        
+
     Returns:
         Path to the rendered PNG file or None if failed
     """
     logger.info(f"Rendering {rm_file} to PNG")
-    
+
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Generate output filename
     filename = os.path.basename(rm_file)
     name_without_ext = os.path.splitext(filename)[0]
     output_path = os.path.join(output_dir, f"{name_without_ext}.png")
-    
+
     # Try to use rM tools if available (rsvg-convert is commonly used)
     try:
         # This is a simplified version - actual rendering would require processing
         # the .rm format which requires specialized tools
-        
+
         # As a fallback, we'll try to use pdftoppm if available
-        logger.warning("Using simplified rendering - install specialized tools for better results")
-        
+        logger.warning(
+            "Using simplified rendering - install specialized tools for better results"
+        )
+
         # For now, just copy the file to show we processed it
         shutil.copy(rm_file, output_path)
         logger.info(f"Saved (placeholder) PNG to {output_path}")
@@ -247,40 +254,48 @@ def main():
     parser = argparse.ArgumentParser(
         description="Fetch and render a reMarkable notebook as PNG images."
     )
-    parser.add_argument("--notebook-name", type=str, default="Claude",
-                       help="Name of the notebook to fetch (default: Claude)")
-    parser.add_argument("--output-dir", type=str, default="rendered_pages",
-                       help="Directory to save rendered PNG files (default: rendered_pages)")
-    
+    parser.add_argument(
+        "--notebook-name",
+        type=str,
+        default="Claude",
+        help="Name of the notebook to fetch (default: Claude)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="rendered_pages",
+        help="Directory to save rendered PNG files (default: rendered_pages)",
+    )
+
     args = parser.parse_args()
-    
+
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
-    
+
     # Find notebook
     notebook_id = find_notebook_by_name(args.notebook_name)
     if not notebook_id:
         sys.exit(1)
-    
+
     # Download notebook
     zip_path = download_notebook(notebook_id)
     if not zip_path:
         sys.exit(1)
-    
+
     # Extract notebook
     extract_dir = extract_notebook(zip_path)
     if not extract_dir:
         sys.exit(1)
-    
+
     # Find .rm files
     rm_files = find_rm_files(extract_dir)
     if not rm_files:
         sys.exit(1)
-    
+
     # Render each .rm file to PNG
     for rm_file in rm_files:
         render_rm_file_to_png(rm_file, args.output_dir)
-    
+
     logger.info(f"Rendered {len(rm_files)} pages to {args.output_dir}")
 
 

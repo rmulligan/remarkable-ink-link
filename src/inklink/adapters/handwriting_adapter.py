@@ -26,20 +26,23 @@ class HandwritingAdapter(Adapter):
             claude_command: Command to invoke Claude CLI
             model: Claude model to use (if needed)
         """
-        self.claude_command = claude_command or os.environ.get("CLAUDE_COMMAND", "claude")
+        self.claude_command = claude_command or os.environ.get(
+            "CLAUDE_COMMAND", "claude"
+        )
         self.model = model
-        
+
         # Create the Claude Vision adapter
         self.vision_adapter = ClaudeVisionAdapter(
-            claude_command=self.claude_command, 
-            model=self.model
+            claude_command=self.claude_command, model=self.model
         )
         self.initialized = self.vision_adapter.is_available()
-        
+
         if self.initialized:
-            logger.info(f"Claude Vision adapter initialized with command: {self.claude_command}")
+            logger.info("Claude Vision adapter initialized successfully")
         else:
-            logger.warning("Claude Vision adapter initialization failed or CLI not available")
+            logger.warning(
+                "Claude Vision adapter initialization failed or CLI not available"
+            )
 
     def ping(self) -> bool:
         """
@@ -65,16 +68,15 @@ class HandwritingAdapter(Adapter):
         self.claude_command = claude_command
         if model:
             self.model = model
-            
+
         # Reinitialize the adapter
         self.vision_adapter = ClaudeVisionAdapter(
-            claude_command=self.claude_command, 
-            model=self.model
+            claude_command=self.claude_command, model=self.model
         )
         self.initialized = self.vision_adapter.is_available()
-        
+
         if self.initialized:
-            logger.info(f"Claude Vision adapter initialized with command: {self.claude_command}")
+            logger.info("Claude Vision adapter initialized successfully")
             return True
         else:
             logger.warning("Claude Vision adapter initialization failed")
@@ -83,7 +85,7 @@ class HandwritingAdapter(Adapter):
     def extract_strokes_from_rm_file(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
-        
+
         This function is maintained for compatibility with existing code,
         but the Claude Vision approach will render the file to an image
         rather than use the strokes directly.
@@ -127,7 +129,7 @@ class HandwritingAdapter(Adapter):
                                 y_points.append(point.y)
                                 pressures.append(point.pressure)
                                 # Use 't' attribute for timestamp in newer API
-                                timestamps.append(point.t if hasattr(point, 't') else 0)
+                                timestamps.append(point.t if hasattr(point, "t") else 0)
 
                             # Create stroke in simple format
                             stroke = {
@@ -136,20 +138,34 @@ class HandwritingAdapter(Adapter):
                                 "y": y_points,
                                 "p": pressures,
                                 "t": timestamps,
-                                "color": str(item.color) if hasattr(item, 'color') else "#000000",
-                                "width": float(item.pen.value) if hasattr(item, 'pen') else 2.0,
+                                "color": (
+                                    str(item.color)
+                                    if hasattr(item, "color")
+                                    else "#000000"
+                                ),
+                                "width": (
+                                    float(item.pen.value)
+                                    if hasattr(item, "pen")
+                                    else 2.0
+                                ),
                             }
 
                             strokes.append(stroke)
 
                     if strokes:
-                        logger.info(f"Extracted {len(strokes)} strokes using current rmscene API")
+                        logger.info(
+                            f"Extracted {len(strokes)} strokes using current rmscene API"
+                        )
                         return strokes
                     else:
-                        logger.warning("No strokes found in file using current rmscene API")
+                        logger.warning(
+                            "No strokes found in file using current rmscene API"
+                        )
 
                 except Exception as scene_tree_error:
-                    logger.error(f"Failed to use current rmscene API: {scene_tree_error}")
+                    logger.error(
+                        f"Failed to use current rmscene API: {scene_tree_error}"
+                    )
                     return []
 
             return []
@@ -161,39 +177,41 @@ class HandwritingAdapter(Adapter):
     def render_rm_file(self, rm_file_path: str) -> str:
         """
         Render a reMarkable file to a PNG image.
-        
+
         Args:
             rm_file_path: Path to the .rm file
-            
+
         Returns:
             Path to the rendered PNG image
         """
         try:
             from handwriting_model.render_rm_file import (
-                load_rm_file, extract_strokes, render_strokes
+                load_rm_file,
+                extract_strokes,
+                render_strokes,
             )
-            
+
             # Create temp file for output
             fd, output_path = tempfile.mkstemp(suffix=".png")
             os.close(fd)
-            
+
             # Load and render the file
             scene = load_rm_file(rm_file_path)
             if not scene:
                 raise ValueError(f"Failed to load .rm file: {rm_file_path}")
-                
+
             strokes = extract_strokes(scene)
-            
+
             # Use default reMarkable dimensions
             width = 1404  # Default reMarkable width
             height = 1872  # Default reMarkable height
             dpi = 300  # Default rendering DPI
-            
+
             render_strokes(strokes, output_path, width, height, dpi)
             logger.info(f"Rendered .rm file to {output_path}")
-            
+
             return output_path
-            
+
         except Exception as e:
             logger.error(f"Error rendering .rm file: {e}")
             raise
@@ -217,14 +235,15 @@ class HandwritingAdapter(Adapter):
         """
         # Get appropriate prompt based on content type
         prompt = self._get_content_type_prompt(content_type, language)
-        
+
         # Process with Claude Vision
         success, result = self.vision_adapter.process_image(
             image_path, prompt, content_type
         )
-        
+
         if success:
             import time
+
             result_id = f"vision-{int(time.time())}"
             return {
                 "success": True,
@@ -238,18 +257,18 @@ class HandwritingAdapter(Adapter):
     def _get_content_type_prompt(self, content_type: str, language: str) -> str:
         """
         Get appropriate prompt based on content type and language.
-        
+
         Args:
             content_type: Content type (Text, Diagram, Math)
             language: Language code
-            
+
         Returns:
             Tailored prompt for Claude
         """
         lang_prefix = ""
         if language and language != "en_US":
             lang_prefix = f"The content is written in {language}. "
-        
+
         if not content_type or content_type.lower() == "text":
             return f"{lang_prefix}Please transcribe the handwritten text in this image. Maintain the formatting structure as much as possible."
         elif content_type.lower() == "math":
@@ -277,13 +296,14 @@ class HandwritingAdapter(Adapter):
             if isinstance(content_id, str):
                 try:
                     import json
+
                     content = json.loads(content_id)
                 except (json.JSONDecodeError, TypeError):
                     # If not valid JSON, return as is
                     return {"content": content_id, "format": format_type}
             else:
                 content = content_id
-            
+
             # Extract the main recognition result
             text = ""
             if isinstance(content, dict):
@@ -293,9 +313,9 @@ class HandwritingAdapter(Adapter):
                     text = content["content"]
             else:
                 text = str(content)
-                
+
             return {"content": text, "format": format_type}
-            
+
         except Exception as e:
             logger.error(f"Failed to export content: {e}")
             return {"error": str(e)}
@@ -322,7 +342,7 @@ class HandwritingAdapter(Adapter):
 
             # Render the .rm file to an image
             image_path = self.render_rm_file(rm_file_path)
-            
+
             try:
                 # Process the image with Claude Vision
                 result = self.recognize_handwriting(image_path, content_type, language)

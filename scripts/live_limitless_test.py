@@ -18,16 +18,17 @@ logger = logging.getLogger(__name__)
 API_KEY = os.environ.get("LIMITLESS_API_KEY", "sk-f5d04b11-c595-4f75-a8c4-cc6e871c5dcf")
 BASE_URL = "https://api.limitless.ai"
 
+
 def test_ping():
     """Test if the API is reachable."""
     print("\n=== TESTING API CONNECTION ===")
     print(f"Using API key: {API_KEY[:4]}...{API_KEY[-4:]}")
-    
+
     headers = {
         "X-API-Key": API_KEY,
         "Content-Type": "application/json",
     }
-    
+
     response = requests.get(f"{BASE_URL}/v1/lifelogs?limit=1", headers=headers)
     if response.status_code == 200:
         print(f"✅ API connection successful (status: {response.status_code})")
@@ -36,6 +37,7 @@ def test_ping():
         print(f"❌ API connection failed (status: {response.status_code})")
         print(f"Response: {response.text}")
         return False
+
 
 def test_get_life_logs(limit=3):
     """Test getting life logs from the API."""
@@ -118,66 +120,81 @@ def test_get_life_logs(limit=3):
                 for j, item in enumerate(contents[:3]):
                     content = item.get("content", "No content")
                     item_type = item.get("type", "unknown")
-                    print(f"    - [{item_type}] {content[:50]}..." if len(content) > 50 else f"    - [{item_type}] {content}")
+                    print(
+                        f"    - [{item_type}] {content[:50]}..."
+                        if len(content) > 50
+                        else f"    - [{item_type}] {content}"
+                    )
                     if j >= 2 and len(contents) > 3:
                         print(f"    - (... and {len(contents) - 3} more items)")
                         break
 
             # Show if has markdown
             if "markdown" in log:
-                markdown_len = len(log["markdown"]) if isinstance(log["markdown"], str) else 0
+                markdown_len = (
+                    len(log["markdown"]) if isinstance(log["markdown"], str) else 0
+                )
                 print(f"  Markdown: {markdown_len} characters")
                 if markdown_len > 0:
                     # Show first few lines
                     markdown_lines = log["markdown"].split("\n")[:5]
                     print("  Markdown Preview:")
                     for line in markdown_lines:
-                        print(f"    {line[:60]}..." if len(line) > 60 else f"    {line}")
+                        print(
+                            f"    {line[:60]}..." if len(line) > 60 else f"    {line}"
+                        )
                     if len(markdown_lines) < len(log["markdown"].split("\n")):
-                        print(f"    (... and {len(log['markdown'].split('\n')) - len(markdown_lines)} more lines)")
+                        total_lines = len(log["markdown"].split("\n"))
+                        print(
+                            f"    (... and {total_lines - len(markdown_lines)} more lines)"
+                        )
 
     return True, logs
+
 
 def test_get_specific_log(log_id):
     """Test getting a specific life log."""
     print(f"\n=== FETCHING SPECIFIC LOG (ID: {log_id}) ===")
-    
+
     headers = {
         "X-API-Key": API_KEY,
         "Content-Type": "application/json",
     }
-    
+
     response = requests.get(f"{BASE_URL}/v1/lifelogs/{log_id}", headers=headers)
     if response.status_code != 200:
         print(f"❌ Failed to fetch log {log_id} (status: {response.status_code})")
         print(f"Response: {response.text}")
         return False, None
-    
+
     log = response.json()
     print(f"✅ Successfully retrieved log (status: {response.status_code})")
-    
+
     # Print log details
     if isinstance(log, dict):
         title = log.get("title", "No Title")
         start_time = log.get("startTime", "Unknown")
-        
+
         print(f"Log Details:")
         print(f"  ID: {log_id}")
         print(f"  Title: {title}")
         print(f"  Start Time: {start_time}")
-        
+
         # Check for content
         contents = log.get("contents", [])
         if contents:
             print(f"  Content Items: {len(contents)}")
             # Print first few content items
             for i, item in enumerate(contents[:3]):
-                print(f"    - {item.get('type', 'unknown')}: {item.get('content', '')[:50]}...")
+                print(
+                    f"    - {item.get('type', 'unknown')}: {item.get('content', '')[:50]}..."
+                )
                 if i >= 2:
                     print(f"    - (... and {len(contents) - 3} more items)")
                     break
-    
+
     return True, log
+
 
 def test_pagination():
     """Test pagination through all logs."""
@@ -202,7 +219,9 @@ def test_pagination():
 
         # Make request
         print(f"\nFetching page {page}...")
-        response = requests.get(f"{BASE_URL}/v1/lifelogs", headers=headers, params=params)
+        response = requests.get(
+            f"{BASE_URL}/v1/lifelogs", headers=headers, params=params
+        )
 
         if response.status_code != 200:
             print(f"❌ Failed to fetch page {page} (status: {response.status_code})")
@@ -213,7 +232,11 @@ def test_pagination():
 
         # Extract logs
         logs = []
-        if "data" in data and isinstance(data["data"], dict) and "lifelogs" in data["data"]:
+        if (
+            "data" in data
+            and isinstance(data["data"], dict)
+            and "lifelogs" in data["data"]
+        ):
             logs = data["data"]["lifelogs"]
         elif "data" in data and isinstance(data["data"], list):
             logs = data["data"]
@@ -247,6 +270,7 @@ def test_pagination():
     print(f"\nRetrieved a total of {len(all_logs)} logs across {page} pages")
     return True, all_logs
 
+
 def main():
     """Run all tests."""
     print("=" * 80)
@@ -279,6 +303,7 @@ def main():
     print("✅ TESTS COMPLETED SUCCESSFULLY!")
     print("=" * 80)
     return True
+
 
 if __name__ == "__main__":
     if not main():

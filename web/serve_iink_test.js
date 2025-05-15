@@ -37,7 +37,17 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.url.startsWith('/node_modules/')) {
     // Serve files from node_modules
-    const filePath = path.join(__dirname, req.url);
+    const safeUrl = path.normalize(req.url).replace(/^(\.\.(\/|\\|$))+/, '');
+    const filePath = path.join(__dirname, safeUrl);
+    
+    // Ensure path is within the allowed directory
+    const normalizedBase = path.normalize(__dirname);
+    const normalizedFilePath = path.normalize(filePath);
+    if (!normalizedFilePath.startsWith(normalizedBase)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Access denied');
+      return;
+    }
     
     fs.readFile(filePath, (err, data) => {
       if (err) {

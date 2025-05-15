@@ -2,3 +2,4 @@
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.onnx filter=lfs diff=lfs merge=lfs -text
 *.pb filter=lfs diff=lfs merge=lfs -text
+src/models/handwriting_model/checkpoints/mock_model.pt filter=lfs diff=lfs merge=lfs -text

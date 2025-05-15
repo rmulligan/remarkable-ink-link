@@ -18,13 +18,14 @@ from datetime import datetime
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # File paths
-FILE_PATH = "/home/ryan/dev/remarkable-ink-link/src/inklink/services/claude_penpal_service.py"
+FILE_PATH = (
+    "/home/ryan/dev/remarkable-ink-link/src/inklink/services/claude_penpal_service.py"
+)
 BACKUP_PATH = "/home/ryan/dev/remarkable-ink-link/src/inklink/services/claude_penpal_service.py.backup"
 
 # The function to replace
@@ -38,7 +39,7 @@ OLD_FUNCTION = """    def _insert_response_after_query(
         response_text,
         all_pages
     ):
-        """Insert response page after query page in notebook.
+        \"\"\"Insert response page after query page in notebook.
         
         Args:
             notebook_id: ID of the notebook
@@ -48,7 +49,7 @@ OLD_FUNCTION = """    def _insert_response_after_query(
             query_page: Query page data
             response_text: Response text to insert
             all_pages: List of all pages in the notebook
-        """
+        \"\"\"
         try:
             import zipfile
             
@@ -148,7 +149,7 @@ NEW_FUNCTION = """    def _insert_response_after_query(
         response_text,
         all_pages
     ):
-        """Insert response page after query page in notebook.
+        \"\"\"Insert response page after query page in notebook.
         
         Args:
             notebook_id: ID of the notebook
@@ -158,7 +159,7 @@ NEW_FUNCTION = """    def _insert_response_after_query(
             query_page: Query page data
             response_text: Response text to insert
             all_pages: List of all pages in the notebook
-        """
+        \"\"\"
         try:
             import zipfile
             
@@ -256,38 +257,46 @@ NEW_FUNCTION = """    def _insert_response_after_query(
                 with open(metadata_file_path, 'w') as f:
                     json.dump(metadata, f)"""
 
+
 def backup_file():
     """Create a backup of the original file."""
     shutil.copy2(FILE_PATH, BACKUP_PATH)
     logger.info(f"Created backup at {BACKUP_PATH}")
 
+
 def update_file():
     """Update the file with the fixed function."""
-    with open(FILE_PATH, 'r') as f:
+    with open(FILE_PATH, "r") as f:
         content = f.read()
-    
+
     # Replace the function
     new_content = content.replace(OLD_FUNCTION, NEW_FUNCTION)
-    
+
     # Write updated content
-    with open(FILE_PATH, 'w') as f:
+    with open(FILE_PATH, "w") as f:
         f.write(new_content)
-    
+
     logger.info(f"Updated {FILE_PATH} with fixed metadata handling")
+
 
 def add_refresh_to_rmapi_adapter():
     """Add refresh command to rmapi_adapter.py."""
-    adapter_path = "/home/ryan/dev/remarkable-ink-link/src/inklink/adapters/rmapi_adapter.py"
-    
+    adapter_path = (
+        "/home/ryan/dev/remarkable-ink-link/src/inklink/adapters/rmapi_adapter.py"
+    )
+
     # Look for upload_file method
-    with open(adapter_path, 'r') as f:
+    with open(adapter_path, "r") as f:
         content = f.read()
-    
+
     # Add refresh before upload
-    if "def upload_file" in content and "# First use 'put' to upload the file" in content:
+    if (
+        "def upload_file" in content
+        and "# First use 'put' to upload the file" in content
+    ):
         # Replace the upload_file method to include refresh
         old_upload = """    def upload_file(self, file_path: str, title: str) -> Tuple[bool, str]:
-        """
+        \"\"\"
         Upload a file to reMarkable Cloud.
 
         Args:
@@ -296,15 +305,15 @@ def add_refresh_to_rmapi_adapter():
 
         Returns:
             Tuple of (success, message)
-        """
+        \"\"\"
         if not self._validate_executable():
             return False, "rmapi path not valid"
 
         # First use 'put' to upload the file
         success, stdout, stderr = self.run_command("put", file_path)"""
-        
+
         new_upload = """    def upload_file(self, file_path: str, title: str) -> Tuple[bool, str]:
-        """
+        \"\"\"
         Upload a file to reMarkable Cloud.
 
         Args:
@@ -313,7 +322,7 @@ def add_refresh_to_rmapi_adapter():
 
         Returns:
             Tuple of (success, message)
-        """
+        \"\"\"
         if not self._validate_executable():
             return False, "rmapi path not valid"
             
@@ -326,33 +335,35 @@ def add_refresh_to_rmapi_adapter():
 
         # First use 'put' to upload the file
         success, stdout, stderr = self.run_command("put", file_path)"""
-        
+
         updated_content = content.replace(old_upload, new_upload)
-        
-        with open(adapter_path, 'w') as f:
+
+        with open(adapter_path, "w") as f:
             f.write(updated_content)
-            
+
         logger.info(f"Added refresh command to {adapter_path}")
     else:
         logger.warning(f"Could not find upload_file method in {adapter_path}")
+
 
 def main():
     """Main entry point."""
     try:
         # Create backup
         backup_file()
-        
+
         # Update the file
         update_file()
-        
+
         # Add refresh to rmapi_adapter
         add_refresh_to_rmapi_adapter()
-        
+
         logger.info("Successfully applied fixes to Claude Penpal service")
         return 0
     except Exception as e:
         logger.error(f"Error applying fixes: {e}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
