@@ -4,10 +4,10 @@ This module provides an adapter for handwriting recognition services
 using Claude's vision capabilities through the CLI tool.
 """
 
-import os
 import logging
+import os
 import tempfile
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.adapter import Adapter
 from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
@@ -100,8 +100,8 @@ class HandwritingAdapter(Adapter):
             # Import rmscene for parsing .rm files
             try:
                 import rmscene
-                from rmscene.scene_stream import read_tree
                 from rmscene.scene_items import Line
+                from rmscene.scene_stream import read_tree
             except ImportError:
                 logger.error("rmscene not installed - cannot parse .rm files")
                 return []
@@ -186,10 +186,11 @@ class HandwritingAdapter(Adapter):
         """
         try:
             # Use RmScene to process Remarkable files
-            from rmscene import read_v5_scene
             from pathlib import Path
+
             import numpy as np
             from PIL import Image
+            from rmscene import read_v5_scene
 
             # Create temp file for output
             fd, output_path = tempfile.mkstemp(suffix=".png")

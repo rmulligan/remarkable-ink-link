@@ -3,15 +3,15 @@
 Mock Penpal script to process local notebooks without rmapi.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-from datetime import datetime
-import uuid
-import tempfile
+import os
 import shutil
+import sys
+import tempfile
+import time
+import uuid
+from datetime import datetime
 
 # Setup logging
 logging.basicConfig(

@@ -4,13 +4,13 @@ Direct approach to download and re-upload a notebook using the rmapi CLI.
 This avoids the RmapiAdapter class and works directly with the CLI.
 """
 
-import os
-import sys
-import subprocess
-import tempfile
-import shutil
-import time
 import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
 
 # Setup logging
 logging.basicConfig(

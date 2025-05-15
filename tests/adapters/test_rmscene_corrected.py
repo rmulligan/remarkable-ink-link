@@ -4,10 +4,10 @@ Corrected test for rmscene functionality.
 This script tests the rmscene library with the correct API.
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import json
 
 # Configure logging
 logging.basicConfig(
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 # Try importing rmscene
 try:
     import rmscene
-    from rmscene.scene_tree import SceneTree, CrdtId
-    from rmscene.scene_items import Group, Line, Point, Pen, PenColor
+    from rmscene.scene_items import Group, Line, Pen, PenColor, Point
+    from rmscene.scene_tree import CrdtId, SceneTree
 
     logger.info("Successfully imported rmscene classes")
 except ImportError as e:

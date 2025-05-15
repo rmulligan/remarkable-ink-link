@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import sys
+
 from src.inklink.adapters.rmapi_adapter import RmapiAdapter
 
 # Configure logging

@@ -4,15 +4,15 @@ Create a properly structured notebook that matches the format expected by rmapi.
 This script creates a notebook with both metadata and content files.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-import zipfile
-import tempfile
-import uuid
+import os
 import subprocess
+import sys
+import tempfile
+import time
+import uuid
+import zipfile
 
 from inklink.config import CONFIG
 

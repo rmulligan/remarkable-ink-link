@@ -9,25 +9,25 @@ This service provides a penpal-style interaction with Claude, where:
 - Responses are inserted directly after query pages
 """
 
-import os
-import time
-import logging
-import tempfile
-import threading
 import json
+import logging
+import os
 import re
-import uuid
 import shutil
 import subprocess
+import tempfile
+import threading
+import time
+import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter
+from inklink.config import CONFIG
+from inklink.services.document_service import DocumentService
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.services.document_service import DocumentService
-from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

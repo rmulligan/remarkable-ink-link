@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Demonstration of Claude Penpal Service functionality."""
 
+import argparse
+import json
+import logging
 import os
 import sys
 import time
-import logging
-import json
 import uuid
 import zipfile
-import argparse
 
 # Set up logging
 logging.basicConfig(
@@ -18,15 +18,15 @@ logger = logging.getLogger("demo_claude_penpal")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
 

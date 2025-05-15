@@ -15,19 +15,19 @@ Usage:
     python verify_metadata_fix.py [--notebook-id ID] [--verbose]
 """
 
-import os
-import sys
-import time
+import argparse
 import json
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import time
+import traceback
 import uuid
 import zipfile
-import tempfile
-import logging
-import argparse
-import shutil
-import traceback
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -37,14 +37,14 @@ logger = logging.getLogger("verify_metadata_fix")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 
 
 def parse_args():

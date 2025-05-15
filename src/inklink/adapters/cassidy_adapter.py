@@ -4,17 +4,18 @@ This module provides an adapter that extends the RmapiAdapter with tag detection
 monitoring, and image conversion functionality for the Cassidy assistant workflow.
 """
 
-import os
-import time
-import logging
 import json
-import tempfile
-import zipfile
-import shutil
-import uuid
-import subprocess
+import logging
+import os
 import re
-from typing import Optional, Tuple, List, Dict, Any, Set
+import shutil
+import subprocess
+import tempfile
+import time
+import uuid
+import zipfile
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 from PIL import Image
 
 from src.inklink.adapters.rmapi_adapter import RmapiAdapter
@@ -787,7 +788,6 @@ class CassidyAdapter(RmapiAdapter):
 
                 # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Currently unused
                 # annotation_text = f"Claude Response ({timestamp}):\n\n{text}"  # Unused variable
-
                 # Create an annotation file by adding strokes
                 # This is a simplification - in a real implementation, we would use
                 # a proper annotation approach, possibly using drawj2d

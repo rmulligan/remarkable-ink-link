@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Full test of Claude Penpal Service processing with real integration."""
 
+import argparse
+import json
+import logging
 import os
+import struct
 import sys
 import time
-import logging
-import json
 import uuid
 import zipfile
-import argparse
-import struct
 
 # Set up logging
 logging.basicConfig(
@@ -19,15 +19,15 @@ logger = logging.getLogger("test_full_penpal_processing")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
 

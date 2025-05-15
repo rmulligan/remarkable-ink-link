@@ -4,13 +4,13 @@ This module provides a caching mechanism for handwriting recognition results,
 helping to reduce duplicate API calls and improve performance.
 """
 
-import os
-import json
 import hashlib
+import json
 import logging
+import os
 import time
-from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

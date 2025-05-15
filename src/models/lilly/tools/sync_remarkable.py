@@ -3,15 +3,15 @@
 Sync reMarkable notebooks to Lilly's workspace.
 """
 
-import os
-import sys
-import json
 import argparse
+import json
+import os
+import shutil
 import subprocess
+import sys
 import tempfile
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import shutil
+from typing import Any, Dict, List, Optional
 
 # Configure paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

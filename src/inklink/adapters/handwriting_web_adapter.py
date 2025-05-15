@@ -4,17 +4,18 @@ This module provides an adapter for handwriting recognition using the
 MyScript Web API instead of the local SDK.
 """
 
-import os
-import logging
-import json
-import hmac
-import hashlib
 import base64
+import hashlib
+import hmac
+import json
+import logging
+import os
 import time
-import requests
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
+
+import requests
 
 from inklink.adapters.adapter import Adapter
 
@@ -146,8 +147,8 @@ class HandwritingWebAdapter(Adapter):
             # Import rmscene for parsing .rm files
             try:
                 import rmscene
-                from rmscene.scene_stream import read_tree
                 from rmscene.scene_items import Line
+                from rmscene.scene_stream import read_tree
             except ImportError:
                 logger.error("rmscene not installed - cannot parse .rm files")
                 return []

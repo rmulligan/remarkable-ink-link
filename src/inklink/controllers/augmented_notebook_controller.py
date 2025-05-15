@@ -5,10 +5,10 @@ This controller provides HTTP endpoints for processing reMarkable notebook pages
 with AI assistance, knowledge graph integration, and response generation.
 """
 
-import logging
 import json
+import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from inklink.controllers.base_controller import BaseController
 from inklink.services.augmented_notebook_service import AugmentedNotebookService

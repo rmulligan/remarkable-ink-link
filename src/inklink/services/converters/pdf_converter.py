@@ -9,6 +9,10 @@ import os
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+<<<<<<< HEAD
+=======
+from inklink.config import CONFIG
+>>>>>>> c5c0feb (style: format code with Autopep8, Black and isort)
 from inklink.services.converters.base_converter import BaseConverter
 
 logger = logging.getLogger(__name__)

@@ -6,15 +6,15 @@ This script downloads an existing notebook from reMarkable,
 makes a simple change, and then re-uploads it to test metadata handling.
 """
 
-import os
-import sys
-import time
-import json
-import zipfile
-import tempfile
-import logging
 import argparse
+import json
+import logging
+import os
 import shutil
+import sys
+import tempfile
+import time
+import zipfile
 
 # Set up logging
 logging.basicConfig(
@@ -24,14 +24,14 @@ logger = logging.getLogger("download_and_reupload")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 
 
 def main():

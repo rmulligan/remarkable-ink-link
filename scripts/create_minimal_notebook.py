@@ -4,16 +4,16 @@ Create a minimal notebook with just a single page and basic metadata.
 This script attempts to upload a notebook with minimal structure.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-import zipfile
-import tempfile
-import uuid
-import subprocess
+import os
 import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import uuid
+import zipfile
 
 from inklink.config import CONFIG
 

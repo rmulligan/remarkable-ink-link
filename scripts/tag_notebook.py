@@ -3,12 +3,12 @@
 Tag an existing reMarkable notebook with HasLilly and Lilly tags.
 """
 
-import os
 import json
 import logging
+import os
+import sys
 import tempfile
 import zipfile
-import sys
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter
 

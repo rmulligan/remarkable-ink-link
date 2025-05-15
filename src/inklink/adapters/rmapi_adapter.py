@@ -4,16 +4,16 @@ This module provides an adapter for interacting with the reMarkable Cloud API
 via the rmapi tool, including authentication handling.
 """
 
+import json
+import logging
 import os
+import re
+import shutil
 import subprocess
 import tempfile
 import time
-import logging
-import json
 import zipfile
-import shutil
-import re
-from typing import Optional, Tuple, List, Dict, Any, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,9 @@ class RmapiAdapter:
             True if download successful, False otherwise
         """
         import platform
-        import requests
         import stat
+
+        import requests
 
         try:
             # Determine OS and architecture

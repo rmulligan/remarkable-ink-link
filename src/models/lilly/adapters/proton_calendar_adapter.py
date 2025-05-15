@@ -6,14 +6,15 @@ This adapter provides an interface to access and interact with Proton Calendar
 through the CalDAV protocol via Proton Bridge.
 """
 
-import os
-import logging
 import datetime
+import logging
+import os
 import uuid
-from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import caldav
-from caldav.elements import dav, cdav
+from caldav.elements import cdav, dav
 
 logger = logging.getLogger(__name__)
 

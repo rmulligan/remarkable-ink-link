@@ -7,7 +7,7 @@ with support for environment variables for easy configuration in different envir
 
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Base configuration dictionary
 AUTH_CONFIG = {

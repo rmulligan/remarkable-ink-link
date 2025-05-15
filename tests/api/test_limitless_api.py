@@ -6,10 +6,10 @@ This script directly tests the LimitlessAdapter, LimitlessLifeLogService,
 and LimitlessSchedulerService to verify the full integration flow.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import tempfile
 from datetime import datetime, timedelta
 
@@ -23,9 +23,10 @@ logger = logging.getLogger(__name__)
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from test_kg_mock import MockKnowledgeGraphService  # noqa: E402
+
 # Import Limitless components
 from src.inklink.adapters.limitless_adapter import LimitlessAdapter  # noqa: E402
-from test_kg_mock import MockKnowledgeGraphService  # noqa: E402
 
 
 class LimitlessIntegrationTester:

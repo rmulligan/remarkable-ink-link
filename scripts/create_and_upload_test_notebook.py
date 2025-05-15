@@ -4,16 +4,16 @@ Create a test notebook with the correct structure and upload it directly.
 This script addresses HTTP 400 errors by ensuring the correct metadata format.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-import zipfile
-import tempfile
-import uuid
-import subprocess
+import os
 import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import uuid
+import zipfile
 
 from inklink.config import CONFIG
 

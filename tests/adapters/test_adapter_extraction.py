@@ -4,10 +4,10 @@ Test script for the updated HandwritingWebAdapter extraction function.
 This script tests the adapter with existing sample .rm files.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 
 # Configure logging
 logging.basicConfig(

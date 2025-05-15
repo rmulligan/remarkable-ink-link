@@ -6,14 +6,14 @@ This script tests the handwriting recognition using the new HandwritingWebAdapte
 which integrates with the MyScript Cloud API instead of the local SDK.
 """
 
-import os
-import sys
+import argparse
 import json
 import logging
-import argparse
-from pathlib import Path
+import os
+import sys
 import tempfile
 import time
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(

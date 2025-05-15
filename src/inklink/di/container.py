@@ -5,49 +5,49 @@ This module provides a container for configuring and resolving dependencies.
 
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from inklink.di.service_provider import ServiceProvider
-from inklink.services.interfaces import (
-    IQRCodeService,
-    IWebScraperService,
-    IDocumentService,
-    IPDFService,
-    IRemarkableService,
-    IHandwritingRecognitionService,
-    IGoogleDocsService,
-    IEPUBGenerator,
-    IKnowledgeGraphService,
-    IKnowledgeIndexService,
-    ILimitlessLifeLogService,
-)
-from inklink.services.qr_service import QRCodeService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.pdf_service import PDFService
-from inklink.services.remarkable_service import RemarkableService
-from inklink.services.handwriting_recognition_service import (
-    HandwritingRecognitionService,
-)
-from inklink.services.google_docs_service import GoogleDocsService
-from inklink.services.ai_service import AIService
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.services.knowledge_graph_integration_service import (
-    KnowledgeGraphIntegrationService,
-)
-
-# Import new services for knowledge index notebooks
-from inklink.services.epub_generator import EPUBGenerator
-from inklink.services.knowledge_index_service import KnowledgeIndexService
-
-# Import Limitless services
-from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.services.limitless_life_log_service import LimitlessLifeLogService
-from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 
 # Import adapters
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
-from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
+
+# Import Limitless services
+from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.di.service_provider import ServiceProvider
+from inklink.services.ai_service import AIService
+from inklink.services.document_service import DocumentService
+
+# Import new services for knowledge index notebooks
+from inklink.services.epub_generator import EPUBGenerator
+from inklink.services.google_docs_service import GoogleDocsService
+from inklink.services.handwriting_recognition_service import (
+    HandwritingRecognitionService,
+)
+from inklink.services.interfaces import (
+    IDocumentService,
+    IEPUBGenerator,
+    IGoogleDocsService,
+    IHandwritingRecognitionService,
+    IKnowledgeGraphService,
+    IKnowledgeIndexService,
+    ILimitlessLifeLogService,
+    IPDFService,
+    IQRCodeService,
+    IRemarkableService,
+    IWebScraperService,
+)
+from inklink.services.knowledge_graph_integration_service import (
+    KnowledgeGraphIntegrationService,
+)
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.knowledge_index_service import KnowledgeIndexService
+from inklink.services.limitless_life_log_service import LimitlessLifeLogService
+from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
+from inklink.services.pdf_service import PDFService
+from inklink.services.qr_service import QRCodeService
+from inklink.services.remarkable_service import RemarkableService
+from inklink.services.web_scraper_service import WebScraperService
 
 logger = logging.getLogger(__name__)
 

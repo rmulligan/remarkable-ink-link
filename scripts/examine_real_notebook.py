@@ -4,12 +4,12 @@ Download and examine a real notebook from reMarkable Cloud.
 This script will help us understand the correct structure.
 """
 
+import json
+import logging
 import os
 import subprocess
-import zipfile
-import json
 import tempfile
-import logging
+import zipfile
 
 # Setup logging
 logging.basicConfig(

@@ -5,16 +5,16 @@ Simplified test for metadata handling with reMarkable API.
 This script creates a minimal test notebook and uploads it to verify metadata format.
 """
 
-import os
-import sys
-import time
+import argparse
 import json
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import time
 import uuid
 import zipfile
-import tempfile
-import logging
-import argparse
-import shutil
 from datetime import datetime
 
 # Set up logging
@@ -25,14 +25,14 @@ logger = logging.getLogger("test_simplified_metadata")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 
 
 def create_test_notebook():

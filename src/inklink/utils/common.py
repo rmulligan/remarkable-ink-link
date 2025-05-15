@@ -3,13 +3,13 @@
 This module provides common utility functions used throughout the project.
 """
 
-import time
 import logging
-import subprocess
-import re
 import os
-from urllib.parse import urlparse
+import re
+import subprocess
+import time
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -236,8 +236,9 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
         If failed, result is the error message
     """
     try:
-        from inklink.config import CONFIG
         import tempfile
+
+        from inklink.config import CONFIG
 
         # Create a temporary directory
         temp_dir = CONFIG.get("TEMP_DIR")

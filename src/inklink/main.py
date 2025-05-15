@@ -1,14 +1,16 @@
 """Entry point for InkLink application."""
 
-import click
-import logging
-import time
-import os
-import json
-import subprocess
 import datetime
+import json
+import logging
+import os
+import subprocess
+import time
+from typing import Any, Dict, List, Optional
+
+import click
+
 from src.inklink.config import CONFIG
-from typing import List, Dict, Any, Optional
 
 
 @click.group()
@@ -33,6 +35,7 @@ def server(host, port):
 def auth(host, port):
     """Start the reMarkable Cloud authentication UI."""
     import uvicorn
+
     from inklink.auth import app
 
     uvicorn.run(app, host=host, port=port)
@@ -625,8 +628,9 @@ def penpal(
     use_conversation_ids,
 ):
     """Start the Claude Penpal monitoring service."""
-    from inklink.services.claude_penpal_service import ClaudePenpalService
     import logging
+
+    from inklink.services.claude_penpal_service import ClaudePenpalService
 
     logging.basicConfig(
         level=logging.INFO,

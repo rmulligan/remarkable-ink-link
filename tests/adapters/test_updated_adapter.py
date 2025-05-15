@@ -3,10 +3,10 @@
 Test script for the updated HandwritingWebAdapter with rmscene v0.7.0+.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import tempfile
 
 # Configure logging
@@ -28,9 +28,9 @@ from src.inklink.adapters.handwriting_web_adapter import (  # noqa: E402
 # Import rmscene for creating test files
 try:
     import rmscene
-    from rmscene.scene_tree import SceneTree
-    from rmscene.scene_items import Group, Line, Point, Pen, PenColor
+    from rmscene.scene_items import Group, Line, Pen, PenColor, Point
     from rmscene.scene_stream import write_tree
+    from rmscene.scene_tree import SceneTree
 
     RMSCENE_AVAILABLE = True
 except ImportError as e:

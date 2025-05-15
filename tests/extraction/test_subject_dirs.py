@@ -3,11 +3,11 @@
 Test script for subject-based directory structure.
 """
 
-import os
-import sys
 import json
 import logging
+import os
 import shutil
+import sys
 import uuid
 from datetime import datetime
 

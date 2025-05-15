@@ -16,19 +16,20 @@ Usage:
     LIMITLESS_API_KEY=your_api_key NEO4J_URI=bolt://localhost:7687 NEO4J_USER=neo4j NEO4J_PASS=password pytest -xvs tests/test_limitless_live.py
 """
 
-import os
-import time
 import json
 import logging
-import pytest
-from datetime import datetime, timedelta
-import requests
+import os
 import tempfile
+import time
+from datetime import datetime, timedelta
+
+import pytest
+import requests
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
 
 # Configure logging for tests
 logging.basicConfig(
@@ -65,8 +66,8 @@ def limitless_adapter():
 def knowledge_graph_service():
     """Create a mock Knowledge Graph service for testing."""
     # Import our mock service
-    import sys
     import os
+    import sys
 
     # Add the project root to Python path for imports
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

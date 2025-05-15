@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-import os
 import logging
+import os
+
+from pydantic import BaseModel, Field
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -5,9 +5,9 @@ This controller provides HTTP endpoints for creating and managing knowledge inde
 notebooks that organize entities and topics with references to related content.
 """
 
-import logging
 import json
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Any, Dict, List, Optional
 
 from inklink.controllers.base_controller import BaseController
 from inklink.services.knowledge_index_service import KnowledgeIndexService

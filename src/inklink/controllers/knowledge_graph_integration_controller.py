@@ -5,10 +5,10 @@ This controller exposes HTTP endpoints for extracting knowledge from reMarkable
 notebooks, performing semantic search with handwritten queries, and more.
 """
 
-import logging
 import json
+import logging
 import os
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.controllers.base_controller import BaseController
 from inklink.services.knowledge_graph_integration_service import (

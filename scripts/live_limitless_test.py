@@ -3,12 +3,13 @@
 Live test script for Limitless integration.
 """
 
-import os
-import sys
 import json
 import logging
-import requests
+import os
+import sys
 from datetime import datetime, timedelta
+
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

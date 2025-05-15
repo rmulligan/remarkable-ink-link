@@ -3,8 +3,9 @@
 Simple test for Limitless API with the new API key
 """
 
-import os
 import json
+import os
+
 import requests
 
 

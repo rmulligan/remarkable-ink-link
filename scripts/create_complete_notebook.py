@@ -4,15 +4,15 @@ Create a notebook that matches the structure of a real reMarkable notebook.
 This version creates the complete structure with all required fields.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-import zipfile
-import tempfile
-import uuid
+import os
 import subprocess
+import sys
+import tempfile
+import time
+import uuid
+import zipfile
 
 from inklink.config import CONFIG
 

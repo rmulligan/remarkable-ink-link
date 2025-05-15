@@ -1,9 +1,11 @@
-from fastapi import Form
-from fastapi.responses import HTMLResponse
-import subprocess
-import shlex
 import os
 import re
+import shlex
+import subprocess
+
+from fastapi import Form
+from fastapi.responses import HTMLResponse
+
 from inklink.config import CONFIG
 
 

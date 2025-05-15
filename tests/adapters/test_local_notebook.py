@@ -6,12 +6,12 @@ This script simulates the processing of a local test notebook without using rmap
 to confirm that the subject-based directory structure is working properly.
 """
 
-import os
-import sys
-import logging
 import json
-import tempfile
+import logging
+import os
 import shutil
+import sys
+import tempfile
 import uuid
 from datetime import datetime
 

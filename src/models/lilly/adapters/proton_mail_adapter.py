@@ -6,20 +6,20 @@ This adapter provides an interface to access and interact with Proton Mail
 through the Proton Bridge IMAP/SMTP service.
 """
 
-import os
+import datetime
 import email
 import imaplib
-import smtplib
-import logging
-import re
 import json
-import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.header import decode_header
-from email.utils import parsedate_to_datetime
-from typing import List, Dict, Any, Optional, Tuple, Union
+import logging
+import os
+import re
+import smtplib
 from dataclasses import dataclass
+from email.header import decode_header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import parsedate_to_datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 

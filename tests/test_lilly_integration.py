@@ -1,17 +1,17 @@
 """Integration test for the Lilly persona with Claude Vision."""
 
-import os
 import json
+import os
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, mock_open
 
 from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
+from inklink.config import get_config
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.config import get_config
-
 
 # Sample content that would be in the persona file
 SAMPLE_PERSONA = """# Lilly: reMarkable Companion

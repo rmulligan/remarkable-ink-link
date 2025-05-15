@@ -5,20 +5,20 @@ This module provides command-line interfaces for authenticating with various ser
 used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 """
 
-import os
-import click
 import getpass
+import os
 from typing import Optional
 
-from lilly.auth.credential_manager import CredentialManager
+import click
 from lilly.auth.authentication import (
-    AuthenticationProvider,
-    SERVICE_PROTON_MAIL,
-    SERVICE_PROTON_CALENDAR,
     SERVICE_GOOGLE_DRIVE,
+    SERVICE_PROTON_CALENDAR,
+    SERVICE_PROTON_MAIL,
     AuthenticationError,
+    AuthenticationProvider,
 )
 from lilly.auth.config import get_config, load_dotenv
+from lilly.auth.credential_manager import CredentialManager
 
 # Create authentication provider
 credential_manager = CredentialManager()

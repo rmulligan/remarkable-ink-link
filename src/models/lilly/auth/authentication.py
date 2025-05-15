@@ -5,16 +5,16 @@ This module provides a consistent authentication flow for all service adapters
 used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 """
 
-import os
-import time
-import logging
-import webbrowser
 import http.server
+import logging
+import os
 import socketserver
+import time
 import urllib.parse
+import webbrowser
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Tuple, Callable
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Tuple
 
 # Import credential manager
 from lilly.auth.credential_manager import CredentialManager
@@ -253,9 +253,9 @@ class GoogleDriveAuthentication(AuthenticationBase):
         """
         # Import here to avoid dependency if not using Google
         try:
-            from google_auth_oauthlib.flow import Flow
             from google.auth.transport.requests import Request
             from google.oauth2.credentials import Credentials
+            from google_auth_oauthlib.flow import Flow
         except ImportError:
             raise AuthenticationError(
                 "Google auth libraries not installed. Run: pip install google-auth google-auth-oauthlib google-auth-httplib2"

@@ -3,10 +3,11 @@
 Simple test to check Limitless API connectivity.
 """
 
-import os
 import json
-import requests
+import os
 from pprint import pprint
+
+import requests
 
 # API key
 API_KEY = "sk-0b83e577-433d-4019-bfd5-b7979914cbde"

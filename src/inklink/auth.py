@@ -1,7 +1,10 @@
 """Authentication UI for reMarkable Cloud pairing."""
 
 import os
+<<<<<<< HEAD
 import re
+=======
+>>>>>>> c5c0feb (style: format code with Autopep8, Black and isort)
 import subprocess
 
 from fastapi import FastAPI, Form

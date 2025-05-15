@@ -6,19 +6,20 @@ This adapter uses Claude's vision capabilities through the 'claude' CLI tool
 to recognize handwritten text from rendered images of reMarkable notebook pages.
 """
 
-import os
-import logging
-import tempfile
-import json
-import subprocess
-import random
-import time
 import concurrent.futures
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+import json
+import logging
+import os
+import random
+import subprocess
+import tempfile
+import time
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # PIL for image processing
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-import numpy as np
 
 from .adapter import Adapter
 

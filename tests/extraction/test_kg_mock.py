@@ -1,8 +1,8 @@
 """Mock implementation of KnowledgeGraphService for testing."""
 
-import os
 import logging
-from typing import Dict, List, Any, Optional, Tuple, Union
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.services.interfaces import IKnowledgeGraphService
 

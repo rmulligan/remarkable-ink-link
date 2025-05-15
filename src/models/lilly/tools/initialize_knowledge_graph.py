@@ -4,11 +4,11 @@ Initialize the knowledge graph for Lilly.
 Creates basic entity types and relationships for reMarkable notes management.
 """
 
-import os
-import sys
 import json
+import os
 import subprocess
-from typing import List, Dict, Any
+import sys
+from typing import Any, Dict, List
 
 # Define the knowledge graph structure
 ENTITY_TYPES = [

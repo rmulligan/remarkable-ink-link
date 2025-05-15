@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Create placeholder notebook files with sample content and tags."""
 
-import os
 import json
+import os
 import sys
 import uuid
 

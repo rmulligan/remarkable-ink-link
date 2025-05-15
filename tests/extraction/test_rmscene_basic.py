@@ -4,9 +4,9 @@ Basic test for rmscene functionality.
 This script tests if rmscene is working correctly.
 """
 
+import logging
 import os
 import sys
-import logging
 
 # Configure logging
 logging.basicConfig(

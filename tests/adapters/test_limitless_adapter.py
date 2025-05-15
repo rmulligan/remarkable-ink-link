@@ -3,9 +3,9 @@
 Simple test script for Limitless adapter.
 """
 
+import json
 import os
 import sys
-import json
 from datetime import datetime
 
 # Add project root to path

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Script to check if a notebook has specific tags."""
 
-import os
-import sys
-import subprocess
-import tempfile
 import json
+import os
 import shutil
+import subprocess
+import sys
+import tempfile
 import zipfile
 
 

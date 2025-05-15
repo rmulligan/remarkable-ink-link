@@ -14,18 +14,18 @@ Arguments:
     --test-tag TEST_TAG      The tag to add for test purposes (default: LillyTest)
 """
 
-import os
-import sys
-import time
+import argparse
 import json
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import time
 import uuid
 import zipfile
-import tempfile
-import logging
-import argparse
-import shutil
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -35,15 +35,15 @@ logger = logging.getLogger("test_claude_penpal_fix")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
 

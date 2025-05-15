@@ -6,10 +6,10 @@ This script tests the extraction of strokes from a reMarkable file
 using the current rmscene API without requiring MyScript API credentials.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -28,8 +28,8 @@ if project_root not in sys.path:
 # Try importing rmscene
 try:
     import rmscene  # noqa: E402
-    import rmscene.scene_tree as st  # noqa: E402
     import rmscene.scene_items as si  # noqa: E402
+    import rmscene.scene_tree as st  # noqa: E402
     from rmscene.scene_stream import read_tree, write_tree  # noqa: E402
 
     RMSCENE_AVAILABLE = True

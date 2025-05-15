@@ -4,14 +4,14 @@ Tag an existing reMarkable notebook with HasLilly and Lilly tags.
 Corrected version with proper upload command.
 """
 
-import os
 import json
 import logging
+import os
+import shutil
+import subprocess
+import sys
 import tempfile
 import zipfile
-import sys
-import subprocess
-import shutil
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter
 from inklink.config import CONFIG

@@ -6,14 +6,14 @@ This script ensures that both content and metadata files are properly updated
 when modifying notebooks, addressing issues with the reMarkable Cloud API.
 """
 
-import os
-import sys
 import json
 import logging
-import zipfile
-import tempfile
+import os
 import shutil
+import sys
+import tempfile
 import uuid
+import zipfile
 from datetime import datetime
 
 # Setup logging

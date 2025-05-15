@@ -7,8 +7,9 @@
 # This module provides a way to run system commands and interact with the system shell from within a
 # Python script.
 import subprocess
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 
 from inklink.auth import app
 

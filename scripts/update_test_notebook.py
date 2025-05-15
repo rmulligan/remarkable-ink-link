@@ -6,14 +6,14 @@ This script takes the local test notebook that has been modified by the mock pen
 service and uploads it back to the reMarkable cloud.
 """
 
-import os
-import sys
-import logging
-import zipfile
-import tempfile
-import subprocess
 import glob
+import logging
+import os
 import shutil
+import subprocess
+import sys
+import tempfile
+import zipfile
 
 # Setup logging
 logging.basicConfig(

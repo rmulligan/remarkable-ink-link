@@ -6,14 +6,14 @@ This script creates a test file, uploads it with rmapi, downloads it back,
 and examines its structure to understand the proper format.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import shutil
+import subprocess
+import sys
 import tempfile
 import zipfile
-import subprocess
-import shutil
 
 # Setup logging
 logging.basicConfig(
@@ -31,8 +31,8 @@ def create_test_file():
     """Create a simple test file and upload it with rmapi."""
     # Create a simple PDF file (rmapi only supports PDF, epub, and reMarkable formats)
     try:
-        from reportlab.pdfgen import canvas
         from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
 
         temp_fd, test_file_path = tempfile.mkstemp(suffix=".pdf")
         os.close(temp_fd)  # Close the file descriptor as Canvas will open it

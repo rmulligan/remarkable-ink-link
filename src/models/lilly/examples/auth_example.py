@@ -6,24 +6,24 @@ This script demonstrates how to authenticate with Proton Mail, Proton Calendar,
 and Google Drive using the Lilly authentication system.
 """
 
+import getpass
 import os
 import sys
-import getpass
 
 # Add the project root to Python path
 sys.path.insert(
     0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 )
 
-from lilly.auth.credential_manager import CredentialManager  # noqa: E402
 from lilly.auth.authentication import (  # noqa: E402
-    AuthenticationProvider,
-    SERVICE_PROTON_MAIL,
-    SERVICE_PROTON_CALENDAR,
     SERVICE_GOOGLE_DRIVE,
+    SERVICE_PROTON_CALENDAR,
+    SERVICE_PROTON_MAIL,
     AuthenticationError,
+    AuthenticationProvider,
 )
 from lilly.auth.config import load_dotenv  # noqa: E402
+from lilly.auth.credential_manager import CredentialManager  # noqa: E402
 
 
 def main():

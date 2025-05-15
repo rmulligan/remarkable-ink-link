@@ -3,13 +3,13 @@
 Process handwritten notes from reMarkable using Claude's vision capabilities.
 """
 
-import os
-import sys
-import json
 import argparse
+import json
+import os
 import subprocess
+import sys
 import tempfile
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 def create_claude_prompt(image_path: str, content_type: str = "text") -> str:

@@ -4,18 +4,18 @@ This module provides a service that monitors reMarkable Cloud for notebooks
 tagged with 'Cass' and processes them with Claude Code.
 """
 
-import os
-import time
+import datetime
 import json
 import logging
-import tempfile
-import subprocess
-import threading
-import datetime
-import zipfile
-import shutil
+import os
 import re
-from typing import Dict, List, Any, Optional, Tuple, Set, Callable
+import shutil
+import subprocess
+import tempfile
+import threading
+import time
+import zipfile
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from inklink.adapters.cassidy_adapter import CassidyAdapter
 from inklink.config import CONFIG

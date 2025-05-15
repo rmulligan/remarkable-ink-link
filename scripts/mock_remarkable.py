@@ -7,11 +7,11 @@ initialization in the container.py file to allow the application to start
 for testing purposes.
 """
 
-import os
-import sys
 import importlib
 import inspect
 import logging
+import os
+import sys
 from functools import wraps
 from unittest.mock import MagicMock
 

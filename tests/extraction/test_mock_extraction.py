@@ -4,11 +4,11 @@ Test script for the updated HandwritingWebAdapter using mock data.
 This avoids the need for real .rm files.
 """
 
-import os
-import sys
 import json
 import logging
-from typing import List, Dict, Any
+import os
+import sys
+from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(

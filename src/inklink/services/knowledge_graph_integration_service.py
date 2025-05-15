@@ -1,6 +1,10 @@
 """Integration service for knowledge graph and reMarkable notebooks."""
 
 import logging
+<<<<<<< HEAD
+=======
+import os
+>>>>>>> c5c0feb (style: format code with Autopep8, Black and isort)
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.config import CONFIG

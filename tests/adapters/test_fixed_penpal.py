@@ -4,12 +4,12 @@
 This script executes a real penpal service response on an existing reMarkable notebook.
 """
 
+import argparse
+import logging
 import os
 import sys
-import time
-import logging
-import argparse
 import tempfile
+import time
 
 # Set up logging
 logging.basicConfig(
@@ -19,15 +19,15 @@ logger = logging.getLogger("test_fixed_penpal")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
 

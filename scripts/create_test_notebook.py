@@ -3,14 +3,14 @@
 Create a test notebook with Lilly tag on a page and upload it to reMarkable.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-import zipfile
+import os
+import sys
 import tempfile
+import time
 import uuid
+import zipfile
 from datetime import datetime
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter

@@ -5,13 +5,14 @@ This script starts the Claude Penpal Service with the new directory structure
 and pre-filtering functionality to process handwritten queries.
 """
 
+import argparse
+import logging
 import os
 import sys
 import time
-import logging
-import argparse
-from inklink.services.claude_penpal_service import ClaudePenpalService
+
 from inklink.config import CONFIG
+from inklink.services.claude_penpal_service import ClaudePenpalService
 
 # Setup logging
 logging.basicConfig(

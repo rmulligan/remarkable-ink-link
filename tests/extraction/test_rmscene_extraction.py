@@ -6,10 +6,10 @@ This script tests the extraction of strokes from a reMarkable file
 using rmscene without requiring MyScript API credentials.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import tempfile
 import time
 from pathlib import Path

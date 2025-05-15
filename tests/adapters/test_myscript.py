@@ -5,10 +5,10 @@ Test script for MyScript iink SDK integration.
 This script tests the handwriting recognition service using the MyScript iink SDK.
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import json
 from pathlib import Path
 
 # Configure logging

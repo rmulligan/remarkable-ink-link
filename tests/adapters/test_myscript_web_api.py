@@ -15,17 +15,18 @@ Notes:
    - You've accepted the terms of service for the MyScript API
 """
 
+import base64
+import hashlib
+import hmac
+import json
+import logging
 import os
 import sys
-import json
-import hmac
-import hashlib
-import base64
 import time
-import logging
-import requests
 from datetime import datetime
 from urllib.parse import urljoin
+
+import requests
 
 # Configure logging
 logging.basicConfig(

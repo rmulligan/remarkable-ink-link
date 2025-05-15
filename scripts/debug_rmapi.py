@@ -4,11 +4,11 @@ Debugging script for reMarkable Cloud API issues.
 This script checks the reMarkable Cloud API configuration and tries various operations.
 """
 
-import os
-import sys
-import logging
-import subprocess
 import json
+import logging
+import os
+import subprocess
+import sys
 import tempfile
 import time
 

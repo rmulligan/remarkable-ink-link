@@ -7,13 +7,13 @@ the full InkLink server to be running. It creates a lightweight application
 instance just to test the Limitless integration functionality.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(

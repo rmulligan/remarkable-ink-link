@@ -6,28 +6,28 @@ This script demonstrates how to integrate the Lilly authentication system
 with the Proton Mail, Proton Calendar, and Google Drive adapters.
 """
 
+import logging
 import os
 import sys
-import logging
 
 # Add the project root to Python path
 sys.path.insert(
     0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 )
 
-from lilly.auth.credential_manager import CredentialManager  # noqa: E402
-from lilly.auth.authentication import (  # noqa: E402
-    AuthenticationProvider,
-    SERVICE_PROTON_MAIL,
-    SERVICE_PROTON_CALENDAR,
-    SERVICE_GOOGLE_DRIVE,
-)
-from lilly.auth.config import load_dotenv  # noqa: E402
+from lilly.adapters.google_drive_adapter import GoogleDriveAdapter  # noqa: E402
+from lilly.adapters.proton_calendar_adapter import ProtonCalendarAdapter  # noqa: E402
 
 # Import adapters
 from lilly.adapters.proton_mail_adapter import ProtonMailAdapter  # noqa: E402
-from lilly.adapters.proton_calendar_adapter import ProtonCalendarAdapter  # noqa: E402
-from lilly.adapters.google_drive_adapter import GoogleDriveAdapter  # noqa: E402
+from lilly.auth.authentication import (  # noqa: E402
+    SERVICE_GOOGLE_DRIVE,
+    SERVICE_PROTON_CALENDAR,
+    SERVICE_PROTON_MAIL,
+    AuthenticationProvider,
+)
+from lilly.auth.config import load_dotenv  # noqa: E402
+from lilly.auth.credential_manager import CredentialManager  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -11,13 +11,13 @@ Usage:
     python run_live_penpal_test.py [--tag TAG] [--wait SECONDS]
 """
 
+import argparse
+import logging
 import os
 import sys
-import time
-import logging
-import argparse
 import threading
-from typing import Dict, Any, Optional, List
+import time
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(
@@ -27,15 +27,15 @@ logger = logging.getLogger("live_penpal_test")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
 

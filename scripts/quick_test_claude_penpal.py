@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Quick test for Claude Penpal Service with local notebook."""
 
+import logging
 import os
 import sys
-import logging
+
 from inklink.services.claude_penpal_service import ClaudePenpalService
 
 # Setup logging

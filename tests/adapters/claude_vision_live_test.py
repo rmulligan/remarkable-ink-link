@@ -6,13 +6,13 @@ This script tests the ClaudeVisionAdapter with real images and live Claude API c
 to verify recognition quality, performance, and handling of different content types.
 """
 
+import argparse
+import logging
 import os
 import sys
 import time
-import logging
-import argparse
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pytest
 
@@ -30,7 +30,6 @@ from PIL import Image
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter  # noqa: E402
-
 
 # Configure logging
 logging.basicConfig(

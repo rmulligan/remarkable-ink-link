@@ -4,18 +4,18 @@ This module provides a service that monitors reMarkable Cloud for notebooks
 tagged with 'Lilly' and processes them with Claude Code using Claude's vision capabilities.
 """
 
-import os
-import time
 import json
 import logging
-import tempfile
-import subprocess
+import os
 import shutil
-from typing import Dict, List, Any, Optional, Tuple, Callable
+import subprocess
+import tempfile
+import time
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from inklink.services.cassidy_monitor_service import CassidyMonitor
 from inklink.adapters.cassidy_adapter import CassidyAdapter
 from inklink.config import CONFIG
+from inklink.services.cassidy_monitor_service import CassidyMonitor
 
 logger = logging.getLogger(__name__)
 

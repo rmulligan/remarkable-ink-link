@@ -6,16 +6,16 @@ This script tests the fixed _insert_response_after_query function from
 Claude Penpal Service directly with a test example.
 """
 
-import os
-import sys
-import time
+import argparse
 import json
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import time
 import uuid
 import zipfile
-import tempfile
-import logging
-import argparse
-import shutil
 from datetime import datetime
 
 # Set up logging
@@ -26,14 +26,14 @@ logger = logging.getLogger("test_metadata_implementation")
 
 # Import project modules
 try:
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 except ImportError:
     # Add project root to sys.path if imports fail
     project_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(project_dir, "src"))
-    from inklink.config import CONFIG
     from inklink.adapters.rmapi_adapter import RmapiAdapter
+    from inklink.config import CONFIG
 
 
 def create_test_notebook():

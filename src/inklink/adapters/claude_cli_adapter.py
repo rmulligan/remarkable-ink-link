@@ -4,16 +4,16 @@ This module provides an adapter for interacting with Claude AI assistant
 through the local Claude CLI command.
 """
 
+import logging
 import os
+import re
 import subprocess
 import tempfile
-import logging
 import time
-import re
-from typing import Dict, Any, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
-from inklink.utils import retry_operation, format_error
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 

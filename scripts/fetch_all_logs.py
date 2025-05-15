@@ -3,12 +3,13 @@
 Script to fetch all Limitless life logs without any date restrictions.
 """
 
+import json
 import os
 import sys
-import json
-import requests
-from pprint import pprint
 from datetime import datetime, timedelta
+from pprint import pprint
+
+import requests
 
 # API key
 API_KEY = "sk-0b83e577-433d-4019-bfd5-b7979914cbde"
