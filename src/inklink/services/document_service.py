@@ -7,21 +7,20 @@ using a configurable set of content converters and renderers.
 import logging
 import os
 import threading
+import time
 from typing import Any, Dict, List, Optional
+
+from inklink.config import CONFIG
 from inklink.services.converters.html_converter import HTMLConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.pdf_converter import PDFConverter
-from inklink.services.interfaces import IContentConverter, IDocumentService
-from inklink.services.renderers.hcl_renderer import HCLRenderer
-from inklink.utils import ensure_rcu_available, ensure_drawj2d_available
-from inklink.config import CONFIG
-import time
 from inklink.services.interfaces import (
-IContentConverter,
-IDocumentRenderer,
-IDocumentService,
+    IContentConverter,
+    IDocumentRenderer,
+    IDocumentService,
 )
-from inklink.utils import ensure_drawj2d_available
+from inklink.services.renderers.hcl_renderer import HCLRenderer
+from inklink.utils import ensure_drawj2d_available, ensure_rcu_available
 
 logger = logging.getLogger(__name__)
 

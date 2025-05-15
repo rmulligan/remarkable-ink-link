@@ -6,10 +6,10 @@ into Markdown and then into reMarkable-compatible formats.
 
 import logging
 import os
-from typing import Any, Dict, Optional
-from inklink.services.converters.base_converter import BaseConverter
-from inklink.utils import convert_markdown_to_rm
 import time
+from typing import Any, Dict, Optional
+
+from inklink.services.converters.base_converter import BaseConverter
 from inklink.utils import convert_markdown_to_rm, retry_operation
 
 logger = logging.getLogger(__name__)
