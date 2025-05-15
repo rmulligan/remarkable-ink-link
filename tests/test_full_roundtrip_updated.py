@@ -19,6 +19,9 @@ from typing import Any, Dict, Optional
 
 import pytest
 
+from inklink.controllers.ingest_controller import IngestController
+from inklink.controllers.process_controller import ProcessController
+
 # Import controllers
 from inklink.controllers.share_controller import ShareController
 

@@ -2,6 +2,8 @@ import os
 import tempfile
 from typing import Any, Dict
 
+import pytest
+
 from inklink.utils.hcl_render import (
     HCLResourceConfig,
     create_hcl_from_content,

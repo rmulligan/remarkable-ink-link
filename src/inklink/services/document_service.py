@@ -20,7 +20,7 @@ from inklink.services.interfaces import (
     IDocumentService,
 )
 from inklink.services.renderers.hcl_renderer import HCLRenderer
-from inklink.utils import ensure_drawj2d_available, ensure_rcu_available
+from inklink.utils import ensure_rcu_available
 
 logger = logging.getLogger(__name__)
 

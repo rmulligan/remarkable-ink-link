@@ -9,10 +9,6 @@ from fastapi.responses import HTMLResponse
 
 from inklink.config import CONFIG
 
-<< << << < HEAD
-== == == =
->>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
-
 
 app = FastAPI()
 

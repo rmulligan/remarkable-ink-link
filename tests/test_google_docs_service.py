@@ -2,9 +2,11 @@
 
 import os
 from typing import Any, Dict, List, Tuple
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from inklink.adapters.google_adapter import GoogleAPIAdapter
 from inklink.services.google_docs_service import GoogleDocsService
 
 

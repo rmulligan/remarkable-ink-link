@@ -6,6 +6,7 @@ Protocol (MCP) tools, enabling Claude and other MCP-compatible interfaces to
 interact with reMarkable notebooks and the knowledge graph.
 """
 
+import json
 import logging
 from typing import Any, Dict, List, Optional
 

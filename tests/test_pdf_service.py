@@ -1,5 +1,7 @@
 import os
-from unittest.mock import MagicMock
+import shutil
+from io import BytesIO
+from unittest.mock import MagicMock, patch
 
 import pytest
 

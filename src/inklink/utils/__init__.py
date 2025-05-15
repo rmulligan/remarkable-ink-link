@@ -6,8 +6,7 @@ This package provides utility functions for the InkLink project.
 from inklink.utils.common import (
     convert_html_to_rm,
     convert_markdown_to_rm,
-    create_hcl_from_markdown,
-    ensure_drawj2d_available,
+    ensure_rcu_available,
     format_error,
     is_safe_url,
     retry_operation,

@@ -1,7 +1,7 @@
 """Tests for QR code service and adapter."""
 
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import qrcode

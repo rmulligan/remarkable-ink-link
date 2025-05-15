@@ -1,6 +1,7 @@
 """Tests for the round-trip workflow."""
 
-from unittest.mock import MagicMock
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 

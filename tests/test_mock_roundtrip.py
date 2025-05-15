@@ -11,14 +11,19 @@ import os
 from typing import Any, Dict, Optional
 from unittest.mock import MagicMock
 
+import pytest
+
 from inklink.controllers.share_controller import ShareController
+from inklink.di.service_provider import ServiceProvider
 
 # Import required modules
 from inklink.pipeline.factory import PipelineFactory
+from inklink.pipeline.processor import PipelineContext
 from inklink.services.interfaces import (
     IDocumentService,
     IQRCodeService,
     IRemarkableService,
+    IWebScraperService,
 )
 from inklink.services.web_scraper_service import WebScraperService
 

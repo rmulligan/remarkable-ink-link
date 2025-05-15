@@ -11,7 +11,9 @@ Run with:
 poetry run pytest tests/test_live_roundtrip.py -v
 """
 
+import asyncio
 import importlib.util
+import json
 import logging
 import os
 import platform
@@ -20,11 +22,14 @@ import subprocess
 import sys
 import tempfile
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pytest
 
 from inklink.controllers.ingest_controller import IngestController
+from inklink.controllers.knowledge_graph_controller import KnowledgeGraphController
+from inklink.controllers.process_controller import ProcessController
 from inklink.controllers.share_controller import ShareController
 from inklink.services.ai_service import AIService
 from inklink.services.document_service import DocumentService

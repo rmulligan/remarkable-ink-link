@@ -1,6 +1,7 @@
 """Google Docs integration service."""
 
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.google_adapter import GoogleAPIAdapter

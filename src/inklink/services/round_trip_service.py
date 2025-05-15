@@ -1,7 +1,9 @@
 """Round-trip service for handling Q&A workflow."""
 
+import json
 import logging
 import os
+import tempfile
 import time
 from typing import Any, Dict, Optional, Tuple
 

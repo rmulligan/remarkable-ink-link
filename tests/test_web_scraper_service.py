@@ -1,6 +1,6 @@
 """Tests for the web scraper service."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from bs4 import BeautifulSoup
