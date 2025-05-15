@@ -221,8 +221,8 @@ class HandwritingAdapter(Adapter):
                 logger.error("MyScript iink SDK not initialized")
                 return {"error": "SDK not initialized"}
 
-            # Import SDK
-            try:
+           # Import SDK
+           try:
                 from iink.iink import (
                     Configuration,
                     ContentBlock,
