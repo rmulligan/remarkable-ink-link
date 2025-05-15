@@ -84,7 +84,8 @@ jobs:
       - name: Code Review GPT
         uses: mattzcarey/shippie@v0.14.0
         with:
-          MODEL_STRING: github:gpt-4.1-mini
+          MODEL_STRING: openai:gpt-4.1-mini
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
         env:
           NODE_OPTIONS: --max-old-space-size=4096
