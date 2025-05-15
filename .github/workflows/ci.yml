@@ -74,8 +74,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+      - name: Install Dependencies
+        run: |
+          poetry install --no-interaction --no-ansi
       - name: Code Review GPT
         uses: mattzcarey/shippie@v0.14.0
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
   build-and-push:
     name: Build and Push Docker Image
