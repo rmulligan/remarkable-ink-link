@@ -102,9 +102,9 @@ jobs:
                       
                       # Provide specific suggestions for common patterns
                       if pattern == 'eval(':
-                          review += "```python\n# Instead of eval(), use ast.literal_eval() for safe evaluation\nimport ast\nresult = ast.literal_eval(user_input)\n```\n"
+                          review += "```suggestion\nimport ast\nresult = ast.literal_eval(user_input)\n```\n"
                       elif pattern == 'os.system':
-                          review += "```python\n# Instead of os.system(), use subprocess.run() with proper sanitization\nimport subprocess\nresult = subprocess.run(['command', 'arg'], capture_output=True, text=True)\n```\n"
+                          review += "```suggestion\nimport subprocess\nresult = subprocess.run(['command', 'arg'], capture_output=True, text=True)\n```\n"
               
               review += f"\n#### Testing\n"
               if has_tests:
@@ -112,7 +112,7 @@ jobs:
               else:
                   review += "⚠️ No test changes detected\n"
                   review += "**Suggestion**: Add tests for your changes\n"
-                  review += "```python\ndef test_your_new_function():\n    # Add test cases here\n    assert your_function(input) == expected_output\n```\n"
+                  review += "```suggestion\ndef test_your_new_function():\n    \"\"\"Test the new functionality.\"\"\"\n    # Add test cases here\n    assert your_function(input) == expected_output\n```\n"
               
               review += "\n### General Recommendations\n"
               review += "- Review the changes for logic errors and edge cases\n"
@@ -143,14 +143,22 @@ jobs:
               2. Any potential issues or bugs
               3. Suggestions for improvements
               4. Code quality assessment
-              5. When you identify issues, provide specific code suggestions to fix them. Use markdown code blocks with the language specified.
+              5. When you identify issues, provide specific code suggestions to fix them.
 
-              Format your response with clear sections and include code suggestions in this format:
+              Format your response with clear sections. When providing code suggestions, format them exactly like this so they can be applied via GitHub's suggestion feature:
+              
               **Issue**: [Description of the issue]
-              **Suggestion**: [Explanation of the fix]
-              ```language
-              [Corrected code]
+              
+              ```suggestion
+              [exact lines of corrected code that should replace the problematic lines]
               ```
+              
+              IMPORTANT: 
+              - The ```suggestion block must contain the EXACT code to replace the existing lines
+              - Include only the changed lines, not the entire function or file
+              - Match the indentation exactly
+              - Do NOT include diff markers (+ or -) in the suggestion block
+              - Provide complete, syntactically correct code in the suggestion block
 
               Please be concise and focus on actionable feedback.
 
@@ -202,8 +210,41 @@ jobs:
                   title = "## 📋 Automated Code Review"
                   footer = "*This is a basic automated analysis. Consider having a human review these changes.*"
               
+              body = f"{title}\n\n{review_body}\n\n---\n{footer}"
+              
+              # If the review contains ```suggestion blocks, we should create a proper review
+              # with line comments instead of a general PR comment
+              if "```suggestion" in review_body:
+                  return create_pr_review_with_suggestions(repo_full_name, pr_number, review_body, title, footer)
+              
               payload = {
-                  "body": f"{title}\n\n{review_body}\n\n---\n{footer}"
+                  "body": body
+              }
+              
+              response = requests.post(url, headers=headers, json=payload)
+              return response.status_code == 201
+              
+          def create_pr_review_with_suggestions(repo_full_name: str, pr_number: int, review_body: str, title: str, footer: str):
+              """Create a PR review with inline suggestions."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return False
+                  
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+                  "Accept": "application/vnd.github+json"
+              }
+              
+              # For now, post as a regular comment since parsing diffs for line numbers is complex
+              # GitHub will still recognize suggestion blocks in regular comments
+              url = f"https://api.github.com/repos/{repo_full_name}/issues/{pr_number}/comments"
+              
+              body = f"{title}\n\n{review_body}\n\n---\n{footer}"
+              
+              payload = {
+                  "body": body
               }
               
               response = requests.post(url, headers=headers, json=payload)

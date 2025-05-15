@@ -198,7 +198,7 @@ The workflow is configured in `.github/workflows/code-review-github-models.yml`
 
 ### Example Code Review Output
 
-When the workflow detects issues, it provides specific code suggestions:
+When the workflow detects issues, it provides code suggestions in GitHub's auto-applicable format:
 
 ```markdown
 ## 🤖 Code Review by GitHub Models
@@ -209,19 +209,15 @@ The changes introduce a new authentication mechanism but contain potential secur
 ### Issues and Suggestions
 
 **Issue**: SQL injection vulnerability in user query
-**Suggestion**: Use parameterized queries to prevent SQL injection
-```python
-# Instead of:
-query = f"SELECT * FROM users WHERE id = {user_id}"
 
-# Use:
+```suggestion
 query = "SELECT * FROM users WHERE id = ?"
 cursor.execute(query, (user_id,))
 ```
 
 **Issue**: Missing error handling
-**Suggestion**: Add try-catch blocks for database operations
-```python
+
+```suggestion
 try:
     result = cursor.execute(query, (user_id,))
     return result.fetchone()
@@ -239,6 +235,18 @@ except sqlite3.Error as e:
 ---
 *Powered by GitHub Models (gpt-4.1)*
 ```
+
+#### How to Apply Suggestions
+
+When the review includes `suggestion` blocks:
+
+1. **Single Suggestion**: Click "Apply suggestion" button that appears in the PR comment
+2. **Multiple Suggestions**: Click "Add to batch" on each suggestion, then "Commit suggestions"
+3. **Manual Edit**: Click the suggestion to open in editor, make adjustments if needed
+
+![GitHub Suggestion Interface](https://docs.github.com/assets/images/help/pull_requests/apply-suggestion-button.png)
+
+The suggestions are formatted to exactly match the lines that need to be changed, making them instantly applicable.
 
 ## Troubleshooting
 
