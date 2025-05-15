@@ -1,12 +1,12 @@
 """Notebook memory management service for efficient storage and retrieval."""
 
+import hashlib
+import json
 import logging
 import os
-import json
-import time
-from typing import Dict, List, Any, Optional, Tuple, Union
 import shutil
-import hashlib
+import time
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.config import CONFIG
 

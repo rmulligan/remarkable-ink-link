@@ -4,16 +4,16 @@ This module provides an adapter for interacting with the reMarkable Cloud API
 via the rmapi command-line tool.
 """
 
-import os
 import logging
+import os
+import shutil
 import subprocess
 import tempfile
 import uuid
-import shutil
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.adapter import Adapter
-from inklink.utils import retry_operation, format_error
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 

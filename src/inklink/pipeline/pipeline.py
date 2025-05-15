@@ -4,9 +4,9 @@ This module provides a pipeline for processing content through a series of proce
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from inklink.pipeline.processor import Processor, PipelineContext
+from inklink.pipeline.processor import PipelineContext, Processor
 
 logger = logging.getLogger(__name__)
 

@@ -4,15 +4,15 @@ This module provides a renderer that creates HCL scripts for
 the drawj2d tool to generate reMarkable-compatible documents.
 """
 
-import os
-import time
-import subprocess
 import logging
-from typing import Dict, Any, Optional
+import os
+import subprocess
+import time
+from typing import Any, Dict, Optional
 
-from inklink.services.interfaces import IDocumentRenderer
-from inklink.utils import retry_operation, format_error
 from inklink.config import CONFIG
+from inklink.services.interfaces import IDocumentRenderer
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 

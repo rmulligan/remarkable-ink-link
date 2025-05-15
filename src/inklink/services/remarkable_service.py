@@ -1,11 +1,11 @@
 """Service for interacting with reMarkable Cloud."""
 
-import os
 import logging
-from typing import Optional, Tuple, Any
+import os
+from typing import Any, Optional, Tuple
 
-from inklink.services.interfaces import IRemarkableService
 from inklink.adapters.rmapi_adapter import RmapiAdapter
+from inklink.services.interfaces import IRemarkableService
 
 # Set up logger
 logger = logging.getLogger(__name__)

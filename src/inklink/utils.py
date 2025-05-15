@@ -3,8 +3,9 @@
 import logging
 import re
 import time
-from typing import Any, Callable, TypeVar, Optional, Tuple, List, Dict
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 from urllib.parse import urljoin, urlparse
+
 from bs4 import BeautifulSoup, Tag
 
 # Import configuration with proper relative import

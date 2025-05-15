@@ -3,10 +3,11 @@
 This module provides an adapter for PDF processing operations.
 """
 
-import os
 import logging
+import os
 import tempfile
-from typing import Dict, Any, Optional, List, Tuple, BinaryIO, Union
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
+
 import PyPDF2
 from pdf2image import convert_from_path
 
@@ -319,19 +320,20 @@ class PDFAdapter(Adapter):
         """
         try:
             import tempfile
+
             from graphviz import Digraph
+            from reportlab.lib import colors
             from reportlab.lib.pagesizes import letter
+            from reportlab.lib.styles import getSampleStyleSheet
             from reportlab.pdfgen import canvas
             from reportlab.platypus import (
+                Image,
+                Paragraph,
+                SimpleDocTemplate,
+                Spacer,
                 Table,
                 TableStyle,
-                SimpleDocTemplate,
-                Paragraph,
-                Spacer,
-                Image,
             )
-            from reportlab.lib import colors
-            from reportlab.lib.styles import getSampleStyleSheet
 
             # Build graph using Graphviz
             graph = Digraph(comment=title)

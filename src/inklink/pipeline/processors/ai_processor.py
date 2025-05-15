@@ -4,9 +4,9 @@ This module provides a processor for AI-based content processing.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from inklink.pipeline.processor import Processor, PipelineContext
+from inklink.pipeline.processor import PipelineContext, Processor
 from inklink.services.ai_service import AIService
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,5 @@
 import httpx
 
-
 # Monkey-patch httpx.Client.__init__ to accept 'app' keyword argument.
 # This patch is necessary to ensure compatibility with starlette's TestClient,
 # which passes an 'app' keyword argument to httpx.Client. The 'app' argument

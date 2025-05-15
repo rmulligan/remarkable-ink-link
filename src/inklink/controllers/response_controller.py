@@ -4,7 +4,7 @@ This module provides a controller for handling response retrieval requests.
 """
 
 import logging
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 from inklink.controllers.base_controller import BaseController
 

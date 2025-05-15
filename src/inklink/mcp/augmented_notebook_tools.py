@@ -8,10 +8,10 @@ notebook pages with AI, knowledge graph integration, and response generation.
 
 import logging
 import os
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-from inklink.services.augmented_notebook_service import AugmentedNotebookService
 from inklink.di.container import Container
+from inklink.services.augmented_notebook_service import AugmentedNotebookService
 
 logger = logging.getLogger(__name__)
 

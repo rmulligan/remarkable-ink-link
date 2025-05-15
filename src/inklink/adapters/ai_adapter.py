@@ -3,13 +3,14 @@
 This module provides adapters for AI service APIs (OpenAI, etc).
 """
 
-import os
 import logging
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import requests
-from typing import Dict, Any, List, Optional, Union, Tuple
 
 from inklink.adapters.adapter import Adapter
-from inklink.utils import retry_operation, format_error
+from inklink.utils import format_error, retry_operation
 
 logger = logging.getLogger(__name__)
 
