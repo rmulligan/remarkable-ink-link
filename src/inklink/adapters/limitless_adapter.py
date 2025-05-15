@@ -172,7 +172,11 @@ class LimitlessAdapter(Adapter):
                         pagination = meta.get("pagination", {})
 
                 # Check in data.meta if not found elsewhere
-                if not pagination and "data" in result and isinstance(result["data"], dict):
+                if (
+                    not pagination
+                    and "data" in result
+                    and isinstance(result["data"], dict)
+                ):
                     data = result["data"]
                     if "meta" in data and isinstance(data["meta"], dict):
                         pagination = data["meta"].get("pagination", {})

@@ -32,7 +32,9 @@ class AIService(IAIService):
         self.adapter = adapter or ClaudeCliAdapter(
             claude_command=claude_command or CONFIG.get("CLAUDE_COMMAND"),
             model=model or CONFIG.get("CLAUDE_MODEL"),
-            system_prompt=CONFIG.get("CLAUDE_SYSTEM_PROMPT", "You are a helpful assistant.")
+            system_prompt=CONFIG.get(
+                "CLAUDE_SYSTEM_PROMPT", "You are a helpful assistant."
+            ),
         )
 
     def ask(self, prompt: str) -> str:
@@ -48,9 +50,9 @@ class AIService(IAIService):
         """
         success, response, _ = self.adapter.process_with_context(
             prompt=prompt,
-            new_conversation=True  # Use a new conversation for each query
+            new_conversation=True,  # Use a new conversation for each query
         )
-        
+
         if not success:
             logger.error(f"Claude query failed: {response}")
             return ""

@@ -43,9 +43,7 @@ class AugmentedNotebookController(BaseController):
     def _register_routes(self):
         """Register routes for this controller."""
         # Process routes
-        self.add_route(
-            "POST", "/notebooks/process", self.process_notebook_page
-        )
+        self.add_route("POST", "/notebooks/process", self.process_notebook_page)
 
         # Batch process route
         self.add_route(
@@ -53,12 +51,8 @@ class AugmentedNotebookController(BaseController):
         )
 
         # Configuration route
-        self.add_route(
-            "GET", "/notebooks/config", self.get_config
-        )
-        self.add_route(
-            "PUT", "/notebooks/config", self.update_config
-        )
+        self.add_route("GET", "/notebooks/config", self.get_config)
+        self.add_route("PUT", "/notebooks/config", self.update_config)
 
     async def process_notebook_page(self, request):
         """
@@ -96,7 +90,7 @@ class AugmentedNotebookController(BaseController):
                 rm_file_path=rm_file_path,
                 append_response=append_response,
                 extract_knowledge=extract_knowledge,
-                categorize_correspondence=categorize_correspondence
+                categorize_correspondence=categorize_correspondence,
             )
 
             if not success:
@@ -145,11 +139,13 @@ class AugmentedNotebookController(BaseController):
             for file_path in rm_file_paths:
                 # Validate that the file exists
                 if not os.path.exists(file_path):
-                    results.append({
-                        "file_path": file_path,
-                        "success": False,
-                        "error": "File not found"
-                    })
+                    results.append(
+                        {
+                            "file_path": file_path,
+                            "success": False,
+                            "error": "File not found",
+                        }
+                    )
                     continue
 
                 # Process the notebook page
@@ -157,21 +153,21 @@ class AugmentedNotebookController(BaseController):
                     rm_file_path=file_path,
                     append_response=append_response,
                     extract_knowledge=extract_knowledge,
-                    categorize_correspondence=categorize_correspondence
+                    categorize_correspondence=categorize_correspondence,
                 )
 
-                results.append({
-                    "file_path": file_path,
-                    "success": success,
-                    "result": result
-                })
+                results.append(
+                    {"file_path": file_path, "success": success, "result": result}
+                )
 
-            return self.json_response({
-                "total": len(rm_file_paths),
-                "successful": sum(1 for r in results if r["success"]),
-                "failed": sum(1 for r in results if not r["success"]),
-                "results": results
-            })
+            return self.json_response(
+                {
+                    "total": len(rm_file_paths),
+                    "successful": sum(1 for r in results if r["success"]),
+                    "failed": sum(1 for r in results if not r["success"]),
+                    "results": results,
+                }
+            )
 
         except json.JSONDecodeError:
             return self.error_response("Invalid JSON", 400)
@@ -197,7 +193,7 @@ class AugmentedNotebookController(BaseController):
             "claude_model": self.augmented_notebook_service.claude_model,
             "min_entity_confidence": self.augmented_notebook_service.kg_integration_service.min_entity_confidence,
             "min_relation_confidence": self.augmented_notebook_service.kg_integration_service.min_relation_confidence,
-            "min_semantic_similarity": self.augmented_notebook_service.kg_integration_service.min_semantic_similarity
+            "min_semantic_similarity": self.augmented_notebook_service.kg_integration_service.min_semantic_similarity,
         }
 
         return self.json_response(config)
@@ -231,13 +227,19 @@ class AugmentedNotebookController(BaseController):
                 self.augmented_notebook_service.claude_model = data["claude_model"]
 
             if "min_entity_confidence" in data:
-                self.augmented_notebook_service.kg_integration_service.min_entity_confidence = float(data["min_entity_confidence"])
+                self.augmented_notebook_service.kg_integration_service.min_entity_confidence = float(
+                    data["min_entity_confidence"]
+                )
 
             if "min_relation_confidence" in data:
-                self.augmented_notebook_service.kg_integration_service.min_relation_confidence = float(data["min_relation_confidence"])
+                self.augmented_notebook_service.kg_integration_service.min_relation_confidence = float(
+                    data["min_relation_confidence"]
+                )
 
             if "min_semantic_similarity" in data:
-                self.augmented_notebook_service.kg_integration_service.min_semantic_similarity = float(data["min_semantic_similarity"])
+                self.augmented_notebook_service.kg_integration_service.min_semantic_similarity = float(
+                    data["min_semantic_similarity"]
+                )
 
             # Return the updated configuration
             return await self.get_config(request)

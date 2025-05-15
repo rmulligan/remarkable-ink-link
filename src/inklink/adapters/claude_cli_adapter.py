@@ -39,20 +39,25 @@ class ClaudeCliAdapter(Adapter):
         self.claude_command = claude_command or os.environ.get(
             "CLAUDE_COMMAND", "/home/ryan/.claude/local/claude"
         )
-        
+
         # Set the Claude model if provided
         self.model = model or os.environ.get("CLAUDE_MODEL", "")
         self.model_flag = f"--model {self.model}" if self.model else ""
-        
+
         # Set the system prompt
         self.system_prompt = system_prompt or os.environ.get(
             "CLAUDE_SYSTEM_PROMPT", "You are a helpful assistant."
         )
-        
+
         # Temporary directory for input/output files
-        self.temp_dir = os.environ.get("INKLINK_TEMP", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp"))
+        self.temp_dir = os.environ.get(
+            "INKLINK_TEMP",
+            os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp"
+            ),
+        )
         os.makedirs(self.temp_dir, exist_ok=True)
-        
+
         # Track conversation IDs for context
         self.conversation_ids = {}
 
@@ -66,14 +71,11 @@ class ClaudeCliAdapter(Adapter):
         try:
             # Remove -c flag if it's part of the command when checking version
             cmd = self.claude_command.replace(" -c", "").replace(" -r", "")
-            cmd_parts = cmd.split() if ' ' in cmd else [cmd]
-            
+            cmd_parts = cmd.split() if " " in cmd else [cmd]
+
             # Run version check
             process = subprocess.run(
-                cmd_parts + ["--version"], 
-                capture_output=True, 
-                text=True, 
-                timeout=5
+                cmd_parts + ["--version"], capture_output=True, text=True, timeout=5
             )
             if process.returncode == 0:
                 logger.info(f"Claude CLI available: {process.stdout.strip()}")
@@ -110,69 +112,75 @@ class ClaudeCliAdapter(Adapter):
         """
         try:
             # Create temporary files for input and output
-            with tempfile.NamedTemporaryFile(mode='w+', suffix='.txt', delete=False) as input_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w+", suffix=".txt", delete=False
+            ) as input_file:
                 input_path = input_file.name
-                
+
                 # Add system prompt if provided (Claude CLI doesn't have direct system prompt support)
                 if system_prompt:
                     input_file.write(f"System: {system_prompt}\n\n")
-                    
+
                 # Write user prompt
                 input_file.write(prompt)
                 input_file.flush()
-            
-            output_path = tempfile.NamedTemporaryFile(suffix='.txt', delete=False).name
-            stderr_path = tempfile.NamedTemporaryFile(suffix='.txt', delete=False).name
-            
+
+            output_path = tempfile.NamedTemporaryFile(suffix=".txt", delete=False).name
+            stderr_path = tempfile.NamedTemporaryFile(suffix=".txt", delete=False).name
+
             # Build the Claude CLI command
-            cmd = f'{self.claude_command}'
-            
+            cmd = f"{self.claude_command}"
+
             # Add model flag if specified
             if self.model_flag:
-                cmd += f' {self.model_flag}'
-            
+                cmd += f" {self.model_flag}"
+
             # Add conversation context flag if needed
             if use_context:
-                cmd += ' -c'
-            
+                cmd += " -c"
+
             # Add conversation ID if provided
             if conversation_id:
-                cmd += f' -r {conversation_id}'
-                
+                cmd += f" -r {conversation_id}"
+
             # Add input/output redirection
-            cmd += f' < {input_path} > {output_path} 2> {stderr_path}'
-            
+            cmd += f" < {input_path} > {output_path} 2> {stderr_path}"
+
             # Execute command
             logger.info(f"Executing Claude command: {cmd}")
             subprocess.run(cmd, shell=True, check=True)
-            
+
             # If using a conversation ID, try to capture it from stderr
-            if not conversation_id and (use_context or conversation_id == ''):
+            if not conversation_id and (use_context or conversation_id == ""):
                 try:
                     # Read stderr which might contain the conversation ID
                     if os.path.exists(stderr_path):
-                        with open(stderr_path, 'r') as stderr_file:
+                        with open(stderr_path, "r") as stderr_file:
                             stderr_content = stderr_file.read()
                             # Look for conversation ID, usually printed like "Conversation: abc123"
-                            id_match = re.search(r'Conversation:\s+([a-zA-Z0-9]+)', stderr_content)
+                            id_match = re.search(
+                                r"Conversation:\s+([a-zA-Z0-9]+)", stderr_content
+                            )
                             if id_match:
                                 new_conversation_id = id_match.group(1)
-                                logger.info(f"Captured conversation ID: {new_conversation_id}")
+                                logger.info(
+                                    f"Captured conversation ID: {new_conversation_id}"
+                                )
                                 return True, new_conversation_id
                 except Exception as e:
                     logger.error(f"Failed to capture conversation ID: {e}")
-            
+
             # Read response
-            with open(output_path, 'r') as f:
+            with open(output_path, "r") as f:
                 response = f.read().strip()
-            
+
             # Clean up temp files
             os.unlink(input_path)
             os.unlink(output_path)
             os.unlink(stderr_path)
-            
+
             return True, response
-            
+
         except Exception as e:
             logger.error(f"Error generating completion with Claude CLI: {e}")
             return False, str(e)
@@ -199,42 +207,44 @@ class ClaudeCliAdapter(Adapter):
         try:
             # Determine which context mode to use
             use_context = not new_conversation and context_id in self.conversation_ids
-            conversation_id = None if new_conversation else self.conversation_ids.get(context_id)
-            
+            conversation_id = (
+                None if new_conversation else self.conversation_ids.get(context_id)
+            )
+
             # Generate completion
             success, result = self.generate_completion(
                 prompt=prompt,
                 system_prompt=system_prompt,
                 conversation_id=conversation_id,
-                use_context=use_context
+                use_context=use_context,
             )
-            
+
             if not success:
                 return False, f"Error: {result}", None
-            
+
             # If this is a new conversation and we got back a conversation ID instead of content
             if new_conversation or conversation_id is None:
                 # Check if the result might be a conversation ID (short alphanumeric string)
-                if re.match(r'^[a-zA-Z0-9]{5,20}$', result):
+                if re.match(r"^[a-zA-Z0-9]{5,20}$", result):
                     # Store the conversation ID
                     self.conversation_ids[context_id] = result
-                    
+
                     # Make a second call with the new conversation ID
                     success, response = self.generate_completion(
                         prompt=prompt,
                         system_prompt=system_prompt,
                         conversation_id=result,
-                        use_context=False
+                        use_context=False,
                     )
-                    
+
                     if success:
                         return True, response, result
                     else:
                         return False, f"Error in follow-up: {response}", result
-            
+
             # Normal response case
             return True, result, conversation_id
-        
+
         except Exception as e:
             logger.error(f"Error in process_with_context: {e}")
             return False, str(e), None
@@ -243,7 +253,9 @@ class ClaudeCliAdapter(Adapter):
         self,
         query_text: str,
         context: Optional[Dict[str, Any]] = None,
-        structured_content: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+        structured_content: Optional[
+            Union[List[Dict[str, Any]], Dict[str, Any]]
+        ] = None,
         context_window: Optional[int] = None,
         selected_pages: Optional[List[Union[int, str]]] = None,
     ) -> Tuple[bool, str]:
@@ -267,20 +279,22 @@ class ClaudeCliAdapter(Adapter):
             context_window=context_window,
             selected_pages=selected_pages,
         )
-        
+
         # Generate completion with the enhanced system prompt
         success, result, _ = self.process_with_context(
             prompt=query_text,
             system_prompt=system_prompt,
-            new_conversation=True  # Use a new conversation for each structured query
+            new_conversation=True,  # Use a new conversation for each structured query
         )
-        
+
         return success, result
 
     def _build_system_prompt_with_context(
         self,
         context: Optional[Dict[str, Any]] = None,
-        structured_content: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+        structured_content: Optional[
+            Union[List[Dict[str, Any]], Dict[str, Any]]
+        ] = None,
         context_window: Optional[int] = None,
         selected_pages: Optional[List[Union[int, str]]] = None,
     ) -> str:

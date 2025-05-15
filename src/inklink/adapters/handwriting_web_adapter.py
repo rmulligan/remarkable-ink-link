@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 # MyScript API configuration
 API_BASE_URL = "https://cloud.myscript.com/api/v4.0/iink/"
-RECOGNITION_ENDPOINT = "batch"  # Changed from "recognize" to "batch" based on successful curl request
+RECOGNITION_ENDPOINT = (
+    "batch"  # Changed from "recognize" to "batch" based on successful curl request
+)
 
 
 class HandwritingWebAdapter(Adapter):
@@ -49,7 +51,7 @@ class HandwritingWebAdapter(Adapter):
         """
         if not self.application_key or not self.hmac_key:
             return False
-        
+
         # Perform a lightweight request to the API to check if it's accessible
         try:
             # Use a minimal request to test connectivity
@@ -64,17 +66,17 @@ class HandwritingWebAdapter(Adapter):
                         "x": [100],
                         "y": [100],
                         "t": [current_time],
-                        "p": [0.5]
+                        "p": [0.5],
                     }
                 ],
                 "scaleX": 0.265,
-                "scaleY": 0.265
+                "scaleY": 0.265,
             }
-            
+
             # Generate HMAC signature
             request_json = json.dumps(request_data)
             hmac_signature = self._generate_hmac(request_json)
-            
+
             # Set up headers per MyScript authentication requirements based on successful curl request
             headers = {
                 "Accept": "application/json,application/vnd.myscript.jiix",
@@ -82,7 +84,7 @@ class HandwritingWebAdapter(Adapter):
                 "applicationkey": self.application_key,  # Lowercase key as seen in the curl request
                 "hmac": hmac_signature,
                 "origin": "https://cloud.myscript.com",  # Adding additional headers from the curl
-                "referer": "https://cloud.myscript.com/"
+                "referer": "https://cloud.myscript.com/",
             }
 
             # Make the request with a short timeout
@@ -91,12 +93,12 @@ class HandwritingWebAdapter(Adapter):
                 url,
                 headers=headers,
                 data=request_json,
-                timeout=5  # Short timeout for ping
+                timeout=5,  # Short timeout for ping
             )
-            
+
             # Check if the request was successful (even if recognition fails)
             return response.status_code == 200
-            
+
         except Exception as e:
             logger.error(f"Failed to ping MyScript Web API: {e}")
             return False
@@ -125,9 +127,7 @@ class HandwritingWebAdapter(Adapter):
         # - The request body as message
         # - SHA-512 as the algorithm
         h = hmac.new(
-            bytes(self.hmac_key, "utf-8"),
-            data.encode("utf-8"),
-            hashlib.sha512
+            bytes(self.hmac_key, "utf-8"), data.encode("utf-8"), hashlib.sha512
         )
         # Return the base64 encoded digest
         return base64.b64encode(h.digest()).decode("utf-8")
@@ -175,7 +175,7 @@ class HandwritingWebAdapter(Adapter):
                                 y_points.append(point.y)
                                 pressures.append(point.pressure)
                                 # Use 't' attribute for timestamp in newer API
-                                timestamps.append(point.t if hasattr(point, 't') else 0)
+                                timestamps.append(point.t if hasattr(point, "t") else 0)
 
                             # Create stroke in MyScript format
                             stroke = {
@@ -184,20 +184,34 @@ class HandwritingWebAdapter(Adapter):
                                 "y": y_points,
                                 "p": pressures,
                                 "t": timestamps,
-                                "color": str(item.color) if hasattr(item, 'color') else "#000000",
-                                "width": float(item.pen.value) if hasattr(item, 'pen') else 2.0,
+                                "color": (
+                                    str(item.color)
+                                    if hasattr(item, "color")
+                                    else "#000000"
+                                ),
+                                "width": (
+                                    float(item.pen.value)
+                                    if hasattr(item, "pen")
+                                    else 2.0
+                                ),
                             }
 
                             strokes.append(stroke)
 
                     if strokes:
-                        logger.info(f"Extracted {len(strokes)} strokes using current rmscene API")
+                        logger.info(
+                            f"Extracted {len(strokes)} strokes using current rmscene API"
+                        )
                         return strokes
                     else:
-                        logger.warning("No strokes found in file using current rmscene API")
+                        logger.warning(
+                            "No strokes found in file using current rmscene API"
+                        )
 
                 except Exception as scene_tree_error:
-                    logger.error(f"Failed to use current rmscene API: {scene_tree_error}")
+                    logger.error(
+                        f"Failed to use current rmscene API: {scene_tree_error}"
+                    )
                     # Older .rm files might need a different approach
                     logger.warning("Trying fallback extraction method...")
                     return []
@@ -230,7 +244,7 @@ class HandwritingWebAdapter(Adapter):
                         "smartGuideFadeOut": {"enable": False, "duration": 10000},
                         "mimeTypes": ["text/plain", "application/vnd.myscript.jiix"],
                         "margin": {"top": 20, "left": 10, "right": 10},
-                        "eraser": {"erase-precisely": False}
+                        "eraser": {"erase-precisely": False},
                     },
                     "lang": "en_US",
                     "export": {
@@ -238,12 +252,9 @@ class HandwritingWebAdapter(Adapter):
                         "jiix": {
                             "bounding-box": False,
                             "strokes": False,
-                            "text": {
-                                "chars": False,
-                                "words": True
-                            }
-                        }
-                    }
+                            "text": {"chars": False, "words": True},
+                        },
+                    },
                 },
                 "xDPI": 96,
                 "yDPI": 96,
@@ -252,13 +263,13 @@ class HandwritingWebAdapter(Adapter):
                 "strokeGroups": [],
                 "height": 500,
                 "width": 656,
-                "conversionState": "DIGITAL_EDIT"
+                "conversionState": "DIGITAL_EDIT",
             }
 
             # Create a stroke group with the strokes
             stroke_group = {
                 "penStyle": "color: #000000;\n-myscript-pen-width: 1;",
-                "strokes": []
+                "strokes": [],
             }
 
             # Add strokes to the structure
@@ -266,9 +277,17 @@ class HandwritingWebAdapter(Adapter):
                 web_api_stroke = {
                     "x": stroke.get("x", []),
                     "y": stroke.get("y", []),
-                    "t": stroke.get("timestamp", []) if stroke.get("timestamp") else stroke.get("t", []),
-                    "p": stroke.get("pressure", []) if stroke.get("pressure") else stroke.get("p", []),
-                    "pointerType": "pen"  # Default to pen
+                    "t": (
+                        stroke.get("timestamp", [])
+                        if stroke.get("timestamp")
+                        else stroke.get("t", [])
+                    ),
+                    "p": (
+                        stroke.get("pressure", [])
+                        if stroke.get("pressure")
+                        else stroke.get("p", [])
+                    ),
+                    "pointerType": "pen",  # Default to pen
                 }
 
                 # Add stroke to the stroke group
@@ -289,7 +308,7 @@ class HandwritingWebAdapter(Adapter):
                 "strokeGroups": [{"strokes": []}],
                 "height": 500,
                 "width": 656,
-                "conversionState": "DIGITAL_EDIT"
+                "conversionState": "DIGITAL_EDIT",
             }
 
     def recognize_handwriting(
@@ -341,7 +360,7 @@ class HandwritingWebAdapter(Adapter):
                 iink_data["configuration"]["math"]["solver"] = {
                     "enable": True,
                     "fractional-part-digits": 3,
-                    "decimal-separator": "."
+                    "decimal-separator": ".",
                 }
 
             elif content_type.lower() == "diagram":
@@ -350,15 +369,15 @@ class HandwritingWebAdapter(Adapter):
 
                 iink_data["configuration"]["diagram"]["convert"] = {
                     "types": ["text", "shape"],
-                    "matchTextSize": True
+                    "matchTextSize": True,
                 }
-            
+
             # Convert to JSON for request
             request_json = json.dumps(iink_data)
-            
+
             # Generate HMAC signature
             hmac_signature = self._generate_hmac(request_json)
-            
+
             # Set up headers per MyScript authentication requirements based on successful curl request
             headers = {
                 "Accept": "application/json,application/vnd.myscript.jiix",
@@ -366,29 +385,29 @@ class HandwritingWebAdapter(Adapter):
                 "applicationkey": self.application_key,  # Lowercase key as seen in the curl request
                 "hmac": hmac_signature,
                 "origin": "https://cloud.myscript.com",  # Adding additional headers from the curl
-                "referer": "https://cloud.myscript.com/"
+                "referer": "https://cloud.myscript.com/",
             }
 
             # Send request to MyScript Web API
             url = urljoin(API_BASE_URL, RECOGNITION_ENDPOINT)
             logger.info(f"Sending recognition request to {url}")
-            
+
             response = requests.post(
                 url,
                 headers=headers,
                 data=request_json,
-                timeout=30  # Reasonable timeout for recognition
+                timeout=30,  # Reasonable timeout for recognition
             )
-            
+
             # Check response status
             if response.status_code == 200:
                 result = response.json()
                 logger.info("Recognition successful")
-                
+
                 # Add a consistent ID for compatibility with existing code
                 if "id" not in result:
                     result["id"] = f"web-recognition-{int(time.time())}"
-                    
+
                 return result
             else:
                 error_message = f"Recognition failed: HTTP {response.status_code}"
@@ -397,7 +416,7 @@ class HandwritingWebAdapter(Adapter):
                     error_message = f"{error_message} - {json.dumps(error_details)}"
                 except Exception:
                     error_message = f"{error_message} - {response.text}"
-                    
+
                 logger.error(error_message)
                 return {"error": error_message}
 
@@ -410,7 +429,7 @@ class HandwritingWebAdapter(Adapter):
     ) -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
-        
+
         Note: For the Web API, this is a simplified operation since most formatting
         is handled during the recognition phase.
 
@@ -431,7 +450,7 @@ class HandwritingWebAdapter(Adapter):
                     return {"content": content_id, "format": format_type}
             else:
                 content = content_id
-            
+
             # Extract the main recognition result based on format type
             if format_type.lower() == "text":
                 if "result" in content:
@@ -445,7 +464,10 @@ class HandwritingWebAdapter(Adapter):
                 # For math content, extract the specific format
                 math_formats = content.get("result", {})
                 if format_type.upper() in math_formats:
-                    return {"content": math_formats[format_type.upper()], "format": format_type}
+                    return {
+                        "content": math_formats[format_type.upper()],
+                        "format": format_type,
+                    }
                 return {"content": json.dumps(math_formats), "format": "json"}
             else:
                 # For other formats, return the full result in JSON
@@ -485,7 +507,9 @@ class HandwritingWebAdapter(Adapter):
             # Convert to MyScript Web API format
             iink_data = self.convert_to_iink_format(strokes)
 
-            if not iink_data or not iink_data.get("strokeGroups", [{}])[0].get("strokes"):
+            if not iink_data or not iink_data.get("strokeGroups", [{}])[0].get(
+                "strokes"
+            ):
                 logger.error("Failed to convert to MyScript Web API format")
                 return {"error": "Failed to convert to MyScript Web API format"}
 

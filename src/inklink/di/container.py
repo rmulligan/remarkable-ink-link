@@ -98,36 +98,38 @@ class Container:
         provider.register(IDocumentService, DocumentService)
         provider.register(IPDFService, PDFService)
         provider.register(IRemarkableService, RemarkableService)
-        
+
         # Set up Handwriting Recognition with Claude CLI
         claude_command = normalized_config.get("claude_command", "claude")
         claude_model = normalized_config.get("claude_model", "")
-        
+
         # Create and register Claude Vision adapter
         claude_vision_adapter = ClaudeVisionAdapter(
-            claude_command=claude_command,
-            model=claude_model
+            claude_command=claude_command, model=claude_model
         )
-        
+
         # Create and register Handwriting adapter
         handwriting_adapter = HandwritingAdapter(
-            claude_command=claude_command,
-            model=claude_model
+            claude_command=claude_command, model=claude_model
         )
-        
+
         # Create and register Handwriting recognition service
         handwriting_recognition_service = HandwritingRecognitionService(
             claude_command=claude_command,
             model=claude_model,
-            handwriting_adapter=handwriting_adapter
+            handwriting_adapter=handwriting_adapter,
         )
-        
+
         # Register services and adapters
         provider.register_instance(ClaudeVisionAdapter, claude_vision_adapter)
         provider.register_instance(HandwritingAdapter, handwriting_adapter)
-        provider.register_instance(IHandwritingRecognitionService, handwriting_recognition_service)
-        provider.register_instance(HandwritingRecognitionService, handwriting_recognition_service)
-        
+        provider.register_instance(
+            IHandwritingRecognitionService, handwriting_recognition_service
+        )
+        provider.register_instance(
+            HandwritingRecognitionService, handwriting_recognition_service
+        )
+
         provider.register(IGoogleDocsService, GoogleDocsService)
 
         # Register services that don't have interfaces yet

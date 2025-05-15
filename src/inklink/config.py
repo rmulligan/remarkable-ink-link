@@ -73,14 +73,14 @@ CONFIG = {
     "CASSIDY_TAG": os.environ.get("CASSIDY_TAG", "Cass"),
     "CASSIDY_POLLING_INTERVAL": int(os.environ.get("CASSIDY_POLLING_INTERVAL", 60)),
     "CASSIDY_CLAUDE_COMMAND": os.environ.get("CASSIDY_CLAUDE_COMMAND", "claude -c"),
-    
     # Lilly settings
     "LILLY_ROOT_DIR": os.environ.get("LILLY_ROOT_DIR", os.path.expanduser("~/dev")),
     "LILLY_TAG": os.environ.get("LILLY_TAG", "Lilly"),
     "LILLY_POLLING_INTERVAL": int(os.environ.get("LILLY_POLLING_INTERVAL", 60)),
     "LILLY_SUBJECT_TAG": os.environ.get("LILLY_SUBJECT_TAG", "Subject"),
     "LILLY_DEFAULT_SUBJECT": os.environ.get("LILLY_DEFAULT_SUBJECT", "General"),
-    "LILLY_USE_SUBJECT_DIRS": os.environ.get("LILLY_USE_SUBJECT_DIRS", "true").lower() == "true",
+    "LILLY_USE_SUBJECT_DIRS": os.environ.get("LILLY_USE_SUBJECT_DIRS", "true").lower()
+    == "true",
     "LILLY_PRE_FILTER_TAG": os.environ.get("LILLY_PRE_FILTER_TAG", "HasLilly"),
 }
 
@@ -139,3 +139,8 @@ def setup_logging():
 
     # Return the root logger
     return logging.getLogger()
+
+
+def get_config():
+    """Return the global InkLink configuration dictionary."""
+    return CONFIG
