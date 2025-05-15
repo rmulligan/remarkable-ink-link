@@ -6,10 +6,11 @@ into Markdown and then into reMarkable-compatible formats.
 
 import logging
 import os
+import time
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
-from inklink.utils import convert_markdown_to_rm
+from inklink.utils import convert_markdown_to_rm, retry_operation
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +73,8 @@ class MarkdownConverter(BaseConverter):
             logger.info(f"Created markdown file: {output_path}")
 
             # Convert to reMarkable format
-            use_rcu = content.get("use_rcu", True)
-            if use_rcu:
+            use_drawj2d = content.get("use_drawj2d", True)
+            if use_drawj2d:
                 success, result = convert_markdown_to_rm(
                     markdown_path=output_path, title=title
                 )
@@ -87,7 +88,7 @@ class MarkdownConverter(BaseConverter):
                     logger.error(f"Markdown conversion failed: {result}")
                     return None
             else:
-                logger.error("RCU not available for Markdown conversion")
+                logger.error("drawj2d not available for Markdown conversion")
                 return None
 
         except Exception as e:

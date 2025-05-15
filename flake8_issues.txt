@@ -1,0 +1,12 @@
+src/inklink/adapters/claude_vision_adapter.py:315:13: F841 local variable 'img_gray' is assigned to but never used
+src/inklink/adapters/claude_vision_adapter.py:390:1: W293 blank line contains whitespace
+src/inklink/adapters/claude_vision_adapter.py:405:44: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:536:45: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:552:56: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:554:66: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:614:78: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:619:73: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:624:68: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:646:45: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:664:56: E226 missing whitespace around arithmetic operator
+src/inklink/adapters/claude_vision_adapter.py:716:79: E226 missing whitespace around arithmetic operator

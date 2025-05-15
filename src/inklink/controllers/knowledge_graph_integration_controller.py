@@ -5,13 +5,15 @@ This controller exposes HTTP endpoints for extracting knowledge from reMarkable
 notebooks, performing semantic search with handwritten queries, and more.
 """
 
-import logging
 import json
+import logging
 import os
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.controllers.base_controller import BaseController
-from inklink.services.knowledge_graph_integration_service import KnowledgeGraphIntegrationService
+from inklink.services.knowledge_graph_integration_service import (
+    KnowledgeGraphIntegrationService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,9 @@ class KnowledgeGraphIntegrationController(BaseController):
     """
 
     def __init__(
-        self, knowledge_graph_integration_service: KnowledgeGraphIntegrationService, handler=None
+        self,
+        knowledge_graph_integration_service: KnowledgeGraphIntegrationService,
+        handler=None,
     ):
         """
         Initialize the KnowledgeGraphIntegrationController.
@@ -83,9 +87,10 @@ class KnowledgeGraphIntegrationController(BaseController):
                 return self.error_response(f"File not found: {rm_file_path}", 404)
 
             # Extract knowledge from the notebook
-            success, result = self.kg_integration_service.extract_knowledge_from_notebook(
-                rm_file_path=rm_file_path,
-                entity_types=entity_types
+            success, result = (
+                self.kg_integration_service.extract_knowledge_from_notebook(
+                    rm_file_path=rm_file_path, entity_types=entity_types
+                )
             )
 
             if not success:
@@ -149,14 +154,18 @@ class KnowledgeGraphIntegrationController(BaseController):
                         "max_results must be a positive integer", 400
                     )
             except (ValueError, TypeError):
-                return self.error_response("max_results must be a positive integer", 400)
+                return self.error_response(
+                    "max_results must be a positive integer", 400
+                )
 
             # Perform semantic search
-            success, result = self.kg_integration_service.semantic_search_from_handwritten_query(
-                rm_file_path=rm_file_path,
-                min_similarity=min_similarity,
-                max_results=max_results,
-                entity_types=entity_types
+            success, result = (
+                self.kg_integration_service.semantic_search_from_handwritten_query(
+                    rm_file_path=rm_file_path,
+                    min_similarity=min_similarity,
+                    max_results=max_results,
+                    entity_types=entity_types,
+                )
             )
 
             if not success:
@@ -200,10 +209,12 @@ class KnowledgeGraphIntegrationController(BaseController):
                 return self.error_response(f"File not found: {rm_file_path}", 404)
 
             # Augment notebook with knowledge
-            success, result = self.kg_integration_service.augment_notebook_with_knowledge(
-                rm_file_path=rm_file_path,
-                include_related=include_related,
-                include_semantic=include_semantic
+            success, result = (
+                self.kg_integration_service.augment_notebook_with_knowledge(
+                    rm_file_path=rm_file_path,
+                    include_related=include_related,
+                    include_semantic=include_semantic,
+                )
             )
 
             if not success:

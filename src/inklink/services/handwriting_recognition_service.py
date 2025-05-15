@@ -1,8 +1,11 @@
-"""Handwriting recognition service using MyScript iink SDK."""
+"""Handwriting recognition service using Claude Vision CLI."""
 
 import logging
 import os
 import re
+import tempfile
+import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
@@ -15,99 +18,128 @@ logger = logging.getLogger(__name__)
 
 class HandwritingRecognitionService(IHandwritingRecognitionService):
     """
-    Service for handwriting recognition using MyScript iink SDK.
-    Uses the HandwritingAdapter to interact with MyScript and rmscene.
+    Service for handwriting recognition using Claude Vision CLI.
+    Uses the HandwritingAdapter to interact with Claude's vision capabilities.
     """
 
     def __init__(
         self,
-        application_key: Optional[str] = None,
-        hmac_key: Optional[str] = None,
+        claude_command: Optional[str] = None,
+        model: Optional[str] = None,
         handwriting_adapter: Optional[HandwritingAdapter] = None,
     ):
         """
         Initialize the handwriting recognition service.
 
         Args:
-            application_key: Optional application key for MyScript API
-            hmac_key: Optional HMAC key for MyScript API
+            claude_command: Optional command to invoke Claude CLI
+            model: Optional model specification for Claude CLI
             handwriting_adapter: Optional pre-configured adapter
         """
-        # Get API keys from environment variables or config
-        self.application_key = (
-            application_key
-            or os.environ.get("MYSCRIPT_APP_KEY")
-            or CONFIG.get("MYSCRIPT_APP_KEY", "")
+        # Get command from environment variables or config
+        self.claude_command = (
+            claude_command
+            or os.environ.get("CLAUDE_COMMAND")
+            or CONFIG.get("CLAUDE_COMMAND", "/home/ryan/.claude/local/claude")
         )
-        self.hmac_key = (
-            hmac_key
-            or os.environ.get("MYSCRIPT_HMAC_KEY")
-            or CONFIG.get("MYSCRIPT_HMAC_KEY", "")
+        self.model = (
+            model or os.environ.get("CLAUDE_MODEL") or CONFIG.get("CLAUDE_MODEL", "")
         )
+
+        logger.info("Using Claude Vision CLI for handwriting recognition")
 
         # Use provided adapter or create a new one
         self.adapter = handwriting_adapter or HandwritingAdapter(
-            application_key=self.application_key, hmac_key=self.hmac_key
+            claude_command=self.claude_command, model=self.model
         )
 
-        if not self.application_key or not self.hmac_key:
+        if not self.adapter.ping():
             logger.warning(
-                "MyScript keys not provided; handwriting recognition not available"
+                "Claude CLI not available or configured correctly; handwriting recognition may not function"
             )
 
-    def classify_region(self, strokes: List[Dict[str, Any]]) -> str:
+    def classify_region(self, image_path: str) -> str:
         """
-        Classify a region as 'text', 'math', or 'diagram' based on stroke features.
-        Uses simple heuristics (to be replaced with ML or SDK logic).
+        Classify a region as 'text', 'math', or 'diagram' based on content.
+        Uses a simple prompt to Claude Vision.
 
         Args:
-            strokes: List of stroke dictionaries
+            image_path: Path to rendered image
 
         Returns:
             Content type classification ("Text", "Math", or "Diagram")
         """
-        # Example heuristic: very basic, for demonstration
-        if strokes:
-            # If many strokes and some are long, guess diagram
-            if any(len(s.get("x", [])) > 10 for s in strokes):
-                return "Diagram"
-            # If strokes are dense and short, guess math
-            if len(strokes) > 5:
-                return "Math"
-        return "Text"
+        if not self.adapter.ping():
+            # Default to Text if classification is not available
+            return "Text"
 
-    def initialize_iink_sdk(self, application_key: str, hmac_key: str) -> bool:
+        # prompt = """  # Currently unused
+        # Analyze this handwritten content. Tell me if this content is primarily:
+        # 1. Text (general notes, paragraphs, lists)
+        # 2. Math (equations, mathematical notation, numeric calculations)
+        # 3. Diagram (drawings, charts, graphs, sketches)
+        #
+        # Respond with ONLY ONE of these words: "Text", "Math", or "Diagram".
+        # """
+
+        result = self.adapter.recognize_handwriting(
+            image_path, "classification", "en_US"
+        )
+
+        if result.get("success", False):
+            text = result.get("result", "").strip().lower()
+            if "math" in text:
+                return "Math"
+            elif "diagram" in text:
+                return "Diagram"
+            else:
+                return "Text"
+        else:
+            # Default to Text on failure
+            return "Text"
+
+    def initialize_api(self, claude_command: str, model: str = None) -> bool:
         """
-        Initialize the MyScript iink SDK with authentication keys.
+        Initialize the adapter with a new command/model.
 
         Args:
-            application_key: Application key for MyScript API
-            hmac_key: HMAC key for MyScript API
+            claude_command: Command to invoke Claude CLI
+            model: Claude model specification (optional)
 
         Returns:
             True if initialized successfully, False otherwise
         """
         try:
-            self.application_key = application_key
-            self.hmac_key = hmac_key
+            self.claude_command = claude_command
+            if model:
+                self.model = model
 
-            # Use the adapter to initialize the SDK
-            success = self.adapter.initialize_sdk(application_key, hmac_key)
+            # Use the adapter to initialize
+            success = self.adapter.initialize_sdk(claude_command, model)
 
             if success:
-                logger.info("MyScript iink SDK initialized successfully")
+                logger.info("Claude Vision CLI initialized successfully")
             else:
-                logger.error("Failed to initialize MyScript iink SDK")
+                logger.error("Failed to initialize Claude Vision CLI")
 
             return success
 
         except Exception as e:
-            logger.error(f"Error initializing MyScript iink SDK: {e}")
+            logger.error(f"Error initializing Claude Vision CLI: {e}")
             return False
+
+    # Alias for backward compatibility
+    initialize_iink_sdk = initialize_api
+
+    # NOTE: The convert_to_iink_format method has been removed here as it was duplicated.
+    # The full implementation is provided later in this file.
 
     def extract_strokes(self, rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
+
+        This is maintained for compatibility but isn't directly used
+        for recognition with Claude Vision.
 
         Args:
             rm_file_path: Path to .rm file
@@ -130,47 +162,17 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             logger.error(f"Error extracting strokes from {rm_file_path}: {e}")
             return []
 
-    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Convert reMarkable strokes to iink SDK compatible format.
-
-        Args:
-            strokes: List of stroke dictionaries
-
-        Returns:
-            Formatted data for iink SDK
-        """
-        try:
-            # Use the adapter to convert strokes to iink format
-            iink_data = self.adapter.convert_to_iink_format(strokes)
-
-            # If the adapter didn't return strokes in the right format,
-            # fall back to a simple format that works with the API
-            if not iink_data or not iink_data.get("strokes"):
-                iink_data = {
-                    "type": "inkData",
-                    "width": CONFIG.get("PAGE_WIDTH", 1872),
-                    "height": CONFIG.get("PAGE_HEIGHT", 2404),
-                    "strokes": strokes,
-                }
-
-            return iink_data
-
-        except Exception as e:
-            logger.error(f"Error converting strokes to iink format: {e}")
-            return {"type": "inkData", "strokes": []}
-
     def recognize_handwriting(
         self,
-        iink_data: Dict[str, Any],
+        image_path: str,
         content_type: str = "Text",
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
-        Process ink data through the iink SDK and return recognition results.
+        Process an image through Claude Vision CLI and return recognition results.
 
         Args:
-            iink_data: Ink data in iink format
+            image_path: Path to the image file
             content_type: Content type (Text, Diagram, Math, etc.)
             language: Language code
 
@@ -178,28 +180,31 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             Recognition results
         """
         try:
-            if not self.application_key or not self.hmac_key:
+            if not self.adapter.ping():
                 raise ValueError(
-                    "MyScript keys not available; cannot recognize handwriting"
+                    "Claude CLI not available; cannot recognize handwriting"
                 )
 
             # Use the adapter to recognize handwriting
             result = self.adapter.recognize_handwriting(
-                iink_data, content_type, language
+                image_path, content_type, language
             )
 
             # Handle error cases
-            if "error" in result:
-                logger.error(f"Recognition failed: {result['error']}")
+            if not result.get("success", False):
+                logger.error(
+                    f"Recognition failed: {result.get('error', 'Unknown error')}"
+                )
                 return {
                     "success": False,
-                    "error": result["error"],
+                    "error": result.get("error", "Recognition failed"),
                 }
 
             # Format the result for consistency
             return {
                 "success": True,
-                "content_id": result.get("id", ""),
+                "content_id": result.get("content_id", ""),
+                "text": result.get("result", ""),
                 "raw_result": result,
             }
 
@@ -216,14 +221,14 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
 
         Args:
             content_id: Content ID from recognition result
-            format_type: Format type (text, JIIX, etc.)
+            format_type: Format type (text, json, etc.)
 
         Returns:
             Exported content
         """
         try:
-            if not self.application_key or not self.hmac_key:
-                raise ValueError("MyScript keys not available; cannot export content")
+            if not self.adapter.ping():
+                raise ValueError("Claude CLI not available; cannot export content")
 
             # Use the adapter to export content
             result = self.adapter.export_content(content_id, format_type)
@@ -249,9 +254,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         language: str = "en_US",
     ) -> Dict[str, Any]:
         """
-        High-level method: Accepts ink data or file path, extracts strokes, classifies region,
-        recognizes handwriting, and returns result.
-        If content_type is None or 'auto', classify region automatically.
+        High-level method: Accepts ink data or file path, renders to image,
+        and performs recognition with Claude Vision CLI.
 
         Args:
             ink_data: Binary ink data
@@ -265,41 +269,29 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         try:
             # Handle the case where ink_data is provided (save to temp file)
             if ink_data is not None:
-                import tempfile
-
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".rm"
-                ) as temp_file:
-                    temp_file.write(ink_data)
-                    temp_path = temp_file.name
-
-                try:
-                    # Extract strokes from temp file
-                    strokes = self.extract_strokes(rm_file_path=temp_path)
-                finally:
-                    # Clean up the temporary file
-                    try:
-                        import os
-
-                        os.unlink(temp_path)
-                    except Exception:
-                        pass
+                fd, temp_path = tempfile.mkstemp(suffix=".rm")
+                os.close(fd)
+                with open(temp_path, "wb") as f:
+                    f.write(ink_data)
+                use_path = temp_path
             elif file_path is not None:
-                # Extract strokes from provided file path
-                strokes = self.extract_strokes(rm_file_path=file_path)
+                use_path = file_path
             else:
                 raise ValueError("Either ink_data or file_path must be provided")
 
-            # Auto-classify content type if needed
-            if content_type is None or content_type.lower() == "auto":
-                content_type = self.classify_region(strokes)
-
-            # Convert strokes to iink format
-            iink_data = self.convert_to_iink_format(strokes)
-
-            # Use the adapter to recognize handwriting
-            result = self.recognize_handwriting(iink_data, content_type, language)
-            return result
+            try:
+                # Process the file with the adapter
+                result = self.adapter.process_rm_file(
+                    use_path, content_type or "Text", language
+                )
+                return result
+            finally:
+                # Clean up temporary file if created
+                if ink_data is not None and os.path.exists(temp_path):
+                    try:
+                        os.unlink(temp_path)
+                    except Exception as e:
+                        logger.warning(f"Failed to remove temporary file: {e}")
 
         except Exception as e:
             logger.error(f"Handwriting recognition pipeline failed: {e}")
@@ -321,79 +313,262 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 [{"from_page": 1, "to_page": 2, "type": "reference", "label": "See Figure 1"}]
 
         Returns:
-            Structured content with per-page items and cross-page links:
-                {
-                    "pages": [...],
-                    "cross_page_links": [...]
-                }
+            Structured content with per-page items and cross-page links
         """
+        if not page_files:
+            return {"pages": [], "cross_page_links": []}
+
         structured_pages = []
         cross_page_links = user_links[:] if user_links else []
 
-        for i, file_path in enumerate(page_files):
-            # Extract strokes from file
-            strokes = self.extract_strokes(rm_file_path=file_path)
+        # Render all pages to images
+        rendered_images = []
+        try:
+            for rm_file in page_files:
+                image_path = self.adapter.render_rm_file(rm_file)
+                rendered_images.append(image_path)
 
-            # Classify content type
-            content_type = self.classify_region(strokes)
+            # Generate a prompt for multi-page processing
+            prompt = f"""
+            I'm sharing multiple pages from a handwritten notebook written in {language}.
+            Please transcribe the content, maintaining context between pages.
+            Treat these as continuous content from the same document.
+            Clearly indicate where each page begins and ends by using "PAGE X:" markers.
+            """
 
-            # Convert to iink format
-            iink_data = self.convert_to_iink_format(strokes)
-
-            # Recognize handwriting
-            result = self.recognize_handwriting(iink_data, content_type, language)
-
-            if result.get("success"):
-                # Extract from API format
-                result = result.get("raw_result", {})
-
-            items = []
-            page_references = []
-
-            # Extract recognized text and look for references
-            if "text" in result:
-                text = result["text"]
-                items.append({"type": content_type.lower(), "content": text})
-
-                # Simple automatic cross-page reference extraction (e.g., "see page X")
-                ref_matches = re.findall(
-                    r"(see|refer to) page (\d+)", text, re.IGNORECASE
+            # Use the adapter to process multiple images at once if supported
+            if hasattr(self.adapter.vision_adapter, "process_multiple_images"):
+                success, combined_result = (
+                    self.adapter.vision_adapter.process_multiple_images(
+                        rendered_images, prompt, maintain_context=True
+                    )
                 )
-                for _, ref_page in ref_matches:
-                    ref_page_num = int(ref_page)
-                    if 1 <= ref_page_num <= len(page_files) and ref_page_num != (i + 1):
-                        link = {
-                            "from_page": i + 1,
-                            "to_page": ref_page_num,
-                            "type": "auto_reference",
-                            "label": f"Reference to page {ref_page_num}",
+
+                if not success:
+                    return {"success": False, "error": combined_result}
+
+                # Process the combined result - split into pages by markers
+                page_sections = self._split_multi_page_result(
+                    combined_result, len(page_files)
+                )
+
+                for i, page_content in enumerate(page_sections):
+                    structured_pages.append(
+                        {
+                            "page_number": i + 1,
+                            "items": [{"type": "text", "content": page_content}],
+                            "metadata": {},
                         }
-                        cross_page_links.append(link)
-                        page_references.append(link)
+                    )
 
-            structured_pages.append(
-                {
-                    "page_number": i + 1,
-                    "items": items,
-                    "metadata": {"references": page_references},
-                }
-            )
+                    # Look for cross-references
+                    ref_matches = re.findall(
+                        r"(see|refer to) page (\d+)", page_content, re.IGNORECASE
+                    )
+                    for _, ref_page in ref_matches:
+                        ref_page_num = int(ref_page)
+                        if 1 <= ref_page_num <= len(page_files) and ref_page_num != (
+                            i + 1
+                        ):
+                            link = {
+                                "from_page": i + 1,
+                                "to_page": ref_page_num,
+                                "type": "auto_reference",
+                                "label": f"Reference to page {ref_page_num}",
+                            }
+                            cross_page_links.append(link)
+            else:
+                # Process pages individually
+                for i, image_path in enumerate(rendered_images):
+                    # page_prompt = f"Please transcribe the handwritten content on this page (Page {i + 1})."  # Currently unused
+                    result = self.adapter.recognize_handwriting(
+                        image_path, "Text", language
+                    )
 
-        # Remove duplicate links (by from_page, to_page, type, label)
-        seen = set()
-        unique_links = []
-        for link in cross_page_links:
-            key = (
-                link["from_page"],
-                link["to_page"],
-                link.get("type"),
-                link.get("label"),
-            )
-            if key not in seen:
-                unique_links.append(link)
-                seen.add(key)
+                    if result.get("success", False):
+                        content = result.get("result", "")
+                        structured_pages.append(
+                            {
+                                "page_number": i + 1,
+                                "items": [{"type": "text", "content": content}],
+                                "metadata": {},
+                            }
+                        )
+                    else:
+                        structured_pages.append(
+                            {
+                                "page_number": i + 1,
+                                "items": [
+                                    {
+                                        "type": "error",
+                                        "content": result.get(
+                                            "error", "Recognition failed"
+                                        ),
+                                    }
+                                ],
+                                "metadata": {},
+                            }
+                        )
 
-        return {
-            "pages": structured_pages,
-            "cross_page_links": unique_links,
-        }
+            # Remove duplicate links
+            seen = set()
+            unique_links = []
+            for link in cross_page_links:
+                key = (
+                    link["from_page"],
+                    link["to_page"],
+                    link.get("type"),
+                    link.get("label"),
+                )
+                if key not in seen:
+                    unique_links.append(link)
+                    seen.add(key)
+
+            return {
+                "success": True,
+                "pages": structured_pages,
+                "cross_page_links": unique_links,
+            }
+
+        except Exception as e:
+            logger.error(f"Error processing multiple pages: {e}")
+            return {"success": False, "error": str(e)}
+
+        finally:
+            # Clean up rendered images
+            for image_path in rendered_images:
+                try:
+                    if os.path.exists(image_path):
+                        os.unlink(image_path)
+                except Exception:
+                    pass
+
+    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Convert reMarkable strokes to MyScript Web API compatible format
+
+        Note: Despite the method name, this formats data for the REST API, not an SDK.
+        The method name is kept for backward compatibility.
+
+        Args:
+            strokes: List of stroke dictionaries extracted from reMarkable file
+
+        Returns:
+            Dictionary formatted for MyScript Web API
+        """
+        try:
+            if not strokes:
+                logger.warning("No strokes provided for conversion to iink format")
+                return {"type": "Raw Content", "strokes": []}
+
+            # Use the adapter to convert strokes to iink format
+            if hasattr(self.adapter, "convert_to_iink_format"):
+                return self.adapter.convert_to_iink_format(strokes)
+
+            # Fallback implementation if adapter doesn't provide this method
+            iink_strokes = []
+            for stroke in strokes:
+                points = stroke.get("points", [])
+
+                # Extract x, y coordinates and convert to iink format
+                # iink format expects x, y pairs in a flat array
+                if points:
+                    x_points = [point.get("x", 0) for point in points]
+                    y_points = [point.get("y", 0) for point in points]
+
+                    # Interleave x and y coordinates
+                    flattened_points = []
+                    for x, y in zip(x_points, y_points):
+                        flattened_points.extend([x, y])
+
+                    iink_stroke = {
+                        "id": stroke.get("id", ""),
+                        "x": x_points,
+                        "y": y_points,
+                        "t": [p.get("timestamp", 0) for p in points],
+                        "p": [p.get("pressure", 1.0) for p in points],
+                    }
+
+                    iink_strokes.append(iink_stroke)
+
+            return {
+                "type": "Raw Content",
+                "strokes": iink_strokes,
+                "width": CONFIG.get("PAGE_WIDTH", 1404),
+                "height": CONFIG.get("PAGE_HEIGHT", 1872),
+            }
+
+        except Exception as e:
+            logger.error(f"Error converting strokes to iink format: {e}")
+            return {"type": "Raw Content", "strokes": [], "error": str(e)}
+
+    def _split_multi_page_result(self, result: str, page_count: int) -> List[str]:
+        """
+        Split a multi-page result into individual pages.
+
+        Args:
+            result: Combined result text
+            page_count: Expected number of pages
+
+        Returns:
+            List of page contents
+        """
+        # Look for page markers in the text
+        page_markers = re.findall(r"(?:Page|PAGE) (\d+)(?::|\.|\n)", result)
+
+        if len(page_markers) >= page_count - 1:
+            # We have enough page markers to split
+            sections = []
+            current_pos = 0
+
+            for i in range(1, page_count + 1):
+                marker = f"Page {i}:" if i > 1 else None
+                alt_marker = f"PAGE {i}:" if i > 1 else None
+
+                # Find the start of this page
+                if marker:
+                    marker_pos = result.find(marker, current_pos)
+                    alt_marker_pos = result.find(alt_marker, current_pos)
+                    if marker_pos != -1 and (
+                        alt_marker_pos == -1 or marker_pos < alt_marker_pos
+                    ):
+                        start_pos = marker_pos + len(marker)
+                    elif alt_marker_pos != -1:
+                        start_pos = alt_marker_pos + len(alt_marker)
+                    else:
+                        # No marker found, use current position
+                        start_pos = current_pos
+                else:
+                    start_pos = 0
+
+                # Find the start of the next page
+                next_marker = f"Page {i + 1}:" if i < page_count else None
+                next_alt_marker = f"PAGE {i + 1}:" if i < page_count else None
+
+                if next_marker:
+                    next_pos = result.find(next_marker, start_pos)
+                    alt_next_pos = result.find(next_alt_marker, start_pos)
+                    if next_pos != -1 and (
+                        alt_next_pos == -1 or next_pos < alt_next_pos
+                    ):
+                        end_pos = next_pos
+                    elif alt_next_pos != -1:
+                        end_pos = alt_next_pos
+                    else:
+                        # No next marker found, use the end of the string
+                        end_pos = len(result)
+                else:
+                    end_pos = len(result)
+
+                # Extract the page content and clean it
+                page_content = result[start_pos:end_pos].strip()
+                sections.append(page_content)
+                current_pos = end_pos
+
+            return sections
+        else:
+            # Not enough page markers, divide evenly
+            avg_length = len(result) // page_count
+            return [
+                result[i * avg_length : (i + 1) * avg_length].strip()
+                for i in range(page_count)
+            ]

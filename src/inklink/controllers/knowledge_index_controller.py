@@ -5,9 +5,9 @@ This controller provides HTTP endpoints for creating and managing knowledge inde
 notebooks that organize entities and topics with references to related content.
 """
 
-import logging
 import json
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Any, Dict, List, Optional
 
 from inklink.controllers.base_controller import BaseController
 from inklink.services.knowledge_index_service import KnowledgeIndexService
@@ -26,9 +26,7 @@ class KnowledgeIndexController(BaseController):
     - Creating master index notebooks
     """
 
-    def __init__(
-        self, knowledge_index_service: KnowledgeIndexService, handler=None
-    ):
+    def __init__(self, knowledge_index_service: KnowledgeIndexService, handler=None):
         """
         Initialize the KnowledgeIndexController.
 
@@ -43,18 +41,10 @@ class KnowledgeIndexController(BaseController):
     def _register_routes(self):
         """Register routes for this controller."""
         # Index creation routes
-        self.add_route(
-            "POST", "/kg/indices/entity", self.create_entity_index
-        )
-        self.add_route(
-            "POST", "/kg/indices/topic", self.create_topic_index
-        )
-        self.add_route(
-            "POST", "/kg/indices/notebook", self.create_notebook_index
-        )
-        self.add_route(
-            "POST", "/kg/indices/master", self.create_master_index
-        )
+        self.add_route("POST", "/kg/indices/entity", self.create_entity_index)
+        self.add_route("POST", "/kg/indices/topic", self.create_topic_index)
+        self.add_route("POST", "/kg/indices/notebook", self.create_notebook_index)
+        self.add_route("POST", "/kg/indices/master", self.create_master_index)
 
     async def create_entity_index(self, request):
         """
@@ -82,7 +72,7 @@ class KnowledgeIndexController(BaseController):
             success, result = self.knowledge_index_service.create_entity_index(
                 entity_types=entity_types,
                 min_references=min_references,
-                upload_to_remarkable=upload_to_remarkable
+                upload_to_remarkable=upload_to_remarkable,
             )
 
             if not success:
@@ -124,7 +114,7 @@ class KnowledgeIndexController(BaseController):
             success, result = self.knowledge_index_service.create_topic_index(
                 top_n_topics=top_n_topics,
                 min_connections=min_connections,
-                upload_to_remarkable=upload_to_remarkable
+                upload_to_remarkable=upload_to_remarkable,
             )
 
             if not success:

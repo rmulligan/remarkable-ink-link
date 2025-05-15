@@ -1,0 +1,6 @@
+[submodule "src/models/handwriting_model/deep_scribe_original"]
+	path = src/models/handwriting_model/deep_scribe_original
+	url = https://github.com/remarkable-ink-link/deep-scribe-original
+[submodule "src/models/handwriting_model/maxio"]
+	path = src/models/handwriting_model/maxio
+	url = https://github.com/remarkable-ink-link/maxio
