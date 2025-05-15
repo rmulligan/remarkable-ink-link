@@ -53,7 +53,7 @@ jobs:
         # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
         run: poetry run pytest --maxfail=1 --disable-warnings -q
       - name: Report test coverage to DeepSource
-        uses: deepsourcelabs/test-coverage-action@master
+        uses: deepsourcelabs/test-coverage-action@v1.0.0
         with:
           key: python
           coverage-file: coverage.xml
