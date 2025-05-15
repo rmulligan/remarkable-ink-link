@@ -81,10 +81,27 @@ jobs:
       - name: Install Dependencies
         run: |
           poetry install --no-interaction --no-ansi
+      - name: Temporarily modify package.json to avoid script errors
+        run: |
+          # Backup original package.json
+          cp package.json package.json.bak
+          # Remove problematic scripts
+          if command -v jq &> /dev/null; then
+            jq 'del(.scripts.postinstall, .scripts.prepare)' package.json > package.json.tmp && mv package.json.tmp package.json
+          else
+            # Fallback if jq is not available
+            node -e "const pkg = require('./package.json'); delete pkg.scripts.postinstall; delete pkg.scripts.prepare; require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
+          fi
       - name: Code Review GPT
         uses: mattzcarey/shippie@v0.14.0
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+      - name: Restore package.json
+        if: always()
+        run: |
+          if [ -f package.json.bak ]; then
+            mv package.json.bak package.json
+          fi
 
   build-and-push:
     name: Build and Push Docker Image
