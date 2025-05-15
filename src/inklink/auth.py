@@ -11,7 +11,6 @@ from inklink.config import CONFIG
 
 app = FastAPI()
 
-
 @app.get("/auth", response_class=HTMLResponse)
 def auth_form():
     # Display instructions for pairing code authentication
