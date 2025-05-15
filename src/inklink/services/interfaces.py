@@ -2,10 +2,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-<< << << < HEAD
-== == == =
->>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
-
 
 class IQRCodeService(ABC):
     @abstractmethod
