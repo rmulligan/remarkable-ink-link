@@ -84,14 +84,14 @@ def extract_strokes_from_rm_file(file_path):
                                             "<ffff", point_data
                                         )
                                         points.append((x, y, pressure))
-                                    except:
+                                    except Exception:
                                         pass
 
                                 if points:
                                     strokes.append(points)
 
                                 break  # Found points, move to next stroke
-                        except:
+                        except Exception:
                             pass  # Try next offset
 
                     if not found_points:

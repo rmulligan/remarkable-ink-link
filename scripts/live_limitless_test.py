@@ -96,7 +96,7 @@ def test_get_life_logs(limit=3):
             start_time = log.get("startTime", "Unknown")
             end_time = log.get("endTime", "Unknown")
 
-            print(f"\nLog {i+1}:")
+            print(f"\nLog {i + 1}:")
             print(f"  ID: {log_id}")
             print(f"  Title: {title}")
             print(f"  Time Range: {start_time} to {end_time}")

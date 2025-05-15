@@ -103,14 +103,14 @@ def demo_from_file(
     results = []
     for i, stroke in enumerate(strokes):
         # Plot stroke
-        plot_stroke(stroke, title=f"Stroke {i+1}")
+        plot_stroke(stroke, title=f"Stroke {i + 1}")
 
         # Predict
         character, confidence = predictor.predict(stroke)
         results.append((character, confidence))
 
         # Print result
-        print(f"Stroke {i+1}: {character} (confidence: {confidence:.4f})")
+        print(f"Stroke {i + 1}: {character} (confidence: {confidence:.4f})")
 
     # Show all plots
     plt.show()

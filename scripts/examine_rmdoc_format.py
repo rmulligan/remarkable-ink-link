@@ -144,7 +144,7 @@ def download_and_analyze():
     # Create a temporary directory for the download
     with tempfile.TemporaryDirectory() as temp_dir:
         # Download the notebook
-        download_path = os.path.join(temp_dir, f"{TEST_NOTEBOOK_NAME}.zip")
+        # download_path = os.path.join(temp_dir, f"{TEST_NOTEBOOK_NAME}.zip")  # Unused variable
         download_cmd = f"{RMAPI_PATH} get '{TEST_NOTEBOOK_NAME}'"
 
         original_dir = os.getcwd()

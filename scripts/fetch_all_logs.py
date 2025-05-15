@@ -109,7 +109,7 @@ def print_response(response):
             print("\nLog details:")
             for i, log in enumerate(logs[:3]):  # Show up to 3 logs
                 if isinstance(log, dict):
-                    print(f"Log {i+1}:")
+                    print(f"Log {i + 1}:")
                     print(f"  ID: {log.get('id', 'No ID')}")
                     print(f"  Title: {log.get('title', 'No Title')}")
                     print(f"  Created: {log.get('created_at', 'Unknown')}")
@@ -118,7 +118,7 @@ def print_response(response):
                         content = content[:100] + "..."
                     print(f"  Content: {content}")
                 else:
-                    print(f"Log {i+1}: {log} (type: {type(log)})")
+                    print(f"Log {i + 1}: {log} (type: {type(log)})")
 
             if len(logs) > 3:
                 print(f"... and {len(logs) - 3} more logs")

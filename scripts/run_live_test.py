@@ -56,7 +56,7 @@ class DebugClaudePenpalService(ClaudePenpalService):
         logger.info(f"Intercepted Claude call for notebook: {notebook_id}")
         return f"""Thank you for your query!
 
-This is a test response from the live test runner. 
+This is a test response from the live test runner.
 The metadata fix should now work correctly with the following changes:
 
 1. Using millisecond timestamps as strings

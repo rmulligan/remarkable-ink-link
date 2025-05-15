@@ -1019,9 +1019,9 @@ if __name__ == "__main__":
             status, emails = adapter.get_recent_emails(args.folder, args.limit)
             if status:
                 print(f"Found {len(emails)} emails in {args.folder}:")
-                for email in emails:
+                for email_message in emails:
                     print(
-                        f"- {email.uid}: {email.subject} (from: {email.sender}, date: {email.date})"
+                        f"- {email_message.uid}: {email_message.subject} (from: {email_message.sender}, date: {email_message.date})"
                     )
             else:
                 print(f"Error: {emails}")
@@ -1038,9 +1038,9 @@ if __name__ == "__main__":
                 print(
                     f"Found {len(emails)} emails matching '{args.query}' in {args.folder}:"
                 )
-                for email in emails:
+                for email_message in emails:
                     print(
-                        f"- {email.uid}: {email.subject} (from: {email.sender}, date: {email.date})"
+                        f"- {email_message.uid}: {email_message.subject} (from: {email_message.sender}, date: {email_message.date})"
                     )
             else:
                 print(f"Error: {emails}")
@@ -1052,10 +1052,10 @@ if __name__ == "__main__":
 
             status, email = adapter.fetch_email(args.uid, args.folder)
             if status:
-                print(f"Subject: {email.subject}")
-                print(f"From: {email.sender}")
+                print(f"Subject: {email_message.subject}")
+                print(f"From: {email_message.sender}")
                 print(f"To: {', '.join(email.recipients)}")
-                print(f"Date: {email.date}")
+                print(f"Date: {email_message.date}")
                 print("\n" + email.body_text)
             else:
                 print(f"Error: {email}")
