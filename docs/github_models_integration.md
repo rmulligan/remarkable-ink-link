@@ -42,6 +42,31 @@ GITHUB_TOKEN=your_github_pat_token  # Personal Access Token with models:read
 GITHUB_MODEL=openai/gpt-4.1  # Optional, defaults to gpt-4.1
 ```
 
+### Setting Up GitHub Personal Access Token
+
+For GitHub Actions workflow integration with GitHub Models, you need to:
+
+1. Create a Personal Access Token (PAT) - Optional but Recommended:
+   - Go to https://github.com/settings/tokens
+   - Click "Generate new token (classic)"
+   - Select the `models:read` scope
+   - Give it a descriptive name like "GitHub Models API Access"
+   - Set an expiration that works for your needs
+
+2. Add the PAT to your repository secrets:
+   - Go to your repository settings
+   - Navigate to Secrets and variables > Actions
+   - Create a new repository secret named `GITHUB_MODELS_PAT`
+   - Paste your PAT as the value
+
+3. The workflow will use this secret to authenticate with GitHub Models API:
+   ```yaml
+   env:
+     GITHUB_TOKEN: ${{ secrets.GITHUB_MODELS_PAT || secrets.GITHUB_TOKEN }}
+   ```
+
+**Note**: If no PAT is provided, the workflow will automatically fall back to a basic local analysis using pattern matching and code statistics. This provides a baseline code review even without access to GitHub Models API.
+
 ## Use Cases
 
 ### 1. Handwriting Recognition Validation
@@ -138,6 +163,35 @@ class CodeValidationAdapter(AIAdapter):
 4. **Caching**: Store validation results for similar queries
 5. **Metrics**: Track accuracy improvements from validation
 
+## Code Review Workflow
+
+The project includes an automated code review workflow that runs on pull requests:
+
+### How It Works
+
+1. **PR Analysis**: The workflow fetches the PR diff when a new PR is opened or updated
+2. **AI Review**: Attempts to use GitHub Models (gpt-4o-mini) for intelligent code review
+3. **Fallback**: If GitHub Models is unavailable, performs a basic local analysis
+4. **Comments**: Posts the review as a comment on the PR
+
+### Workflow Features
+
+#### With GitHub Models (PAT Required)
+- Comprehensive code review using AI
+- Identifies potential bugs and issues
+- Suggests improvements and best practices
+- Provides code quality assessment
+
+#### Fallback Local Analysis (No PAT Required)
+- Basic change statistics (lines added/removed)
+- Security pattern detection (eval, exec, etc.)
+- Test coverage detection
+- General recommendations
+
+### Configuration
+
+The workflow is configured in `.github/workflows/code-review-github-models.yml`
+
 ## Troubleshooting
 
 ### Common Issues
@@ -146,10 +200,13 @@ class CodeValidationAdapter(AIAdapter):
    ```bash
    export GITHUB_TOKEN="ghp_your_token_here"
    ```
+   
+   For the workflow: If you see "The `models` permission is required", the workflow will automatically fall back to local analysis
 
 2. **Model Access**:
    - Ensure PAT has models:read permission
    - Verify Copilot subscription is active
+   - Check repository secrets for `GITHUB_MODELS_PAT`
 
 3. **Rate Limits**:
    - GitHub models have usage limits

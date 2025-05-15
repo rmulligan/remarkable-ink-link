@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  models: read  # Required for GitHub Models API access
 
 jobs:
   review:
@@ -32,7 +33,8 @@ jobs:
         
       - name: Review Code with GitHub Models
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          # Try PAT first, fallback to regular token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_MODELS_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
@@ -44,18 +46,80 @@ jobs:
 
           def get_diff_content(repo_full_name: str, pr_number: int) -> str:
               """Get the PR diff content."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return ""
+                  
               headers = {
-                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Authorization": f"Bearer {token}",
                   "Accept": "application/vnd.github.v3.diff"
               }
               url = f"https://api.github.com/repos/{repo_full_name}/pulls/{pr_number}"
               response = requests.get(url, headers=headers)
               return response.text
 
+          def analyze_diff_locally(diff_content: str) -> str:
+              """Perform a basic local analysis of the diff."""
+              lines = diff_content.split('\n')
+              added_lines = sum(1 for line in lines if line.startswith('+') and not line.startswith('+++'))
+              removed_lines = sum(1 for line in lines if line.startswith('-') and not line.startswith('---'))
+              
+              # Basic pattern detection
+              security_patterns = ['eval(', 'exec(', '__import__', 'os.system', 'subprocess.call']
+              test_patterns = ['def test_', '@pytest.mark', 'assert ', 'unittest']
+              
+              # Check for patterns
+              security_issues = []
+              has_tests = False
+              
+              for line in lines:
+                  if line.startswith('+'):
+                      for pattern in security_patterns:
+                          if pattern in line:
+                              security_issues.append(f"Potential security concern: {pattern} found")
+                      for pattern in test_patterns:
+                          if pattern in line:
+                              has_tests = True
+              
+              # Build review
+              review = f"""## Code Review Summary
+              
+              ### Change Statistics
+              - Lines added: {added_lines}
+              - Lines removed: {removed_lines}
+              - Net change: {added_lines - removed_lines}
+              
+              ### Observations
+              """
+              
+              if security_issues:
+                  review += "\n#### ⚠️ Security Concerns\n"
+                  for issue in security_issues:
+                      review += f"- {issue}\n"
+              
+              review += f"\n#### Testing\n"
+              if has_tests:
+                  review += "✅ Test changes detected\n"
+              else:
+                  review += "⚠️ No test changes detected - consider adding tests\n"
+              
+              review += "\n### Recommendations\n"
+              review += "- Review the changes for logic errors and edge cases\n"
+              review += "- Ensure proper error handling is in place\n"
+              review += "- Verify that the changes align with project standards\n"
+              
+              return review
+
           def review_with_github_models(diff_content: str) -> Dict[str, Any]:
               """Use GitHub Models API to review code."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return None
+                  
               headers = {
-                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Authorization": f"Bearer {token}",
                   "Content-Type": "application/json",
                   "Accept": "application/json"
               }
@@ -98,23 +162,42 @@ jobs:
                       pass
                   return None
 
-          def post_review_comment(repo_full_name: str, pr_number: int, review_body: str):
+          def post_review_comment(repo_full_name: str, pr_number: int, review_body: str, is_ai_review: bool = True):
               """Post review as PR comment."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return False
+                  
               headers = {
-                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Authorization": f"Bearer {token}",
                   "Content-Type": "application/json",
               }
               
               url = f"https://api.github.com/repos/{repo_full_name}/issues/{pr_number}/comments"
               
+              if is_ai_review:
+                  title = "## 🤖 Code Review by GitHub Models"
+                  footer = "*Powered by GitHub Models (gpt-4o-mini)*"
+              else:
+                  title = "## 📋 Automated Code Review"
+                  footer = "*This is a basic automated analysis. Consider having a human review these changes.*"
+              
               payload = {
-                  "body": f"## 🤖 Code Review by GitHub Models\n\n{review_body}\n\n---\n*Powered by GitHub Models (gpt-4o-mini)*"
+                  "body": f"{title}\n\n{review_body}\n\n---\n{footer}"
               }
               
               response = requests.post(url, headers=headers, json=payload)
               return response.status_code == 201
 
           def main():
+              # Check for required environment variables
+              if not os.environ.get("GITHUB_TOKEN"):
+                  print("Error: GITHUB_TOKEN environment variable is not set")
+                  print("Please set up a Personal Access Token with models:read permission")
+                  print("See: https://github.com/settings/tokens")
+                  return 1
+                  
               repo_full_name = os.environ.get("GITHUB_REPOSITORY")
               pr_number = int(os.environ.get("PR_NUMBER"))
               
@@ -122,32 +205,45 @@ jobs:
               
               # Get PR diff
               diff_content = get_diff_content(repo_full_name, pr_number)
+              if not diff_content:
+                  print("Failed to get PR diff content")
+                  return 1
+                  
               print(f"Got diff with {len(diff_content)} characters")
               
-              # Review with GitHub Models
-              print("Sending to GitHub Models for review...")
+              # Try AI review first
+              print("Attempting AI review...")
               review_result = review_with_github_models(diff_content)
               
-              if review_result:
-                  # Extract review from response
+              if review_result and review_result.get("choices"):
+                  # Extract review from AI response
                   try:
                       review_content = review_result["choices"][0]["message"]["content"]
-                      print("Successfully generated review")
+                      print("Successfully generated AI review")
+                      success = post_review_comment(repo_full_name, pr_number, review_content, is_ai_review=True)
                   except (KeyError, IndexError):
-                      review_content = "Failed to generate review content."
-                      print(f"Unexpected response format: {json.dumps(review_result, indent=2)}")
-                  
-                  # Post review
-                  success = post_review_comment(repo_full_name, pr_number, review_content)
-                  if success:
-                      print("Review posted successfully!")
-                  else:
-                      print("Failed to post review.")
+                      print("Failed to extract AI review content")
+                      success = False
               else:
-                  print("Failed to generate review.")
+                  # Check if the error is permission related
+                  if review_result is None:
+                      print("AI review failed, falling back to local analysis...")
+                      review_content = analyze_diff_locally(diff_content)
+                      success = post_review_comment(repo_full_name, pr_number, review_content, is_ai_review=False)
+                  else:
+                      print("Failed to generate review.")
+                      success = False
+              
+              if success:
+                  print("Review posted successfully!")
+                  return 0
+              else:
+                  print("Failed to post review.")
+                  return 1
 
           if __name__ == "__main__":
-              main()
+              import sys
+              sys.exit(main())
           EOF
           
           python review.py
