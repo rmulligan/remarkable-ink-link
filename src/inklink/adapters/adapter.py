@@ -4,7 +4,7 @@ This module provides base adapter interfaces for external services.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, List, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class Adapter(ABC):

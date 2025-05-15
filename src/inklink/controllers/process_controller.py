@@ -3,9 +3,9 @@
 This module provides a controller for handling file processing requests.
 """
 
-import uuid
 import logging
-from typing import Dict, Any
+import uuid
+from typing import Any, Dict
 
 from inklink.controllers.base_controller import BaseController
 

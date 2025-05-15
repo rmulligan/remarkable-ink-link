@@ -1,12 +1,13 @@
 """Tests for the notebook memory management service."""
 
-import os
-import tempfile
-import shutil
-import pytest
-import time
 import json
-from typing import Dict, Any, List
+import os
+import shutil
+import tempfile
+import time
+from typing import Any, Dict, List
+
+import pytest
 
 from inklink.services.memory_management_service import MemoryManagementService
 

@@ -5,9 +5,9 @@ This controller provides endpoints for invoking MCP tools registered
 in the application's tool registry.
 """
 
-import logging
 import json
-from typing import Dict, Any
+import logging
+from typing import Any, Dict
 
 from inklink.controllers.base_controller import BaseController
 from inklink.mcp.registry import get_registry, register_all_tools

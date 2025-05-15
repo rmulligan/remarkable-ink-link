@@ -3,14 +3,14 @@
 This module provides a controller for handling URL sharing requests.
 """
 
-import os
 import logging
+import os
 from urllib.parse import quote
 
 from inklink.controllers.base_controller import BaseController
-from inklink.utils.url_utils import extract_url
 from inklink.pipeline.factory import PipelineFactory
 from inklink.pipeline.processor import PipelineContext
+from inklink.utils.url_utils import extract_url
 
 logger = logging.getLogger(__name__)
 

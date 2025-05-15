@@ -6,8 +6,8 @@ This module provides a scheduler service for regular Limitless Life Log syncing.
 import logging
 import threading
 import time
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 

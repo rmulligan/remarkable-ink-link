@@ -4,14 +4,14 @@ This module provides the base implementation for content converters
 that transform various content types into reMarkable-compatible formats.
 """
 
+import logging
 import os
 import time
-import logging
 from abc import ABC
-from typing import Dict, Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
-from inklink.services.interfaces import IContentConverter
 from inklink.config import CONFIG
+from inklink.services.interfaces import IContentConverter
 
 logger = logging.getLogger(__name__)
 

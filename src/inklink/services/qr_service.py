@@ -1,11 +1,11 @@
 """QR code generation service for InkLink."""
 
-import os
 import logging
-from typing import Tuple, Optional, Dict, Any
+import os
+from typing import Any, Dict, Optional, Tuple
 
-from inklink.services.interfaces import IQRCodeService
 from inklink.adapters.qr_adapter import QRCodeAdapter
+from inklink.services.interfaces import IQRCodeService
 
 logger = logging.getLogger(__name__)
 

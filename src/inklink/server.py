@@ -7,20 +7,20 @@ Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 
 import logging
 import traceback
-from typing import Dict, Optional, TypeVar, Any
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any, Dict, Optional, TypeVar
 
 from inklink.config import CONFIG, setup_logging
-from inklink.router import Router
 from inklink.di.container import Container
+from inklink.router import Router
+from inklink.services.ai_service import AIService
 from inklink.services.interfaces import (
-    IQRCodeService,
-    IWebScraperService,
     IDocumentService,
     IPDFService,
+    IQRCodeService,
     IRemarkableService,
+    IWebScraperService,
 )
-from inklink.services.ai_service import AIService
 
 # Define a TypeVar for our custom server type
 ServerType = TypeVar("ServerType", bound="CustomHTTPServer")

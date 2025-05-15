@@ -3,10 +3,11 @@
 This module provides an adapter for QR code generation using qrcode library.
 """
 
-import os
 import logging
+import os
+from typing import Any, Dict, Optional, Tuple
+
 import qrcode
-from typing import Optional, Tuple, Dict, Any
 
 from inklink.adapters.adapter import Adapter
 

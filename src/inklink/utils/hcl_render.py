@@ -4,10 +4,10 @@ This module provides functions for creating HCL scripts from
 structured content for drawj2d to render.
 """
 
+import logging
 import os
 import time
-import logging
-from typing import Dict, Any, Optional, NamedTuple
+from typing import Any, Dict, NamedTuple, Optional
 
 from inklink.config import CONFIG
 

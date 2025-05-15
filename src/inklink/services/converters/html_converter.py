@@ -4,10 +4,10 @@ This module provides a converter that transforms HTML content
 directly into reMarkable-compatible formats.
 """
 
+import logging
 import os
 import tempfile
-import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
 from inklink.utils import convert_html_to_rm

@@ -3,13 +3,13 @@
 This module provides a controller for handling file download requests.
 """
 
+import logging
 import os
 import re
-import logging
 from urllib.parse import unquote
 
-from inklink.controllers.base_controller import BaseController
 from inklink.config import CONFIG
+from inklink.controllers.base_controller import BaseController
 
 logger = logging.getLogger(__name__)
 

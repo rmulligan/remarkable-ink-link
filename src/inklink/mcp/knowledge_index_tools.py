@@ -7,10 +7,10 @@ index notebooks that organize entities and topics with references to related con
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-from inklink.services.knowledge_index_service import KnowledgeIndexService
 from inklink.di.container import Container
+from inklink.services.knowledge_index_service import KnowledgeIndexService
 
 logger = logging.getLogger(__name__)
 

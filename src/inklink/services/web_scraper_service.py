@@ -1,10 +1,10 @@
 """Web scraping service that tries multiple methods."""
 
 import logging
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-from inklink.services.interfaces import IWebScraperService
 from inklink.adapters.http_adapter import HTTPAdapter
+from inklink.services.interfaces import IWebScraperService
 
 try:
     from readability import Document
@@ -13,8 +13,8 @@ except ImportError:
 
 # Import utility functions for HTML parsing and error handling
 from inklink.utils import (
-    format_error,
     extract_structured_content,
+    format_error,
     validate_and_fix_content,
 )
 

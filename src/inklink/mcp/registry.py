@@ -5,9 +5,9 @@ This module provides a registry for MCP tools and a mechanism
 for registering and retrieving tool handlers.
 """
 
-import logging
 import importlib
-from typing import Dict, Any, Callable, Optional
+import logging
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

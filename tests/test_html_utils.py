@@ -1,14 +1,14 @@
 """Tests for HTML parsing utilities."""
 
-from bs4 import BeautifulSoup
 import pytest
+from bs4 import BeautifulSoup
 
 from inklink.utils import (
+    extract_structured_content,
     extract_title_from_html,
     find_main_content_container,
-    parse_html_container,
-    extract_structured_content,
     generate_title_from_url,
+    parse_html_container,
     validate_and_fix_content,
 )
 

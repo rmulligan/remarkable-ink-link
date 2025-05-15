@@ -1,12 +1,12 @@
 import logging
 import traceback
 
-from inklink.services.qr_service import QRCodeService
-from inklink.services.pdf_service import PDFService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.remarkable_service import RemarkableService
 from inklink.config import CONFIG
+from inklink.services.document_service import DocumentService
+from inklink.services.pdf_service import PDFService
+from inklink.services.qr_service import QRCodeService
+from inklink.services.remarkable_service import RemarkableService
+from inklink.services.web_scraper_service import WebScraperService
 
 logger = logging.getLogger(__name__)
 
