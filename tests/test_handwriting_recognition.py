@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
