@@ -83,6 +83,8 @@ jobs:
           poetry install --no-interaction --no-ansi
       - name: Code Review GPT
         uses: mattzcarey/shippie@v0.14.0
+        with:
+          MODEL_STRING: github:gpt-4
         env:
           NODE_OPTIONS: --max-old-space-size=4096
           GITHUB_TOKEN: ${{ github.token }}
