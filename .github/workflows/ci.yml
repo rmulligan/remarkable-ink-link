@@ -85,8 +85,7 @@ jobs:
         uses: mattzcarey/shippie@v0.14.0
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
 
   build-and-push:
     name: Build and Push Docker Image
