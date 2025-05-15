@@ -4,9 +4,9 @@ This module provides functions for processing HTML content into structured
 data suitable for document generation.
 """
 
-import re
 import logging
-from typing import Dict, Any, List, Tuple, Optional
+import re
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag

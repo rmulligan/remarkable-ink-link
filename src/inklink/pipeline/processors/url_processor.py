@@ -4,9 +4,9 @@ This module provides a processor for validating URLs.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from inklink.pipeline.processor import Processor, PipelineContext
+from inklink.pipeline.processor import PipelineContext, Processor
 from inklink.utils import is_safe_url
 
 logger = logging.getLogger(__name__)

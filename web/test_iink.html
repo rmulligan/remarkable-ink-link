@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iink-ts Test</title>
+    <script src="node_modules/iink-ts/dist/iink.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #editor {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin: 20px auto;
+        }
+        #status {
+            margin: 20px auto;
+            width: 800px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .buttons {
+            width: 800px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 0 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>MyScript iink-ts Test</h1>
+    
+    <div id="status">
+        <p>Status: <span id="statusText">Initializing...</span></p>
+    </div>
+    
+    <div id="editor"></div>
+    
+    <div class="buttons">
+        <button id="clearButton">Clear</button>
+        <button id="convertButton">Convert</button>
+        <button id="recognizeButton">Recognize Strokes</button>
+    </div>
+    
+    <h2>Recognition Results</h2>
+    <div id="results" style="width: 800px; margin: 0 auto;">
+        <p>Text: <span id="recognizedText">None yet</span></p>
+        <h3>JIIX Result:</h3>
+        <pre id="jiixResult">None yet</pre>
+    </div>
+    
+    <script>
+        const statusText = document.getElementById('statusText');
+        const editorElement = document.getElementById('editor');
+        const clearButton = document.getElementById('clearButton');
+        const convertButton = document.getElementById('convertButton');
+        const recognizeButton = document.getElementById('recognizeButton');
+        const recognizedText = document.getElementById('recognizedText');
+        const jiixResult = document.getElementById('jiixResult');
+        
+        let editor;
+        
+        // Your MyScript API keys - You should replace these with your keys
+        const applicationKey = 'MYSCRIPT_APP_KEY_PLACEHOLDER';
+        const hmacKey = 'MYSCRIPT_HMAC_KEY_PLACEHOLDER';
+        
+        // Update status
+        function updateStatus(message) {
+            statusText.textContent = message;
+        }
+        
+        // Initialize editor
+        async function initEditor() {
+            try {
+                updateStatus('Loading editor...');
+                
+                editor = await iink.Editor.load(editorElement, "INTERACTIVEINK", {
+                    configuration: {
+                        server: {
+                            applicationKey: applicationKey,
+                            hmacKey: hmacKey
+                        },
+                        export: {
+                            jiix: {
+                                strokes: true,
+                                bounding: true,
+                                text: {
+                                    chars: true,
+                                    words: true
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                updateStatus('Editor loaded successfully. Draw something!');
+                
+                // Set up button event handlers
+                clearButton.addEventListener('click', clearEditor);
+                convertButton.addEventListener('click', convertContent);
+                recognizeButton.addEventListener('click', recognizeStrokes);
+            } catch (error) {
+                updateStatus('Error loading editor: ' + error.message);
+                console.error('Error loading editor:', error);
+            }
+        }
+        
+        // Create mock strokes that spell "hello"
+        function createMockStrokes() {
+            const baseTime = Date.now();
+            return [
+                // 'h' stroke
+                {
+                    id: 'stroke1',
+                    x: [100, 100, 100, 100, 120, 140, 140, 140],
+                    y: [100, 120, 140, 160, 160, 160, 140, 120],
+                    pointerType: 'PEN',
+                    timestamps: Array.from({ length: 8 }, (_, i) => baseTime + i * 10)
+                },
+                // 'e' stroke
+                {
+                    id: 'stroke2',
+                    x: [180, 200, 220, 200, 180, 180, 200, 220],
+                    y: [140, 130, 140, 150, 160, 140, 140, 140],
+                    pointerType: 'PEN',
+                    timestamps: Array.from({ length: 8 }, (_, i) => baseTime + 100 + i * 10)
+                },
+                // 'l' stroke
+                {
+                    id: 'stroke3',
+                    x: [240, 240, 240, 240],
+                    y: [100, 120, 140, 160],
+                    pointerType: 'PEN',
+                    timestamps: Array.from({ length: 4 }, (_, i) => baseTime + 200 + i * 10)
+                },
+                // 'l' stroke
+                {
+                    id: 'stroke4',
+                    x: [280, 280, 280, 280],
+                    y: [100, 120, 140, 160],
+                    pointerType: 'PEN',
+                    timestamps: Array.from({ length: 4 }, (_, i) => baseTime + 300 + i * 10)
+                },
+                // 'o' stroke
+                {
+                    id: 'stroke5',
+                    x: [320, 340, 360, 360, 340, 320, 320],
+                    y: [140, 120, 140, 160, 180, 160, 140],
+                    pointerType: 'PEN',
+                    timestamps: Array.from({ length: 7 }, (_, i) => baseTime + 400 + i * 10)
+                }
+            ];
+        }
+        
+        // Clear the editor
+        function clearEditor() {
+            try {
+                editor.clear();
+                recognizedText.textContent = 'None yet';
+                jiixResult.textContent = 'None yet';
+                updateStatus('Editor cleared. Draw something new!');
+            } catch (error) {
+                updateStatus('Error clearing editor: ' + error.message);
+                console.error('Error clearing editor:', error);
+            }
+        }
+        
+        // Convert content
+        async function convertContent() {
+            try {
+                updateStatus('Converting content...');
+                
+                const exports = await editor.export_();
+                
+                if (exports && exports['text/plain']) {
+                    recognizedText.textContent = exports['text/plain'];
+                } else {
+                    recognizedText.textContent = 'No text recognized';
+                }
+                
+                if (exports && exports['application/vnd.myscript.jiix']) {
+                    jiixResult.textContent = JSON.stringify(exports['application/vnd.myscript.jiix'], null, 2);
+                } else {
+                    jiixResult.textContent = 'No JIIX data available';
+                }
+                
+                updateStatus('Conversion complete!');
+            } catch (error) {
+                updateStatus('Error converting content: ' + error.message);
+                console.error('Error converting content:', error);
+            }
+        }
+        
+        // Recognize strokes
+        async function recognizeStrokes() {
+            try {
+                updateStatus('Adding mock strokes...');
+                
+                // Clear first
+                editor.clear();
+                
+                // Get mock strokes
+                const strokes = createMockStrokes();
+                
+                // Import strokes to the editor
+                await editor.pointerEvents.importPointerEvents(strokes);
+                
+                updateStatus('Mock strokes added. Click "Convert" to recognize them.');
+            } catch (error) {
+                updateStatus('Error recognizing strokes: ' + error.message);
+                console.error('Error recognizing strokes:', error);
+            }
+        }
+        
+        // Initialize the editor when the page loads
+        window.onload = function() {
+            // Replace placeholders with actual keys from environment
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('appKey') && urlParams.has('hmacKey')) {
+                applicationKey = urlParams.get('appKey');
+                hmacKey = urlParams.get('hmacKey');
+            }
+            
+            initEditor();
+        };
+    </script>
+</body>
+</html>

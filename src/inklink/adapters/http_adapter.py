@@ -6,7 +6,8 @@ error handling, retries, and configuration.
 
 import logging
 import time
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import requests
 from requests.adapters import HTTPAdapter as RequestsHTTPAdapter
 from requests.packages.urllib3.util.retry import Retry

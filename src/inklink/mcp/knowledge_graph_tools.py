@@ -7,11 +7,11 @@ MCP-compatible interfaces.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from inklink.di.container import Container
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.mcp.knowledge_graph_tools_integration import KnowledgeGraphMCPIntegration
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
 
 logger = logging.getLogger(__name__)
 

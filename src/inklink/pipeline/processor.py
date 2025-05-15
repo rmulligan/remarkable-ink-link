@@ -5,7 +5,7 @@ This module provides the base classes for content processing.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, TypeVar, Generic
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 

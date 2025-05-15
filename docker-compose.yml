@@ -14,6 +14,17 @@ services:
     command: ["poetry", "run", "inklink", "server", "--host", "0.0.0.0", "--port", "9999"]
     environment:
       - PYTHONUNBUFFERED=1
+      - LIMITLESS_API_KEY=${LIMITLESS_API_KEY}
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASS=${NEO4J_PASS}
+      - MYSCRIPT_APP_KEY=${MYSCRIPT_APP_KEY}
+      - MYSCRIPT_HMAC_KEY=${MYSCRIPT_HMAC_KEY}
+      - RMAPI_PATH=/usr/local/bin/rmapi
+      - DRAWJ2D_PATH=/usr/bin/drawj2d
+      - REMARKABLE_DIR=/tmp/remarkable_output
+      - LOG_LEVEL=DEBUG
     volumes:
       - .:/app
       - ${HOME}/.config/rmapi:/root/.config/rmapi
+      - /tmp/remarkable_output:/tmp/remarkable_output

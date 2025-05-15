@@ -8,7 +8,10 @@ exclude =
     src/temp,
     tests/__pycache__,
     build,
-    dist
+    dist,
+    temp,
+    temp/*,
+    temp/**/*
 # Match Black's line length and ignore minor conflicts
 # Match Black's line length
 max-line-length = 88

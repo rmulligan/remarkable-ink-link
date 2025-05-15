@@ -4,12 +4,12 @@ This module provides controllers for handling authentication-related requests.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import parse_qs
 
-from inklink.controllers.base_controller import BaseController
 from inklink.adapters.rmapi_adapter import RmapiAdapter
 from inklink.config import CONFIG
+from inklink.controllers.base_controller import BaseController
 
 logger = logging.getLogger(__name__)
 

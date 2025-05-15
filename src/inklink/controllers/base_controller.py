@@ -7,7 +7,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from http.server import BaseHTTPRequestHandler
-from typing import Any, Dict, Optional, TypeVar, cast, Union, Tuple
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union, cast
 
 ServerType = TypeVar("ServerType")
 logger = logging.getLogger(__name__)

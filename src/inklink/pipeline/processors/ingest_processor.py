@@ -4,9 +4,9 @@ This module provides a processor for handling ingested content.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
-from inklink.pipeline.processor import Processor, PipelineContext
+from inklink.pipeline.processor import PipelineContext, Processor
 
 logger = logging.getLogger(__name__)
 

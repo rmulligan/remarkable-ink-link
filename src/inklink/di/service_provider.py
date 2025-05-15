@@ -4,9 +4,9 @@ This module provides a service provider that manages dependencies and service
 instantiation for the application.
 """
 
-import logging
 import importlib
-from typing import Dict, Any, Type, Optional, TypeVar, cast
+import logging
+from typing import Any, Dict, Optional, Type, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 

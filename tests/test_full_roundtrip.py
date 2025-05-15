@@ -10,14 +10,16 @@ External dependencies required:
 This test uses pytest's tmp_path fixture for all temporary files and directories.
 """
 
-import pytest
 import logging
+
+import pytest
+
 from inklink.server import URLHandler
-from inklink.services.qr_service import QRCodeService
-from inklink.services.pdf_service import PDFService
-from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.document_service import DocumentService
+from inklink.services.pdf_service import PDFService
+from inklink.services.qr_service import QRCodeService
 from inklink.services.remarkable_service import RemarkableService
+from inklink.services.web_scraper_service import WebScraperService
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("test_full_roundtrip")
@@ -39,11 +41,11 @@ class TestHandler(URLHandler):
 def test_webpage_ai_summary_integration(tmp_path):
     """Unit test: injects a mock AIService and checks AI summary in content and context passing."""
     from inklink.server import URLHandler
-    from inklink.services.qr_service import QRCodeService
-    from inklink.services.pdf_service import PDFService
-    from inklink.services.web_scraper_service import WebScraperService
     from inklink.services.document_service import DocumentService
+    from inklink.services.pdf_service import PDFService
+    from inklink.services.qr_service import QRCodeService
     from inklink.services.remarkable_service import RemarkableService
+    from inklink.services.web_scraper_service import WebScraperService
 
     class MockAIService:
         """Mock AI Service implementation for testing."""

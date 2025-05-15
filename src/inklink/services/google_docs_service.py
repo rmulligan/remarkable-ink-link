@@ -1,15 +1,11 @@
 """Google Docs integration service."""
 
-import os
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from inklink.services.interfaces import IGoogleDocsService
 from inklink.adapters.google_adapter import GoogleAPIAdapter
-from inklink.utils import (
-    extract_structured_content,
-    validate_and_fix_content,
-)
+from inklink.services.interfaces import IGoogleDocsService
+from inklink.utils import extract_structured_content, validate_and_fix_content
 
 logger = logging.getLogger(__name__)
 

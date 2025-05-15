@@ -5,45 +5,49 @@ This module provides a container for configuring and resolving dependencies.
 
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from inklink.di.service_provider import ServiceProvider
-from inklink.services.interfaces import (
-    IQRCodeService,
-    IWebScraperService,
-    IDocumentService,
-    IPDFService,
-    IRemarkableService,
-    IHandwritingRecognitionService,
-    IGoogleDocsService,
-    IEPUBGenerator,
-    IKnowledgeGraphService,
-    IKnowledgeIndexService,
-    ILimitlessLifeLogService,
-)
-from inklink.services.qr_service import QRCodeService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.pdf_service import PDFService
-from inklink.services.remarkable_service import RemarkableService
-from inklink.services.handwriting_recognition_service import (
-    HandwritingRecognitionService,
-)
-from inklink.services.google_docs_service import GoogleDocsService
-from inklink.services.ai_service import AIService
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.services.knowledge_graph_integration_service import (
-    KnowledgeGraphIntegrationService,
-)
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 
-# Import new services for knowledge index notebooks
-from inklink.services.epub_generator import EPUBGenerator
-from inklink.services.knowledge_index_service import KnowledgeIndexService
+# Import adapters
+from inklink.adapters.handwriting_adapter import HandwritingAdapter
 
 # Import Limitless services
 from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.di.service_provider import ServiceProvider
+from inklink.services.ai_service import AIService
+from inklink.services.document_service import DocumentService
+
+# Import new services for knowledge index notebooks
+from inklink.services.epub_generator import EPUBGenerator
+from inklink.services.google_docs_service import GoogleDocsService
+from inklink.services.handwriting_recognition_service import (
+    HandwritingRecognitionService,
+)
+from inklink.services.interfaces import (
+    IDocumentService,
+    IEPUBGenerator,
+    IGoogleDocsService,
+    IHandwritingRecognitionService,
+    IKnowledgeGraphService,
+    IKnowledgeIndexService,
+    ILimitlessLifeLogService,
+    IPDFService,
+    IQRCodeService,
+    IRemarkableService,
+    IWebScraperService,
+)
+from inklink.services.knowledge_graph_integration_service import (
+    KnowledgeGraphIntegrationService,
+)
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.knowledge_index_service import KnowledgeIndexService
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 from inklink.services.limitless_scheduler_service import LimitlessSchedulerService
+from inklink.services.pdf_service import PDFService
+from inklink.services.qr_service import QRCodeService
+from inklink.services.remarkable_service import RemarkableService
+from inklink.services.web_scraper_service import WebScraperService
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +98,38 @@ class Container:
         provider.register(IDocumentService, DocumentService)
         provider.register(IPDFService, PDFService)
         provider.register(IRemarkableService, RemarkableService)
-        provider.register(IHandwritingRecognitionService, HandwritingRecognitionService)
+
+        # Set up Handwriting Recognition with Claude CLI
+        claude_command = normalized_config.get("claude_command", "claude")
+        claude_model = normalized_config.get("claude_model", "")
+
+        # Create and register Claude Vision adapter
+        claude_vision_adapter = ClaudeVisionAdapter(
+            claude_command=claude_command, model=claude_model
+        )
+
+        # Create and register Handwriting adapter
+        handwriting_adapter = HandwritingAdapter(
+            claude_command=claude_command, model=claude_model
+        )
+
+        # Create and register Handwriting recognition service
+        handwriting_recognition_service = HandwritingRecognitionService(
+            claude_command=claude_command,
+            model=claude_model,
+            handwriting_adapter=handwriting_adapter,
+        )
+
+        # Register services and adapters
+        provider.register_instance(ClaudeVisionAdapter, claude_vision_adapter)
+        provider.register_instance(HandwritingAdapter, handwriting_adapter)
+        provider.register_instance(
+            IHandwritingRecognitionService, handwriting_recognition_service
+        )
+        provider.register_instance(
+            HandwritingRecognitionService, handwriting_recognition_service
+        )
+
         provider.register(IGoogleDocsService, GoogleDocsService)
 
         # Register services that don't have interfaces yet
@@ -129,9 +164,8 @@ class Container:
         )
 
         # Create and register knowledge graph integration service
-        handwriting_service = provider.resolve(IHandwritingRecognitionService)
         knowledge_graph_integration_service = KnowledgeGraphIntegrationService(
-            handwriting_service=handwriting_service,
+            handwriting_service=handwriting_recognition_service,
             knowledge_graph_service=knowledge_graph_service,
         )
         provider.register_factory(

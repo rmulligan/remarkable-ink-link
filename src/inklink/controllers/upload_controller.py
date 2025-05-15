@@ -3,10 +3,10 @@
 This module provides a controller for handling file upload requests.
 """
 
-import os
-import uuid
 import cgi
 import logging
+import os
+import uuid
 
 from inklink.controllers.base_controller import BaseController
 

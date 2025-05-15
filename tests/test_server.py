@@ -1,7 +1,7 @@
 import pytest
 
-from inklink.utils.url_utils import extract_url
 from inklink.utils import is_safe_url
+from inklink.utils.url_utils import extract_url
 
 
 def call_extract(payload: bytes):

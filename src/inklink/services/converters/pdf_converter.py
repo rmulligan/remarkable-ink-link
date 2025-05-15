@@ -4,13 +4,17 @@ This module provides a converter that transforms PDF files
 into reMarkable-compatible formats.
 """
 
+import logging
 import os
 import subprocess
-import logging
-from typing import Dict, Any, Optional, List, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from inklink.services.converters.base_converter import BaseConverter
 from inklink.config import CONFIG
+from inklink.services.converters.base_converter import BaseConverter
+
+<< << << < HEAD
+== == == =
+>>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
 
 logger = logging.getLogger(__name__)
 
@@ -57,43 +61,18 @@ class PDFConverter(BaseConverter):
             title = content.get("title", os.path.basename(pdf_path))
             qr_path = content.get("qr_path", "")
             images = content.get("images", [])
-            use_rcu = content.get("use_rcu", True)
+            use_drawj2d = content.get("use_drawj2d", True)
 
             if not pdf_path or not os.path.exists(pdf_path):
                 logger.error(f"PDF file not found: {pdf_path}")
                 return None
 
-            if not use_rcu:
-                # Convert using legacy HCL method
+            if use_drawj2d:
+                # Convert using HCL method
                 return self._convert_pdf_legacy(pdf_path, title, qr_path, images)
-
-            # Generate output path if not provided
-            if not output_path:
-                output_path = self._generate_temp_path("pdf", pdf_path, "rm")
-
-            # Use RCU to convert PDF to reMarkable format
-            cmd = [
-                "rcu",
-                "convert",
-                "--input",
-                pdf_path,
-                "--output",
-                output_path,
-                "--title",
-                title,
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-            if result.returncode == 0 and os.path.exists(output_path):
-                logger.info(
-                    f"Successfully converted PDF to reMarkable format: {output_path}"
-                )
-                return output_path
             else:
-                logger.error(f"PDF conversion failed: {result.stderr}")
-                # Try falling back to legacy method
-                return self._convert_pdf_legacy(pdf_path, title, qr_path, images)
+                logger.error("drawj2d not available for PDF conversion")
+                return None
 
         except Exception as e:
             logger.error(f"Error converting PDF: {str(e)}")

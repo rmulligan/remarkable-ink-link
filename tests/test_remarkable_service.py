@@ -1,7 +1,8 @@
 import os
 import subprocess
-from inklink.services.remarkable_service import RemarkableService
+
 from inklink.adapters.rmapi_adapter import RmapiAdapter
+from inklink.services.remarkable_service import RemarkableService
 
 
 class DummyResult:

@@ -1,0 +1,85 @@
+{
+  "tools": [
+    {
+      "name": "lilly-remarkable",
+      "path": "./tools/sync_remarkable.py",
+      "methods": [
+        {
+          "name": "list_notebooks",
+          "description": "List all available reMarkable notebooks",
+          "parameters": {}
+        },
+        {
+          "name": "sync_notebook",
+          "description": "Sync a specific notebook from reMarkable",
+          "parameters": {
+            "notebook_id": {
+              "type": "string",
+              "description": "ID of the notebook to sync"
+            },
+            "process": {
+              "type": "boolean",
+              "description": "Whether to process the notebook after syncing"
+            }
+          }
+        },
+        {
+          "name": "sync_all",
+          "description": "Sync all notebooks from reMarkable",
+          "parameters": {
+            "process": {
+              "type": "boolean",
+              "description": "Whether to process notebooks after syncing"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "lilly-handwriting",
+      "path": "./tools/process_handwriting.py",
+      "methods": [
+        {
+          "name": "process_image",
+          "description": "Process a handwritten image with Claude vision",
+          "parameters": {
+            "image_path": {
+              "type": "string",
+              "description": "Path to the image file to process"
+            },
+            "content_type": {
+              "type": "string",
+              "description": "Type of content in the image (text, math, diagram, mixed)",
+              "enum": ["text", "math", "diagram", "mixed"]
+            },
+            "save_to_kg": {
+              "type": "boolean",
+              "description": "Whether to save extracted entities to knowledge graph"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "lilly-knowledge",
+      "path": "./tools/initialize_knowledge_graph.py",
+      "methods": [
+        {
+          "name": "initialize",
+          "description": "Initialize Lilly's knowledge graph with base entity types",
+          "parameters": {}
+        },
+        {
+          "name": "query",
+          "description": "Query Lilly's knowledge graph",
+          "parameters": {
+            "query": {
+              "type": "string",
+              "description": "Cypher query to execute"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

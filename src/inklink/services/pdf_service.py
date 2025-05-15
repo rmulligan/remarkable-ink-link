@@ -1,13 +1,13 @@
 """PDF processing service for InkLink."""
 
-import os
-from urllib.parse import urlparse
-from typing import Dict, Optional, Any, List, Tuple
 import logging
+import os
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
-from inklink.services.interfaces import IPDFService
-from inklink.adapters.pdf_adapter import PDFAdapter
 from inklink.adapters.http_adapter import HTTPAdapter
+from inklink.adapters.pdf_adapter import PDFAdapter
+from inklink.services.interfaces import IPDFService
 
 # Configure logging
 logger = logging.getLogger(__name__)
