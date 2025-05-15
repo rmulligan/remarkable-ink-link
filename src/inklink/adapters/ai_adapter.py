@@ -43,47 +43,77 @@ class AIAdapter(Adapter):
             validation_provider.lower() if validation_provider else None
         )
 
-        # Set up API key, falling back to environment variables
-        self.api_key = api_key or os.environ.get(f"{self.provider.upper()}_API_KEY")
-        if not self.api_key:
-            # General fallbacks
-            self.api_key = os.environ.get("AI_API_KEY") or os.environ.get("LLM_API_KEY")
-            if not self.api_key:
-                logger.warning(
-                    f"No API key found for {self.provider}, AI features may not work"
-                )
+        self._setup_api_keys(api_key)
+        self._setup_model(model)
+        self._setup_api_base(api_base)
+        self._setup_system_prompt(system_prompt)
 
-        # Set up validation API key if using validation provider
+    def _setup_api_keys(self, api_key: Optional[str]) -> None:
+        """Configure API keys for primary and validation providers."""
+        # Set up primary API key
+        self.api_key = self._get_api_key(self.provider, api_key)
+        if not self.api_key:
+            logger.warning(
+                f"No API key found for {self.provider}, AI features may not work"
+            )
+
+        # Set up validation API key
         self.validation_api_key = None
         if self.validation_provider:
-            self.validation_api_key = os.environ.get(
-                f"{self.validation_provider.upper()}_API_KEY"
-            )
-            if not self.validation_api_key and self.validation_provider == "github":
-                self.validation_api_key = os.environ.get("GITHUB_TOKEN")
+            self.validation_api_key = self._get_api_key(self.validation_provider, None)
 
-        # Set up model, API base, and system prompt
+    def _get_api_key(self, provider: str, explicit_key: Optional[str]) -> Optional[str]:
+        """Get API key for a provider from explicit value or environment."""
+        if explicit_key:
+            return explicit_key
+
+        # Try provider-specific key
+        key = os.environ.get(f"{provider.upper()}_API_KEY")
+        if key:
+            return key
+
+        # Special case for GitHub token
+        if provider == "github":
+            return os.environ.get("GITHUB_TOKEN")
+
+        # General fallbacks only for primary provider
+        if provider == self.provider:
+            return os.environ.get("AI_API_KEY") or os.environ.get("LLM_API_KEY")
+
+        return None
+
+    def _setup_model(self, model: Optional[str]) -> None:
+        """Configure model name with defaults by provider."""
         self.model = model or os.environ.get(f"{self.provider.upper()}_MODEL")
         if not self.model:
-            # Default models by provider
-            if self.provider == "openai":
-                self.model = "gpt-3.5-turbo"
-            elif self.provider == "anthropic":
-                self.model = "claude-3-sonnet-20240229"
-            elif self.provider == "github":
-                self.model = "openai/gpt-4.1"
+            self.model = self._get_default_model(self.provider)
 
-        # API base URL
+    def _get_default_model(self, provider: str) -> str:
+        """Get default model for a provider."""
+        defaults = {
+            "openai": "gpt-3.5-turbo",
+            "anthropic": "claude-3-sonnet-20240229",
+            "github": "openai/gpt-4.1",
+        }
+        return defaults.get(provider, "")
+
+    def _setup_api_base(self, api_base: Optional[str]) -> None:
+        """Configure API base URL with defaults by provider."""
         self.api_base = api_base or os.environ.get(f"{self.provider.upper()}_API_BASE")
         if not self.api_base:
-            if self.provider == "openai":
-                self.api_base = "https://api.openai.com/v1"
-            elif self.provider == "anthropic":
-                self.api_base = "https://api.anthropic.com/v1"
-            elif self.provider == "github":
-                self.api_base = "https://models.github.ai/inference"
+            self.api_base = self._get_default_api_base(self.provider)
 
-        # System prompt
+    def _get_default_api_base(self, provider: str) -> str:
+        """Get default API base URL for a provider."""
+        defaults = {
+            "openai": "https://api.openai.com/v1",
+            "anthropic": "https://api.anthropic.com/v1",
+            "github": "https://models.github.ai/inference",
+        }
+        return defaults.get(provider, "")
+
+    def _setup_system_prompt(self, system_prompt: Optional[str]) -> None:
+        """Configure system prompt with default."""
         self.system_prompt = system_prompt or os.environ.get(
             f"{self.provider.upper()}_SYSTEM_PROMPT"
         )
