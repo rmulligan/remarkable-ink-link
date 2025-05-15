@@ -1,8 +1,7 @@
 import os
+from unittest.mock import MagicMock
+
 import pytest
-import json
-import tempfile
-from unittest.mock import patch, MagicMock
 
 from inklink.services.document_service import DocumentService
 

@@ -10,37 +10,36 @@ External dependencies required:
 This test uses pytest's tmp_path fixture for all temporary files and directories.
 """
 
-import os
-import pytest
-import logging
-import importlib.util
 import asyncio
+import importlib.util
 import json
-from typing import Dict, Any, Optional
+import logging
+import os
+from typing import Any, Dict, Optional
+
+import pytest
+
+# Import controllers
+from inklink.controllers.share_controller import ShareController
 
 # Import required modules
 from inklink.di.container import Container
 from inklink.services.interfaces import (
-    IQRCodeService,
-    IWebScraperService,
+    IAIService,
     IDocumentService,
     IPDFService,
+    IQRCodeService,
     IRemarkableService,
-    IAIService,
+    IWebScraperService,
 )
-
-# Import controllers
-from inklink.controllers.share_controller import ShareController
-from inklink.controllers.ingest_controller import IngestController
-from inklink.controllers.process_controller import ProcessController
 
 # Check if neo4j is installed
 neo4j_installed = importlib.util.find_spec("neo4j") is not None
 
 # Only import knowledge graph related modules if neo4j is installed
 if neo4j_installed:
-    from inklink.services.interfaces import IKnowledgeGraphService
     from inklink.controllers.knowledge_graph_controller import KnowledgeGraphController
+    from inklink.services.interfaces import IKnowledgeGraphService
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")

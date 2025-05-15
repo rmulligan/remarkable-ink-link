@@ -1,18 +1,16 @@
 """Round-trip service for handling Q&A workflow."""
 
-import os
-import json
 import logging
+import os
 import time
-import tempfile
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
+from inklink.config import CONFIG
+from inklink.services.document_service import DocumentService
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.services.document_service import DocumentService
 from inklink.services.remarkable_service import RemarkableService
-from inklink.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,8 @@
 This module provides a controller for handling Limitless Life Log API endpoints.
 """
 
-import json
 import logging
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.controllers.base_controller import BaseController
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService

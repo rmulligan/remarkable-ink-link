@@ -5,16 +5,14 @@ This service provides functionality to generate EPUB documents from markdown con
 enhanced with hyperlinks for navigation between related content.
 """
 
+import logging
 import os
 import re
-import logging
 import tempfile
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-import ebooklib
 from ebooklib import epub
 from markdown import markdown
-from bs4 import BeautifulSoup
 
 from inklink.utils.common import sanitize_filename
 

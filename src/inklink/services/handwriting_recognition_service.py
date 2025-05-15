@@ -1,15 +1,14 @@
 """Handwriting recognition service using MyScript iink SDK."""
 
-from typing import List, Dict, Any, Optional, Tuple
-import os
 import logging
-import time
+import os
 import re
+from typing import Any, Dict, List, Optional, Tuple
 
-from inklink.services.interfaces import IHandwritingRecognitionService
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
-from inklink.utils import format_error
 from inklink.config import CONFIG
+from inklink.services.interfaces import IHandwritingRecognitionService
+from inklink.utils import format_error
 
 logger = logging.getLogger(__name__)
 

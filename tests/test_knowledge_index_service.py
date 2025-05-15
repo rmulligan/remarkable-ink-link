@@ -1,15 +1,14 @@
 """Tests for the Knowledge Index Service."""
 
-import os
 import tempfile
 from unittest import mock
 
 import pytest
 
-from inklink.services.knowledge_index_service import KnowledgeIndexService
+from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.services.epub_generator import EPUBGenerator
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
-from inklink.adapters.remarkable_adapter import RemarkableAdapter
+from inklink.services.knowledge_index_service import KnowledgeIndexService
 
 
 @pytest.fixture
