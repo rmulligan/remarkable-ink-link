@@ -1,8 +1,9 @@
 """Test GitHub models integration with AI adapter."""
 
 import os
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from inklink.adapters.ai_adapter import AIAdapter
 
