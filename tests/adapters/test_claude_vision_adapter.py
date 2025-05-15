@@ -85,13 +85,13 @@ def mock_pil():
 def claude_vision_adapter(mock_subprocess, mock_os_path_exists, mock_file_open):
     """Create a ClaudeVisionAdapter instance for testing."""
     config = get_config()
-    config.CLAUDE_COMMAND = "claude"
-    config.CLAUDE_MODEL = "claude-3-haiku-20240307"
+    config["CLAUDE_COMMAND"] = "claude"
+    config["CLAUDE_MODEL"] = "claude-3-haiku-20240307"
 
     # Using the constructor directly with named parameters for more control
     return ClaudeVisionAdapter(
-        claude_command=config.CLAUDE_COMMAND,
-        model=config.CLAUDE_MODEL,
+        claude_command=config["CLAUDE_COMMAND"],
+        model=config["CLAUDE_MODEL"],
         enable_preprocessing=True,
         contrast_factor=1.5,
         brightness_factor=1.2,
