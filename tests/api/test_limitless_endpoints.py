@@ -60,7 +60,7 @@ class LimitlessLiveTest:
         os.makedirs("/tmp/limitless_test", exist_ok=True)
 
         # Create mock knowledge graph service
-        from test_kg_mock import MockKnowledgeGraphService
+        from tests.mocks.test_kg_mock import MockKnowledgeGraphService
 
         self.kg_service = MockKnowledgeGraphService()
 

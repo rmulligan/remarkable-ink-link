@@ -73,7 +73,7 @@ def knowledge_graph_service():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
-    from test_kg_mock import MockKnowledgeGraphService
+    from tests.mocks.test_kg_mock import MockKnowledgeGraphService
 
     service = MockKnowledgeGraphService()
 
