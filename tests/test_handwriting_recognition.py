@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from inklink.adapters.handwriting_adapter import HandwritingAdapter
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
@@ -27,7 +27,7 @@ def mock_strokes():
 @pytest.fixture
 def mock_handwriting_adapter():
     """Create a mock handwriting adapter."""
-    adapter = MagicMock(spec=HandwritingAdapter)
+    adapter = MagicMock(spec=ClaudeVisionAdapter)
     adapter.ping.return_value = True
     adapter.initialize_sdk.return_value = True
 
@@ -77,26 +77,26 @@ def test_init_with_keys():
     )
     assert service.claude_command == "/test/claude/cli"
     assert service.model == "test-model"
-    assert isinstance(service.adapter, HandwritingAdapter)
+    assert isinstance(service.adapter, ClaudeVisionAdapter)
 
 
 def test_init_with_environment(monkeypatch):
     """Test initialization with environment variables."""
     with monkeypatch.context() as m:
-        m.setenv("MYSCRIPT_APP_KEY", "env_app_key")
-        m.setenv("MYSCRIPT_HMAC_KEY", "env_hmac_key")
+        m.setenv("CLAUDE_COMMAND", "/env/claude/cli")
+        m.setenv("CLAUDE_MODEL", "env-model")
         service = HandwritingRecognitionService()
-        assert service.application_key == "env_app_key"
-        assert service.hmac_key == "env_hmac_key"
-        assert isinstance(service.adapter, HandwritingAdapter)
+        assert service.claude_command == "/env/claude/cli"
+        assert service.model == "env-model"
+        assert isinstance(service.adapter, ClaudeVisionAdapter)
 
 
 def test_init_with_adapter():
     """Test initialization with a provided adapter."""
-    mock_adapter = MagicMock(spec=HandwritingAdapter)
+    mock_adapter = MagicMock(spec=ClaudeVisionAdapter)
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_adapter,
     )
     assert service.adapter is mock_adapter
@@ -105,8 +105,8 @@ def test_init_with_adapter():
 def test_convert_to_iink_format(mock_strokes, mock_handwriting_adapter):
     """Test conversion to iink format."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
     result = service.convert_to_iink_format(mock_strokes)
@@ -131,8 +131,8 @@ def test_convert_to_iink_format(mock_strokes, mock_handwriting_adapter):
 def test_extract_strokes(mock_handwriting_adapter):
     """Test extracting strokes from a file."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
     file_path = "/path/to/test.rm"
@@ -157,8 +157,8 @@ def test_extract_strokes_empty_file(tmp_path, mock_handwriting_adapter):
     mock_handwriting_adapter.extract_strokes_from_rm_file.return_value = []
 
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
     # Create an empty file that is not a valid .rm file
@@ -181,8 +181,8 @@ def test_extract_strokes_empty_file(tmp_path, mock_handwriting_adapter):
 def test_initialize_iink_sdk(mock_handwriting_adapter):
     """Test SDK initialization."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
 
@@ -202,8 +202,8 @@ def test_initialize_iink_sdk(mock_handwriting_adapter):
 def test_recognize_handwriting(mock_handwriting_adapter, mock_strokes):
     """Test handwriting recognition."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
     iink_data = service.convert_to_iink_format(mock_strokes)
@@ -228,8 +228,8 @@ def test_recognize_handwriting_error(mock_handwriting_adapter, mock_strokes):
     }
 
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
     iink_data = service.convert_to_iink_format(mock_strokes)
@@ -248,8 +248,8 @@ def test_recognize_handwriting_error(mock_handwriting_adapter, mock_strokes):
 def test_export_content(mock_handwriting_adapter):
     """Test content export."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
 
@@ -274,8 +274,8 @@ def test_export_content_error(mock_handwriting_adapter):
     mock_handwriting_adapter.export_content.return_value = {"error": "Test error"}
 
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
 
@@ -296,8 +296,8 @@ def test_export_content_error(mock_handwriting_adapter):
 def test_recognize_from_ink_with_file_path(mock_handwriting_adapter):
     """Test recognizing handwriting from a file path."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
 
@@ -324,8 +324,8 @@ def test_recognize_from_ink_with_file_path(mock_handwriting_adapter):
 def test_recognize_multi_page_ink(mock_handwriting_adapter):
     """Test recognizing handwriting from multiple pages."""
     service = HandwritingRecognitionService(
-        application_key="test_app_key",
-        hmac_key="test_hmac_key",
+        claude_command="/test/claude/cli",
+        model="test-model",
         handwriting_adapter=mock_handwriting_adapter,
     )
 

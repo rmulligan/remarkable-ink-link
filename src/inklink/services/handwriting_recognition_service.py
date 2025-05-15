@@ -6,7 +6,7 @@ import re
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
-from inklink.adapters.handwriting_adapter import HandwritingAdapter
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.config import CONFIG
 from inklink.services.interfaces import IHandwritingRecognitionService
 from inklink.utils import format_error
@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 class HandwritingRecognitionService(IHandwritingRecognitionService):
     """
     Service for handwriting recognition using Claude Vision CLI.
-    Uses the HandwritingAdapter to interact with Claude's vision capabilities.
+    Uses the ClaudeVisionAdapter to interact with Claude's vision capabilities.
     """
 
     def __init__(
         self,
         claude_command: Optional[str] = None,
         model: Optional[str] = None,
-        handwriting_adapter: Optional[HandwritingAdapter] = None,
+        handwriting_adapter: Optional[ClaudeVisionAdapter] = None,
     ):
         """
         Initialize the handwriting recognition service.
@@ -47,7 +47,7 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         logger.info("Using Claude Vision CLI for handwriting recognition")
 
         # Use provided adapter or create a new one
-        self.adapter = handwriting_adapter or HandwritingAdapter(
+        self.adapter = handwriting_adapter or ClaudeVisionAdapter(
             claude_command=self.claude_command, model=self.model
         )
 
