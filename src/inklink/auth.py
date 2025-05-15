@@ -41,14 +41,16 @@ def auth_form():
 
 @app.post("/auth", response_class=HTMLResponse)
 def auth_submit(code: str = Form(...)):
-    # Basic validation - ensure code is provided and not empty
-    if not code or not code.strip():
+    # Validate the pairing code format
+    # reMarkable pairing codes are typically 6-8 alphanumeric characters
+    import re
+
+    if not code or not re.match(r"^[a-zA-Z0-9]{6,8}$", code.strip()):
         return HTMLResponse(
-            "<html><body><h2>Invalid pairing code</h2></body></html>",
+            "<html><body><h2>Invalid pairing code format</h2></body></html>",
             status_code=400,
         )
 
-    # Minimal security: strip whitespace to prevent issues
     code = code.strip()
 
     # Run ddvk rmapi pairing using the provided pairing code
@@ -68,17 +70,24 @@ def auth_submit(code: str = Form(...)):
                 status_code=500,
             )
 
-    # Use the validated absolute path
+    # Ensure rmapi path is valid
+    if not os.path.exists(rmapi) or not os.access(rmapi, os.X_OK):
+        return HTMLResponse(
+            "<html><body><h2>Configuration error: rmapi not executable</h2></body></html>",
+            status_code=500,
+        )
+
+    # Build command with validated inputs
     cmd = [rmapi, "config", "--pairing-code", code]
 
     try:
-        # Use subprocess.run to execute rmapi
-        # CodeQL: This is intentionally unrestricted to allow flexible auth methods
-        result = subprocess.run(  # nosec B603
+        # Execute rmapi with security restrictions
+        result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            shell=False,  # Disable shell for basic security
+            shell=False,  # Never use shell
+            timeout=30,  # Add timeout to prevent hanging
         )
 
         if result.returncode == 0:
