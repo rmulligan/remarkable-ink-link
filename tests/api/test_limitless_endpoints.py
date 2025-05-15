@@ -27,9 +27,13 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import necessary components from the project
-from src.inklink.adapters.limitless_adapter import LimitlessAdapter
-from src.inklink.services.limitless_life_log_service import LimitlessLifeLogService
-from src.inklink.services.limitless_scheduler_service import LimitlessSchedulerService
+from src.inklink.adapters.limitless_adapter import LimitlessAdapter  # noqa: E402
+from src.inklink.services.limitless_life_log_service import (
+    LimitlessLifeLogService,
+)  # noqa: E402
+from src.inklink.services.limitless_scheduler_service import (
+    LimitlessSchedulerService,
+)  # noqa: E402
 
 
 class LimitlessLiveTest:

@@ -1107,17 +1107,15 @@ class GoogleDriveAdapter:
             permission = {"type": "user", "role": role, "emailAddress": email}
 
             # Create the permission
-            result = (
-                self.service.permissions()
-                .create(
-                    fileId=file_id,
-                    body=permission,
-                    sendNotificationEmail=send_notification,
-                    emailMessage=message,
-                    fields="id",
-                )
-                .execute()
-            )
+            # result = (  # Unused variable
+            self.service.permissions().create(
+                fileId=file_id,
+                body=permission,
+                sendNotificationEmail=send_notification,
+                emailMessage=message,
+                fields="id",
+            ).execute()
+            # )
 
             logger.info(f"Shared file {file_id} with {email} as {role}")
             return True, f"File shared with {email} as {role}"

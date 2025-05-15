@@ -21,7 +21,7 @@ from PIL import Image
 # Add the src directory to the path so we can import our modules
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
-from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter  # noqa: E402
 
 
 # Configure logging

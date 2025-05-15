@@ -192,7 +192,9 @@ def main():
         notebooks = list_notebooks()
         print("Available reMarkable notebooks:")
         for i, notebook in enumerate(notebooks):
-            print(f"{i+1}. [{notebook['type']}] {notebook['name']} ({notebook['id']})")
+            print(
+                f"{i + 1}. [{notebook['type']}] {notebook['name']} ({notebook['id']})"
+            )
         return
 
     # Sync a specific notebook if requested

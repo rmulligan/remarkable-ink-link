@@ -27,10 +27,10 @@ if project_root not in sys.path:
 
 # Try importing rmscene
 try:
-    import rmscene
-    import rmscene.scene_tree as st
-    import rmscene.scene_items as si
-    from rmscene.scene_stream import read_tree, write_tree
+    import rmscene  # noqa: E402
+    import rmscene.scene_tree as st  # noqa: E402
+    import rmscene.scene_items as si  # noqa: E402
+    from rmscene.scene_stream import read_tree, write_tree  # noqa: E402
 
     RMSCENE_AVAILABLE = True
 except ImportError:

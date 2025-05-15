@@ -917,11 +917,11 @@ def test_mixed_content_types_batch(
 
         # Return different results based on content type
         if expected_content_type == "text":
-            return True, f"Text content from page {index+1}"
+            return True, f"Text content from page {index + 1}"
         elif expected_content_type == "math":
-            return True, f"Math equations from page {index+1}"
+            return True, f"Math equations from page {index + 1}"
         elif expected_content_type == "diagram":
-            return True, f"Diagram description from page {index+1}"
+            return True, f"Diagram description from page {index + 1}"
 
     # Setup the test with controlled content types
     with patch.object(

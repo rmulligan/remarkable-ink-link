@@ -21,12 +21,14 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import the updated adapter
-from src.inklink.adapters.handwriting_web_adapter import HandwritingWebAdapter
+from src.inklink.adapters.handwriting_web_adapter import (
+    HandwritingWebAdapter,
+)  # noqa: E402
 
 # Import rmscene for creating test files
 try:
-    import rmscene
-    from rmscene.scene_tree import SceneTree
+    import rmscene  # noqa: E402
+    from rmscene.scene_tree import SceneTree  # noqa: E402
     from rmscene.scene_items import Group, Line, Point, Pen, PenColor
     from rmscene.scene_stream import write_tree
 

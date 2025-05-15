@@ -201,7 +201,8 @@ class HandwritingAdapter(Adapter):
 
             # Read the .rm file using RmScene
             with open(rm_file_path, "rb") as f:
-                scene = read_v5_scene(f)
+                # scene = read_v5_scene(f)  # TODO: Implement scene processing
+                read_v5_scene(f)
 
             # Create a blank white image
             img = Image.new("RGB", (width, height), "white")

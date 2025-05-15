@@ -15,8 +15,8 @@ sys.path.insert(
     0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 )
 
-from lilly.auth.credential_manager import CredentialManager
-from lilly.auth.authentication import (
+from lilly.auth.credential_manager import CredentialManager  # noqa: E402
+from lilly.auth.authentication import (  # noqa: E402
     AuthenticationProvider,
     SERVICE_PROTON_MAIL,
     SERVICE_PROTON_CALENDAR,

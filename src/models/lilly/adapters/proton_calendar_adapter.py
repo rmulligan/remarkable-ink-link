@@ -873,7 +873,7 @@ class ProtonCalendarAdapter:
         today = datetime.datetime.now().replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-        tomorrow = today + datetime.timedelta(days=1)
+        # tomorrow = today + datetime.timedelta(days=1)  # Unused variable
 
         # Get events for today
         return self.get_upcoming_events(days=1, limit=100, calendar_id=calendar_id)
