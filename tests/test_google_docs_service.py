@@ -1,8 +1,9 @@
 """Unit tests for the Google Docs Service."""
 
 import os
+from typing import Any, Dict, List, Tuple
+
 import pytest
-from typing import Dict, Any, List, Tuple
 
 from inklink.services.google_docs_service import GoogleDocsService
 

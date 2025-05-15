@@ -4,11 +4,11 @@ This module provides a service for syncing Limitless Life Logs and integrating
 them with the knowledge graph system.
 """
 
-import logging
-from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import datetime, timedelta
 import json
+import logging
 import os
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.services.interfaces import IKnowledgeGraphService, ILimitlessLifeLogService

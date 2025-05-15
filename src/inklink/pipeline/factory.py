@@ -4,16 +4,16 @@ This module provides a factory for creating pipelines for different content type
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from inklink.pipeline.pipeline import Pipeline
 from inklink.pipeline.processors import (
-    URLProcessor,
-    QRProcessor,
-    WebContentProcessor,
-    DocumentProcessor,
-    UploadProcessor,
     AIProcessor,
+    DocumentProcessor,
+    QRProcessor,
+    UploadProcessor,
+    URLProcessor,
+    WebContentProcessor,
 )
 from inklink.pipeline.processors.ingest_processor import IngestProcessor
 

@@ -4,18 +4,15 @@ This service converts web content to reMarkable-compatible documents
 using a configurable set of content converters and renderers.
 """
 
-import os
 import logging
+import os
 import threading
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
-from inklink.services.interfaces import (
-    IDocumentService,
-    IContentConverter,
-    )
-from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.html_converter import HTMLConverter
+from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.pdf_converter import PDFConverter
+from inklink.services.interfaces import IContentConverter, IDocumentService
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_rcu_available
 

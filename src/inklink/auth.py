@@ -1,8 +1,10 @@
 """Authentication UI for reMarkable Cloud pairing."""
 
+import subprocess
+
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
-import subprocess
+
 from inklink.config import CONFIG
 
 app = FastAPI()

@@ -4,9 +4,9 @@ This module provides a converter that transforms structured content
 into Markdown and then into reMarkable-compatible formats.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
+from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
 from inklink.utils import convert_markdown_to_rm

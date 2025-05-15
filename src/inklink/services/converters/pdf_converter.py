@@ -4,10 +4,10 @@ This module provides a converter that transforms PDF files
 into reMarkable-compatible formats.
 """
 
+import logging
 import os
 import subprocess
-import logging
-from typing import Dict, Any, Optional, List, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.services.converters.base_converter import BaseConverter
 

@@ -1,6 +1,7 @@
 import os
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from inklink.services.document_service import DocumentService
 

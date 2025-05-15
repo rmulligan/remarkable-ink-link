@@ -1,13 +1,14 @@
 """Tests for QR code service and adapter."""
 
 import os
-import pytest
 from unittest.mock import patch
-from PIL import Image
-import qrcode
 
-from inklink.services.qr_service import QRCodeService
+import pytest
+import qrcode
+from PIL import Image
+
 from inklink.adapters.qr_adapter import QRCodeAdapter
+from inklink.services.qr_service import QRCodeService
 
 
 class MockQRCodeAdapter:

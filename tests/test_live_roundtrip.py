@@ -11,28 +11,30 @@ Run with:
 poetry run pytest tests/test_live_roundtrip.py -v
 """
 
-import os
-import sys
-import pytest
-import logging
-import tempfile
-import shutil
 import importlib.util
-import subprocess
+import logging
+import os
 import platform
+import shutil
+import subprocess
+import sys
+import tempfile
 import time
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import pytest
+
+from inklink.controllers.ingest_controller import IngestController
+from inklink.controllers.share_controller import ShareController
+from inklink.services.ai_service import AIService
+from inklink.services.document_service import DocumentService
+from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.pdf_service import PDFService
 
 # Import core modules (early import to avoid E402 errors)
 from inklink.services.qr_service import QRCodeService
-from inklink.services.web_scraper_service import WebScraperService
-from inklink.services.document_service import DocumentService
-from inklink.services.pdf_service import PDFService
 from inklink.services.remarkable_service import RemarkableService
-from inklink.services.ai_service import AIService
-from inklink.controllers.share_controller import ShareController
-from inklink.controllers.ingest_controller import IngestController
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.web_scraper_service import WebScraperService
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

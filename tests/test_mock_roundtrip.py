@@ -5,21 +5,22 @@ This test uses mock services to test the core flow without requiring
 external dependencies like rmapi or Neo4j.
 """
 
-import os
 import json
 import logging
+import os
+from typing import Any, Dict, Optional
 from unittest.mock import MagicMock
-from typing import Dict, Any, Optional
+
+from inklink.controllers.share_controller import ShareController
 
 # Import required modules
 from inklink.pipeline.factory import PipelineFactory
-from inklink.controllers.share_controller import ShareController
-from inklink.services.web_scraper_service import WebScraperService
 from inklink.services.interfaces import (
-    IQRCodeService,
     IDocumentService,
+    IQRCodeService,
     IRemarkableService,
 )
+from inklink.services.web_scraper_service import WebScraperService
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")

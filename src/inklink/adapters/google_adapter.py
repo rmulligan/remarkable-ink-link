@@ -3,10 +3,10 @@
 This module provides an adapter for Google APIs including Google Drive and Google Docs.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional, List, Tuple, BinaryIO, Union
+import os
 import re
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from inklink.adapters.adapter import Adapter

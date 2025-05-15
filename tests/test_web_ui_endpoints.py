@@ -1,8 +1,9 @@
 import io
 import json
-from inklink.server import URLHandler
 
 import pytest
+
+from inklink.server import URLHandler
 
 
 class DummyServer:

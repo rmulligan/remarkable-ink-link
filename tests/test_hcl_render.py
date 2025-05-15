@@ -1,10 +1,11 @@
 import os
 import tempfile
-from typing import Dict, Any
+from typing import Any, Dict
+
 from inklink.utils.hcl_render import (
     HCLResourceConfig,
-    render_hcl_resource,
     create_hcl_from_content,
+    render_hcl_resource,
 )
 
 

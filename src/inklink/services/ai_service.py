@@ -1,11 +1,11 @@
 """AI Service for interacting with AI models."""
 
 import logging
-from typing import Optional, Dict, Any, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from inklink.services.interfaces import IAIService
 from inklink.adapters.ai_adapter import AIAdapter
 from inklink.config import CONFIG
+from inklink.services.interfaces import IAIService
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,9 @@
 This module provides a controller for handling content ingestion from various sources.
 """
 
-import uuid
 import logging
-from typing import Dict, Any, List
+import uuid
+from typing import Any, Dict, List
 
 from inklink.controllers.base_controller import BaseController
 from inklink.pipeline.factory import PipelineFactory

@@ -2,9 +2,11 @@
 
 This module tests the Limitless adapter, service, and scheduler.
 """
+
 import os
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService

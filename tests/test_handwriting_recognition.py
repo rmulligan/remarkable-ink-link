@@ -1,10 +1,13 @@
 """Tests for the handwriting recognition service."""
-import pytest
+
 from unittest.mock import MagicMock
+
+import pytest
+
+from inklink.adapters.handwriting_adapter import HandwritingAdapter
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.adapters.handwriting_adapter import HandwritingAdapter
 
 
 @pytest.fixture

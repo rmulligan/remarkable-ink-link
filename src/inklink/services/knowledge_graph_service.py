@@ -1,7 +1,8 @@
 """Service for interacting with the knowledge graph."""
+
 import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.config import CONFIG
 from inklink.services.ai_service import AIService

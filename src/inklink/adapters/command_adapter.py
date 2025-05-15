@@ -4,10 +4,10 @@ This module provides an adapter for running external command-line tools with
 consistent error handling, retries, and output processing.
 """
 
-import os
 import logging
+import os
 import subprocess
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
 from inklink.utils import retry_operation

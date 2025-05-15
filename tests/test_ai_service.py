@@ -1,12 +1,13 @@
 """Tests for the AI Service and AI Adapter."""
 
-import pytest
+from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest.mock import patch
-from typing import Dict, Any, List, Tuple, Optional, Union
 from urllib.parse import urlparse
 
-from inklink.services.ai_service import AIService
+import pytest
+
 from inklink.adapters.ai_adapter import AIAdapter
+from inklink.services.ai_service import AIService
 
 
 class MockAIAdapter:
