@@ -74,17 +74,37 @@ def test_classify_region(mock_handwriting_adapter):
         handwriting_adapter=mock_handwriting_adapter,
     )
 
-    # Test with valid image
-    mock_handwriting_adapter.process_image.return_value = {
-        "text": "This is handwriting"
+    # Test with text classification
+    mock_handwriting_adapter.recognize_handwriting.return_value = {
+        "success": True,
+        "result": "This is text content",
     }
     result = service.classify_region("/path/to/image.png")
-    assert result == "handwriting"
+    assert result == "Text"
 
-    # Test with error
-    mock_handwriting_adapter.process_image.side_effect = Exception("Processing error")
+    # Test with math classification
+    mock_handwriting_adapter.recognize_handwriting.return_value = {
+        "success": True,
+        "result": "This contains math equations",
+    }
     result = service.classify_region("/path/to/image.png")
-    assert result == "error"
+    assert result == "Math"
+
+    # Test with diagram classification
+    mock_handwriting_adapter.recognize_handwriting.return_value = {
+        "success": True,
+        "result": "This is a diagram",
+    }
+    result = service.classify_region("/path/to/image.png")
+    assert result == "Diagram"
+
+    # Test with failure
+    mock_handwriting_adapter.recognize_handwriting.return_value = {
+        "success": False,
+        "error": "Processing failed",
+    }
+    result = service.classify_region("/path/to/image.png")
+    assert result == "Text"  # Defaults to Text on failure
 
 
 def test_recognize_handwriting(mock_handwriting_adapter):
