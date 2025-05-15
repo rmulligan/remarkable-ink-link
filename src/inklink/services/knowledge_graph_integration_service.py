@@ -11,11 +11,6 @@ from inklink.services.handwriting_recognition_service import (
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
 from inklink.services.remarkable_service import RemarkableService
 
-<< << << < HEAD
-== == == =
->>>>>> > c5c0feb(style: format code with Autopep8, Black and isort)
-
-
 logger = logging.getLogger(__name__)
 
 
