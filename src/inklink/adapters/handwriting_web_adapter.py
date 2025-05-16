@@ -204,9 +204,7 @@ class HandwritingWebAdapter(Adapter):
                             f"Extracted {len(strokes)} strokes using current rmscene API"
                         )
                         return strokes
-                    logger.warning(
-                        "No strokes found in file using current rmscene API"
-                    )
+                    logger.warning("No strokes found in file using current rmscene API")
 
                 except Exception as scene_tree_error:
                     logger.error(

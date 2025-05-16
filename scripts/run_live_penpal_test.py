@@ -204,9 +204,7 @@ def run_live_test(args, rmapi_path, claude_command):
             return True
         logger.warning(f"⚠️ No pages processed within {wait_time} seconds")
         logger.warning("This may be normal if there are no new pages to process")
-        logger.warning(
-            f"Check if your notebook has pages with the '{args.tag}' tag"
-        )
+        logger.warning(f"Check if your notebook has pages with the '{args.tag}' tag")
         return False
 
     finally:

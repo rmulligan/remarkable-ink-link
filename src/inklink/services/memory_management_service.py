@@ -440,9 +440,7 @@ class MemoryManagementService:
                         return True, {
                             section: self.notebook_cache[notebook_id][section]
                         }
-                    return False, {
-                        "error": f"Section {section} not found in notebook"
-                    }
+                    return False, {"error": f"Section {section} not found in notebook"}
                 else:
                     return True, self.notebook_cache[notebook_id]
 

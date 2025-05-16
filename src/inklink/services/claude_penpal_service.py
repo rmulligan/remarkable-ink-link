@@ -477,9 +477,7 @@ class ClaudePenpalService:
             if metadata:
                 logger.info(f"Retrieved metadata for notebook {notebook_name}")
                 return metadata
-            logger.warning(
-                f"Could not retrieve metadata for notebook {notebook_name}"
-            )
+            logger.warning(f"Could not retrieve metadata for notebook {notebook_name}")
             return {}
         except Exception as e:
             logger.error(f"Error retrieving notebook metadata: {e}")

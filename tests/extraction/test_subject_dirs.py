@@ -174,9 +174,7 @@ def main():
                 logger.info(f"  - {item}")
 
             return 0
-        logger.error(
-            f"Failed to create subject-based directory: {test_notebook_dir}"
-        )
+        logger.error(f"Failed to create subject-based directory: {test_notebook_dir}")
         return 1
     else:
         logger.info("Subject directories disabled, using flat structure")
