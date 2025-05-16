@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Optional
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.agents.base.agent import AgentConfig, AgentState
+from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
-from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
 
 
 class LimitlessContextualInsightAgent(MCPEnabledAgent):

@@ -7,13 +7,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
-from inklink.services.remarkable_service import RemarkableService
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
+from inklink.control_center import InkControlCenter
+from inklink.control_center.core import AgentManager
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
-from inklink.control_center import InkControlCenter
-from inklink.control_center.core import AgentManager
+from inklink.services.remarkable_service import RemarkableService
 
 
 class ControlCenterAgent(MCPEnabledAgent):
@@ -236,7 +236,7 @@ class ControlCenterAgent(MCPEnabledAgent):
         parameters = data.get("parameters", {})
 
         # Create command object
-        from inklink.control_center.processor import InkCommand, CommandType
+        from inklink.control_center.processor import CommandType, InkCommand
 
         try:
             command = InkCommand(type=CommandType(command_type), parameters=parameters)

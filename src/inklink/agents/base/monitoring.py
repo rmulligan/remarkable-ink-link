@@ -1,14 +1,14 @@
 """Enhanced monitoring and resilience for agents."""
 
 import asyncio
+import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from enum import Enum
-import logging
+from typing import Dict, List, Optional
 
-from .agent import LocalAgent, AgentState
+from .agent import AgentState, LocalAgent
 
 
 class HealthStatus(Enum):

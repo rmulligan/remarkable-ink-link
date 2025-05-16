@@ -5,9 +5,9 @@ import logging
 import os
 from pathlib import Path
 
-from inklink.agents.di import container, setup_agents
-from inklink.agents.config import config_loader
 from inklink.agents.base.monitoring import MonitoringService
+from inklink.agents.config import config_loader
+from inklink.agents.di import container, setup_agents
 
 
 async def run_monitoring(monitoring_service: MonitoringService, registry):

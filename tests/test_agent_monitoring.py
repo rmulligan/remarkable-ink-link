@@ -1,24 +1,25 @@
 """Test suite for agent monitoring and error handling."""
 
 import asyncio
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
 
-from inklink.agents.base.monitoring import (
-    MonitoringService,
-    HealthStatus,
-    RestartPolicy,
-)
-from inklink.agents.base.agent import LocalAgent, AgentConfig, AgentState
+import pytest
+
+from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.agents.base.agent import AgentConfig, AgentState, LocalAgent
 from inklink.agents.base.exceptions import (
-    AgentException,
-    AgentConfigurationError,
     AgentCommunicationError,
+    AgentConfigurationError,
+    AgentException,
     AgentStateError,
     AgentTimeoutError,
 )
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.agents.base.monitoring import (
+    HealthStatus,
+    MonitoringService,
+    RestartPolicy,
+)
 
 
 class TestAgentMock(LocalAgent):

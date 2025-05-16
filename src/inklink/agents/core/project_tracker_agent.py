@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
-from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
+from inklink.agents.base.agent import AgentConfig
+from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 
 
 class ProactiveProjectTrackerAgent(MCPEnabledAgent):
