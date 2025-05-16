@@ -3,6 +3,7 @@
 This module provides a service that monitors reMarkable Cloud for notebooks
 tagged with 'Cass' and processes them with Claude Code.
 """
+
 import json
 import logging
 import os

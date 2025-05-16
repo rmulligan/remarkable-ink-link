@@ -1,4 +1,5 @@
 """Tests for the Claude Vision Adapter."""
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np

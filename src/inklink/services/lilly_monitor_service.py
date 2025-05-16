@@ -3,6 +3,7 @@
 This module provides a service that monitors reMarkable Cloud for notebooks
 tagged with 'Lilly' and processes them with Claude Code using Claude's vision capabilities.
 """
+
 import logging
 import os
 import shutil

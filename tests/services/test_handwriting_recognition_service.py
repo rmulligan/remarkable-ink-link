@@ -1,4 +1,5 @@
 """Tests for the HandwritingRecognitionService using Claude Vision."""
+
 from unittest.mock import MagicMock
 
 import pytest

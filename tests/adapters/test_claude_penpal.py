@@ -9,6 +9,7 @@ import argparse
 import logging
 import sys
 import time
+
 from inklink.services.claude_penpal_service import ClaudePenpalService
 
 # Setup logging

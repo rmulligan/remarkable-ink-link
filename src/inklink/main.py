@@ -1,4 +1,5 @@
 """Entry point for InkLink application."""
+
 import json
 import logging
 import os
