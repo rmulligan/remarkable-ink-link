@@ -25,11 +25,11 @@ def fibonacci(n):
     """Calculate the nth Fibonacci number."""
     if n <= 1:
         return n
-    
+
     a, b = 0, 1
     for _ in range(2, n + 1):
         a, b = b, a + b
-    
+
     return b
 
 # Test the function
@@ -80,17 +80,17 @@ Here's how to implement a binary search algorithm:
 def binary_search(arr, target):
     """Binary search implementation."""
     left, right = 0, len(arr) - 1
-    
+
     while left <= right:
         mid = (left + right) // 2
-        
+
         if arr[mid] == target:
             return mid
         elif arr[mid] < target:
             left = mid + 1
         else:
             right = mid - 1
-    
+
     return -1
 ```
 
@@ -100,10 +100,10 @@ And here's the JavaScript version:
 function binarySearch(arr, target) {
     let left = 0;
     let right = arr.length - 1;
-    
+
     while (left <= right) {
         const mid = Math.floor((left + right) / 2);
-        
+
         if (arr[mid] === target) {
             return mid;
         } else if (arr[mid] < target) {
@@ -112,7 +112,7 @@ function binarySearch(arr, target) {
             right = mid - 1;
         }
     }
-    
+
     return -1;
 }
 ```

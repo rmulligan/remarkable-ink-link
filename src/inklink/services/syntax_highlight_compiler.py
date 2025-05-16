@@ -4,7 +4,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .syntax_scanner import ScannerFactory
 from .syntax_tokens import Token, TokenType

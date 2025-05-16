@@ -37,12 +37,7 @@ line.color = si.PenColor.BLACK
 # Add some points
 points = []
 for i in range(5):
-    point = si.Point(
-        x=100 + i * 20,
-        y=100,
-        pressure=0.5,
-        # t parameter doesn't exist in the constructor
-    )
+    point = si.Point(x=100 + i * 20, y=100, pressure=0.5)
     points.append(point)
 
 line.points = points

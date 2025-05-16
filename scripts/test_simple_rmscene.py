@@ -5,7 +5,14 @@ import os
 import tempfile
 
 import rmscene
-from rmscene.scene_stream import TaggedBlockWriter, simple_text_document
+from rmscene.scene_stream import (
+    SceneInfo,
+    TaggedBlockWriter,
+    build_tree,
+    read_tree,
+    simple_text_document,
+    write_blocks,
+)
 
 print("Testing simple_text_document function...")
 
@@ -28,14 +35,10 @@ with open(tmp_path, "wb") as f:
     writer = TaggedBlockWriter(f)
 
     # First write the scene info
-    from rmscene.scene_stream import SceneInfo
-
     si_block = SceneInfo(file_type=si.file_type, x_max=si.x_max, y_max=si.y_max)
     writer.write(si_block)
 
     # Write the tree blocks
-    from rmscene.scene_stream import build_tree, write_blocks
-
     # Convert the tree to blocks
     blocks = []
 
@@ -48,8 +51,6 @@ print(f"Saved to {tmp_path}")
 
 # Try to read it back
 with open(tmp_path, "rb") as f:
-    from rmscene.scene_stream import read_tree
-
     loaded_tree = read_tree(f)
 
 print("Successfully read back!")

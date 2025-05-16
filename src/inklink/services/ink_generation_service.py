@@ -84,6 +84,11 @@ class InkGenerationService:
         This is a simplified implementation that creates basic strokes.
         In a real implementation, you'd want proper character templates.
 
+        TODO: In future phases, integrate a more sophisticated character rendering
+        library or develop comprehensive stroke patterns to improve the quality
+        and readability of generated editable ink. Current implementation is
+        intended for initial testing and proof of concept.
+
         Args:
             char: Character to render
             x: X position
