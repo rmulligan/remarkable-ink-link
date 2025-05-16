@@ -223,30 +223,47 @@ class InkGenerationService:
             return False
 
         try:
-            # Create scene tree
-            scene_tree = st.SceneTree()
+            from rmscene.scene_stream import (
+                MainBlockInfo,
+                SceneInfo,
+                SceneLineItemBlock,
+                TreeNodeBlock,
+                write_blocks,
+            )
 
-            # Create root group
-            root_group = si.Group()
-            root_id = scene_tree.add_item(root_group)
+            # Create blocks list for the reMarkable file
+            blocks = []
 
-            # Convert text to strokes
+            # 1. Create the main block
+            main_block = MainBlockInfo()
+            blocks.append(main_block)
+
+            # 2. Create scene info
+            scene_info = SceneInfo(
+                file_type="reMarkable .lines file, version=6",
+                x_max=1404.0,
+                y_max=1872.0,
+            )
+            blocks.append(scene_info)
+
+            # 3. Create a root node
+            root_id = rmscene.CrdtId(0, 1)
+            root_node = TreeNodeBlock(node_id=root_id, parent_id=None)
+            blocks.append(root_node)
+
+            # 4. Convert text to strokes and create line blocks
             strokes = self.text_to_strokes(text)
 
-            # Add strokes to scene tree
-            for stroke in strokes:
-                scene_tree.add_item(stroke, parent_id=root_id)
+            for i, stroke in enumerate(strokes):
+                line_id = rmscene.CrdtId(i + 1, 1)
+                line_block = SceneLineItemBlock(
+                    parent_id=root_id, item_id=line_id, line=stroke
+                )
+                blocks.append(line_block)
 
-            # For now, we create a simple empty file as a placeholder
-            # The full implementation would require understanding the complete
-            # rmscene file format which is complex
+            # Write blocks to the file
             with open(output_path, "wb") as f:
-                # Write reMarkable header
-                f.write(rmscene.HEADER_V6)
-
-                # For now, just write minimal data
-                # In a real implementation, we'd write proper blocks using TaggedBlockWriter
-                # This is a placeholder that at least creates a valid file header
+                write_blocks(f, blocks)
 
             logger.info(f"Created .rm file with editable ink at {output_path}")
             return True
@@ -274,6 +291,14 @@ class InkGenerationService:
             return False
 
         try:
+            from rmscene.scene_stream import (
+                MainBlockInfo,
+                SceneInfo,
+                SceneLineItemBlock,
+                TreeNodeBlock,
+                write_blocks,
+            )
+
             # Load existing file
             with open(rm_file_path, "rb") as f:
                 scene_tree = read_tree(f)
@@ -289,32 +314,54 @@ class InkGenerationService:
                     max_y + self.LINE_SPACING * 2 if max_y > 0 else self.MARGIN_TOP
                 )
 
-            # Create new strokes
-            strokes = self.text_to_strokes(text, y=y_offset)
-
-            # Find root group
+            # Find root ID and max item ID from existing tree
             root_id = None
+            max_item_id = 0
             for item_id, item in scene_tree.items.items():
-                if (
-                    isinstance(item, si.Group)
-                    and scene_tree.get_parent(item_id) is None
-                ):
+                if scene_tree.parent_map.get(item_id) is None:
                     root_id = item_id
-                    break
+                if hasattr(item_id, "left_id"):
+                    max_item_id = max(max_item_id, item_id.left_id)
 
             if root_id is None:
-                # Create root group if it doesn't exist
-                root_group = si.Group()
-                root_id = scene_tree.add_item(root_group)
+                # Create root if it doesn't exist
+                root_id = rmscene.CrdtId(0, 1)
 
-            # Add new strokes
-            for stroke in strokes:
-                scene_tree.add_item(stroke, parent_id=root_id)
+            # Create new strokes with updated IDs
+            strokes = self.text_to_strokes(text, y=y_offset)
 
-            # For now, we can't properly append to existing files
-            # This would require the complete rmscene serialization implementation
-            logger.warning("Appending to existing files not yet implemented")
-            return False
+            # Prepare blocks for the complete file
+            blocks = []
+
+            # 1. Main block
+            blocks.append(MainBlockInfo())
+
+            # 2. Scene info (preserve original dimensions)
+            scene_info = SceneInfo(
+                file_type="reMarkable .lines file, version=6",
+                x_max=1404.0,
+                y_max=1872.0,
+            )
+            blocks.append(scene_info)
+
+            # 3. Convert existing tree to blocks
+            for block in scene_tree.to_blocks():
+                blocks.append(block)
+
+            # 4. Add new stroke blocks
+            for i, stroke in enumerate(strokes):
+                line_id = rmscene.CrdtId(max_item_id + i + 1, 1)
+                line_block = SceneLineItemBlock(
+                    parent_id=root_id, item_id=line_id, line=stroke
+                )
+                blocks.append(line_block)
+
+            # Write the complete file
+            with open(rm_file_path, "wb") as f:
+                write_blocks(f, blocks)
+
+            logger.info(f"Appended text to .rm file at {rm_file_path}")
+            return True
 
         except Exception as e:
             logger.error(f"Failed to append to .rm file: {e}")
