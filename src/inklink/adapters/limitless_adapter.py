@@ -8,7 +8,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-
 from inklink.adapters.adapter import Adapter
 from inklink.adapters.http_adapter import HTTPAdapter
 
