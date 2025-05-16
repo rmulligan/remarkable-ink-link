@@ -41,6 +41,7 @@ for i in range(10):
     print("  - Language: Python")
     print("  - Line numbers: Yes")
     print("  - Metadata: Yes")
+    print(f"  - Code length: {len(code)} characters")
     print()
 
 
