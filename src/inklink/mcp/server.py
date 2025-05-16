@@ -1,4 +1,5 @@
 """Model Context Protocol (MCP) server implementation for InkLink agents."""
+
 import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Protocol
