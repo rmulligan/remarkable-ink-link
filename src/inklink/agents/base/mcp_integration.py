@@ -5,8 +5,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from mcp.types import JSONRPCMessage
 from mcp.server import Server as MCPServer
+from mcp.types import JSONRPCMessage
 
 from .agent import LocalAgent
 

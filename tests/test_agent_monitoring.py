@@ -8,16 +8,16 @@ import pytest
 
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig, LocalAgent
-from inklink.agents.exceptions import (
-    AgentError,
-    AgentStateError,
-    AgentCommunicationError,
-    ConfigurationError,
-)
 from inklink.agents.base.monitoring import (
     HealthStatus,
     MonitoringService,
     RestartPolicy,
+)
+from inklink.agents.exceptions import (
+    AgentCommunicationError,
+    AgentError,
+    AgentStateError,
+    ConfigurationError,
 )
 
 
