@@ -1,7 +1,6 @@
 """AI Service for interacting with Claude via CLI."""
 
 import logging
-import os
 from typing import Any, Dict, List, Optional, Union
 
 from inklink.adapters.ai_adapter import AIAdapter

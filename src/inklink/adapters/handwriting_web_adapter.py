@@ -153,7 +153,6 @@ class HandwritingWebAdapter(Adapter):
         try:
             # Import rmscene for parsing .rm files
             try:
-                import rmscene
                 from rmscene.scene_items import Line
                 from rmscene.scene_stream import read_tree
             except ImportError:

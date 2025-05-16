@@ -7,7 +7,6 @@ used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 
 import http.server
 import logging
-import os
 import socketserver
 import time
 import urllib.parse

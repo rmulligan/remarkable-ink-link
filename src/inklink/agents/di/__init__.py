@@ -88,7 +88,7 @@ class AgentContainer(containers.DeclarativeContainer):
         config=lambda: config_loader.get_agent_config("limitless_insight")["config"],
         limitless_adapter=limitless_adapter,
         ollama_adapter=ollama_adapter,
-        storage_path=lambda: storage_base_path() / "limitless",
+        storage_path=providers.Callable(lambda base: base / "limitless", storage_base_path),
     )
 
     daily_briefing_agent_factory = providers.Factory(
@@ -96,14 +96,14 @@ class AgentContainer(containers.DeclarativeContainer):
         config=lambda: config_loader.get_agent_config("daily_briefing")["config"],
         ollama_adapter=ollama_adapter,
         remarkable_adapter=remarkable_adapter,
-        storage_path=lambda: storage_base_path() / "briefings",
+        storage_path=providers.Callable(lambda base: base / "briefings", storage_base_path),
     )
 
     project_tracker_agent_factory = providers.Factory(
         ProactiveProjectTrackerAgent,
         config=lambda: config_loader.get_agent_config("project_tracker")["config"],
         ollama_adapter=ollama_adapter,
-        storage_path=lambda: storage_base_path() / "projects",
+        storage_path=providers.Callable(lambda base: base / "projects", storage_base_path),
     )
 
     control_center_agent_factory = providers.Factory(

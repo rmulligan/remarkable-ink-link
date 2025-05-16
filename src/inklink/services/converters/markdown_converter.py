@@ -6,7 +6,6 @@ into Markdown and then into reMarkable-compatible formats.
 
 import logging
 import os
-import time
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter

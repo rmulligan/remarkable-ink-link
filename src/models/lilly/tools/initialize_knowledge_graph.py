@@ -5,9 +5,7 @@ Creates basic entity types and relationships for reMarkable notes management.
 """
 
 import json
-import os
 import subprocess
-import sys
 from typing import Any, Dict, List
 
 # Define the knowledge graph structure

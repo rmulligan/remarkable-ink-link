@@ -236,7 +236,6 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
         If failed, result is the error message
     """
     try:
-        import tempfile
 
         from inklink.config import CONFIG
 

@@ -223,14 +223,14 @@ def create_notebook_index(no_upload):
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating notebook index...")
+    click.echo("Creating notebook index...")
 
     success, result = index_service.create_notebook_index(
         upload_to_remarkable=not no_upload
     )
 
     if success:
-        click.echo(f"Notebook index created successfully!")
+        click.echo("Notebook index created successfully!")
         click.echo(f"Notebook count: {result.get('notebook_count', 0)}")
         click.echo(f"EPUB saved to: {result.get('path')}")
 
@@ -257,14 +257,14 @@ def create_master_index(no_upload):
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating master index notebook...")
+    click.echo("Creating master index notebook...")
 
     success, result = index_service.create_master_index(
         upload_to_remarkable=not no_upload
     )
 
     if success:
-        click.echo(f"Master index created successfully!")
+        click.echo("Master index created successfully!")
         click.echo(f"Entity count: {result.get('entity_count', 0)}")
         click.echo(f"Topic count: {result.get('topic_count', 0)}")
         click.echo(f"Notebook count: {result.get('notebook_count', 0)}")
@@ -304,7 +304,7 @@ def update_knowledge_graph(
             "name": notebook_name,
             "entityType": "Notebook",
             "observations": [
-                f"Remarkable notebook processed by Cassidy assistant",
+                "Remarkable notebook processed by Cassidy assistant",
                 f"Contains page: {page_name}",
                 f"Last processed: {timestamp}",
             ],
@@ -640,9 +640,9 @@ def penpal(
     if mcp_tools:
         mcp_tool_tags = [tool.strip() for tool in mcp_tools.split(",")]
 
-    click.echo(f"Starting Claude Penpal monitoring service")
+    click.echo("Starting Claude Penpal monitoring service")
     click.echo(f"Using Claude command: {claude_command}")
-    click.echo(f"Looking for pages with tags:")
+    click.echo("Looking for pages with tags:")
     click.echo(f"  - '{query_tag}' for queries to Claude")
     click.echo(f"  - '{context_tag}' for additional context")
     click.echo(f"  - '{kg_tag}' for Knowledge Graph processing")
