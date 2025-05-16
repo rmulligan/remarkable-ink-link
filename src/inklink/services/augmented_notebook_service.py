@@ -540,16 +540,11 @@ class AugmentedNotebookService:
             with open(md_path, "w", encoding="utf-8") as f:
                 f.write(formatted_response)
 
-            # Convert to reMarkable format
-            rm_path = self.document_service.create_rmdoc_from_content(
-                url="",
-                qr_path="",
-                content={
-                    "title": "AI Response",
-                    "structured_content": [
-                        {"type": "markdown", "content": formatted_response}
-                    ],
-                },
+            # Convert to reMarkable format with editable ink
+            rm_path = self.document_service.create_editable_ink_document(
+                text=formatted_response,
+                title="AI Response",
+                append_to=None,  # Could potentially append to original notebook
             )
 
             if not rm_path:

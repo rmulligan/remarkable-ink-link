@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from inklink.config import CONFIG
 from inklink.services.converters.html_converter import HTMLConverter
+from inklink.services.converters.ink_converter import InkConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.interfaces import (
@@ -65,6 +66,7 @@ class DocumentService(IDocumentService):
             MarkdownConverter(self.temp_dir),
             HTMLConverter(self.temp_dir),
             PDFConverter(self.temp_dir),
+            InkConverter(self.temp_dir),
         ]
 
     def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
@@ -77,6 +79,40 @@ class DocumentService(IDocumentService):
             ),
             None,
         )
+
+    def create_editable_ink_document(
+        self, text: str, title: Optional[str] = None, append_to: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Create a document with editable ink strokes from text.
+
+        Args:
+            text: Text to convert to editable ink
+            title: Optional title for the document
+            append_to: Optional path to existing .rm file to append to
+
+        Returns:
+            Path to generated .rm file or None if failed
+        """
+        try:
+            content = {"text": text, "title": title, "append_to": append_to}
+
+            converter = self._get_converter_for_type("ink")
+            if converter:
+                result = converter.convert(content, None)
+                if result:
+                    logger.info(f"Created editable ink document: {result}")
+                    return result
+                else:
+                    logger.error("Failed to create editable ink document")
+                    return None
+            else:
+                logger.error("Ink converter not available")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error creating editable ink document: {str(e)}")
+            return None
 
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]
