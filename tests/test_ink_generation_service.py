@@ -24,13 +24,15 @@ from inklink.services.ink_generation_service import (
 class TestInkGenerationService:
     """Test ink generation functionality."""
 
-    def test_singleton_instance(self):
+    @staticmethod
+    def test_singleton_instance():
         """Test that service returns singleton instance."""
         service1 = get_ink_generation_service()
         service2 = get_ink_generation_service()
         assert service1 is service2
 
-    def test_text_to_strokes(self):
+    @staticmethod
+    def test_text_to_strokes():
         """Test converting text to stroke Lines."""
         service = InkGenerationService()
 
@@ -43,7 +45,8 @@ class TestInkGenerationService:
             assert stroke.color == si.PenColor.BLACK
             assert len(stroke.points) > 0
 
-    def test_create_rm_file_with_text(self):
+    @staticmethod
+    def test_create_rm_file_with_text():
         """Test creating a .rm file with editable text."""
         service = InkGenerationService()
 
@@ -67,7 +70,8 @@ class TestInkGenerationService:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
-    def test_append_text_to_rm_file(self):
+    @staticmethod
+    def test_append_text_to_rm_file():
         """Test appending text to existing .rm file."""
         service = InkGenerationService()
 
@@ -87,7 +91,8 @@ class TestInkGenerationService:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
-    def test_character_strokes(self):
+    @staticmethod
+    def test_character_strokes():
         """Test that specific characters generate correct stroke patterns."""
         service = InkGenerationService()
 
@@ -100,7 +105,8 @@ class TestInkGenerationService:
                 assert isinstance(stroke, si.Line)
                 assert len(stroke.points) > 0
 
-    def test_multiline_text(self):
+    @staticmethod
+    def test_multiline_text():
         """Test handling of multiline text."""
         service = InkGenerationService()
 
@@ -116,10 +122,11 @@ class TestInkGenerationService:
                 y_coords.append(point.y)
 
         # Should have multiple Y levels for different lines
-        unique_y_levels = len(set(int(y / service.LINE_SPACING) for y in y_coords))
+        unique_y_levels = len({int(y / service.LINE_SPACING) for y in y_coords})
         assert unique_y_levels >= 3
 
-    def test_custom_position(self):
+    @staticmethod
+    def test_custom_position():
         """Test creating strokes at custom position."""
         service = InkGenerationService()
 

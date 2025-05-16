@@ -19,7 +19,6 @@ from inklink.services.syntax_highlight_compiler_v2 import (
     SyntaxHighlightCompilerV2,
 )
 from inklink.services.syntax_layout import PageSize
-from inklink.utils import retry_operation
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,8 @@ class SyntaxHighlightedInkConverter(BaseConverter):
         self.compiler = SyntaxHighlightCompilerV2()
         self.drawj2d_service = Drawj2dService(temp_dir)
 
-    def can_convert(self, content_type: str) -> bool:
+    @staticmethod
+    def can_convert(content_type: str) -> bool:
         """Check if this converter can handle the given content type."""
         return content_type in ["code", "syntax-highlighted"]
 
@@ -142,9 +142,8 @@ class SyntaxHighlightedInkConverter(BaseConverter):
                 if rm_path:
                     logger.info(f"Created syntax-highlighted document: {rm_path}")
                     return rm_path
-                else:
-                    logger.error("Drawj2d processing failed")
-                    return None
+                logger.error("Drawj2d processing failed")
+                return None
 
             return None
 
@@ -152,7 +151,8 @@ class SyntaxHighlightedInkConverter(BaseConverter):
             logger.error(f"Error creating syntax-highlighted ink: {str(e)}")
             return None
 
-    def _detect_language(self, code: str) -> str:
+    @staticmethod
+    def _detect_language(code: str) -> str:
         """
         Attempt to detect the programming language from code content.
 
@@ -165,19 +165,19 @@ class SyntaxHighlightedInkConverter(BaseConverter):
         # Simple heuristic-based detection
         if re.search(r"^\s*def\s+\w+", code, re.MULTILINE):
             return "python"
-        elif re.search(r"^\s*function\s+\w+", code, re.MULTILINE):
+        if re.search(r"^\s*function\s+\w+", code, re.MULTILINE):
             return "javascript"
-        elif re.search(r"^\s*class\s+\w+\s*{", code, re.MULTILINE):
+        if re.search(r"^\s*class\s+\w+\s*{", code, re.MULTILINE):
             return "java"
-        elif re.search(r"#include\s*<", code):
+        if re.search(r"#include\s*<", code):
             return "c"
-        elif re.search(r"fn\s+\w+\s*\(", code):
+        if re.search(r"fn\s+\w+\s*\(", code):
             return "rust"
-        elif re.search(r"func\s+\w+\s*\(", code):
+        if re.search(r"func\s+\w+\s*\(", code):
             return "go"
-        elif re.search(r"<\?php", code):
+        if re.search(r"<\?php", code):
             return "php"
-        elif re.search(r"^\s*def\s+\w+\s*=", code, re.MULTILINE):
+        if re.search(r"^\s*def\s+\w+\s*=", code, re.MULTILINE):
             return "ruby"
 
         return "text"  # Default fallback

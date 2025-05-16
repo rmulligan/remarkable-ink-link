@@ -6,9 +6,6 @@ replacing the old approach of using drawj2d to create static text.
 
 import logging
 import math
-import os
-import tempfile
-import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -318,9 +315,6 @@ class InkGenerationService:
             # This would require the complete rmscene serialization implementation
             logger.warning("Appending to existing files not yet implemented")
             return False
-
-            logger.info(f"Appended text to .rm file at {rm_file_path}")
-            return True
 
         except Exception as e:
             logger.error(f"Failed to append to .rm file: {e}")

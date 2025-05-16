@@ -3,7 +3,6 @@
 
 import re
 import sys
-import tempfile
 from pathlib import Path
 
 # Add src to path
@@ -12,10 +11,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from inklink.services.syntax_highlight_compiler_v2 import (  # noqa: E402
     CodeMetadata,
     Language,
-    RenderOptions,
     SyntaxHighlightCompilerV2,
 )
-from inklink.services.syntax_layout import PageSize  # noqa: E402
 
 
 def test_syntax_compiler():
@@ -127,15 +124,15 @@ def test_language_detection():
     def detect_language(code: str) -> str:
         if re.search(r"^\s*def\s+\w+", code, re.MULTILINE):
             return "python"
-        elif re.search(r"^\s*function\s+\w+", code, re.MULTILINE):
+        if re.search(r"^\s*function\s+\w+", code, re.MULTILINE):
             return "javascript"
-        elif re.search(r"^\s*class\s+\w+\s*{", code, re.MULTILINE):
+        if re.search(r"^\s*class\s+\w+\s*{", code, re.MULTILINE):
             return "java"
-        elif re.search(r"fn\s+\w+\s*\(", code):
+        if re.search(r"fn\s+\w+\s*\(", code):
             return "rust"
-        elif re.search(r"#include\s*<", code):
+        if re.search(r"#include\s*<", code):
             return "c"
-        elif re.search(r"^package\s+\w+", code, re.MULTILINE):
+        if re.search(r"^package\s+\w+", code, re.MULTILINE):
             return "go"
         return "text"
 

@@ -6,7 +6,6 @@ replacing the old approach of using drawj2d to create static text.
 
 import logging
 import os
-import time
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
@@ -28,7 +27,8 @@ class InkConverter(BaseConverter):
         super().__init__(temp_dir)
         self.ink_service = get_ink_generation_service()
 
-    def can_convert(self, content_type: str) -> bool:
+    @staticmethod
+    def can_convert(content_type: str) -> bool:
         """Check if this converter can handle the given content type."""
         return content_type in ["text", "ink", "editable", "response"]
 
@@ -58,7 +58,7 @@ class InkConverter(BaseConverter):
                     if item.get("type") == "markdown":
                         text = item.get("content", "")
                         break
-                    elif item.get("type") == "text":
+                    if item.get("type") == "text":
                         text = item.get("text", "")
                         break
 
@@ -84,17 +84,15 @@ class InkConverter(BaseConverter):
                 success = self.ink_service.append_text_to_rm_file(append_to, text)
                 if success:
                     return append_to
-                else:
-                    logger.error(f"Failed to append ink to {append_to}")
-                    return None
+                logger.error(f"Failed to append ink to {append_to}")
+                return None
             else:
                 # Create new file
                 success = self.ink_service.create_rm_file_with_text(text, output_path)
                 if success:
                     return output_path
-                else:
-                    logger.error(f"Failed to create ink file at {output_path}")
-                    return None
+                logger.error(f"Failed to create ink file at {output_path}")
+                return None
 
         except Exception as e:
             logger.error(f"Error converting text to ink: {str(e)}")

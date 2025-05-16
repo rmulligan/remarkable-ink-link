@@ -3,7 +3,6 @@
 import json
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .syntax_highlight_compiler import Language, SyntaxHighlightCompiler, Theme
@@ -50,7 +49,6 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
             show_line_numbers=self.options.show_line_numbers,
             show_metadata=self.options.show_metadata,
         )
-        # self.hcl_renderer = HCLRenderer()  # Not needed for now
         self.set_theme(self.options.theme.value)
 
     def _get_token_color(self, token_type: TokenType) -> str:
@@ -96,14 +94,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
 
     def _render_page(self, page: PageLayout, tokens: List, lines: List[str]) -> str:
         """Render a single page to HCL."""
-        hcl_content = []
-
-        # Add page header
-        hcl_content.append(f"# Page {page.page_number}")
-        hcl_content.append(
-            f"page_size = [{page.page_size.width}, {page.page_size.height}]"
-        )
-        hcl_content.append("")
+        hcl_content = [f"# Page {page.page_number}", f"page_size = [{page.page_size.width}, {page.page_size.height}]", "", self._render_code_lines(page, tokens, lines)]
 
         # Add debug grid if enabled
         if self.options.debug_mode:
@@ -116,9 +107,6 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
         # Render line numbers
         if self.options.show_line_numbers:
             hcl_content.append(self._render_line_numbers(page))
-
-        # Render code
-        hcl_content.append(self._render_code_lines(page, tokens, lines))
 
         # Add metadata comment if embedding
         if self.options.embed_metadata:
@@ -148,7 +136,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
             header_lines.append(f'text "{metadata.filename}" {{')
             header_lines.append(f"  x = {header_region.x}")
             header_lines.append(f"  y = {y_pos}")
-            header_lines.append(f'  color = "0x333333"')
+            header_lines.append('  color = "0x333333"')
             header_lines.append(
                 f"  size = {int(self.layout_calculator.font_metrics.size * 1.2)}"
             )
@@ -160,7 +148,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
             header_lines.append(f'text "Language: {metadata.language}" {{')
             header_lines.append(f"  x = {header_region.x}")
             header_lines.append(f"  y = {y_pos}")
-            header_lines.append(f'  color = "0x666666"')
+            header_lines.append('  color = "0x666666"')
             header_lines.append(f"  size = {self.layout_calculator.font_metrics.size}")
             header_lines.append("}")
             y_pos += self.layout_calculator.font_metrics.actual_line_height
@@ -170,7 +158,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
             header_lines.append(f'text "Author: {metadata.author}" {{')
             header_lines.append(f"  x = {header_region.x}")
             header_lines.append(f"  y = {y_pos}")
-            header_lines.append(f'  color = "0x666666"')
+            header_lines.append('  color = "0x666666"')
             header_lines.append(f"  size = {self.layout_calculator.font_metrics.size}")
             header_lines.append("}")
 
@@ -194,7 +182,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
                     f"  x = {ln_region.x + ln_region.width - 30}"
                 )  # right-align
                 line_number_lines.append(f"  y = {line.y}")
-                line_number_lines.append(f'  color = "0x999999"')
+                line_number_lines.append('  color = "0x999999"')
                 line_number_lines.append(
                     f"  size = {int(self.layout_calculator.font_metrics.size * 0.9)}"
                 )
@@ -226,7 +214,7 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
                     code_lines.append(f'text "{line_layout.text}" {{')
                     code_lines.append(f"  x = {line_layout.x}")
                     code_lines.append(f"  y = {line_layout.y}")
-                    code_lines.append(f'  color = "0x000000"')
+                    code_lines.append('  color = "0x000000"')
                     code_lines.append(
                         f"  size = {self.layout_calculator.font_metrics.size}"
                     )
@@ -255,7 +243,8 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
 
         return "\n".join(hcl_parts)
 
-    def _map_tokens_to_lines(self, tokens: List, lines: List[str]) -> Dict[int, List]:
+    @staticmethod
+    def _map_tokens_to_lines(tokens: List, lines: List[str]) -> Dict[int, List]:
         """Map tokens to their line numbers."""
         line_tokens = {}
         current_line = 0
@@ -276,21 +265,10 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
 
         return line_tokens
 
-    def _generate_debug_grid(self, page: PageLayout) -> str:
+    @staticmethod
+    def _generate_debug_grid(page: PageLayout) -> str:
         """Generate debug grid for testing."""
-        grid_lines = []
-        grid_lines.append("# Debug grid")
-
-        # Draw margins
-        grid_lines.append(f"rectangle {{")
-        grid_lines.append(f"  x = {page.margins.left}")
-        grid_lines.append(f"  y = {page.margins.top}")
-        grid_lines.append(f"  width = {page.content_width}")
-        grid_lines.append(f"  height = {page.content_height}")
-        grid_lines.append(f'  stroke = "0xFF0000"')
-        grid_lines.append(f"  stroke_width = 2")
-        grid_lines.append(f'  fill = "none"')
-        grid_lines.append("}")
+        grid_lines = ["# Debug grid", "rectangle {{", f"  x = {page.margins.left}", f"  y = {page.margins.top}", f"  width = {page.content_width}", f"  height = {page.content_height}", '  stroke = "0xFF0000"', "  stroke_width = 2", '  fill = "none"', "}"]
 
         # Draw regions
         for region in page.regions:
@@ -300,19 +278,20 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
                 "code": "0xFF00FF",
             }.get(region.content_type, "0x000000")
 
-            grid_lines.append(f"rectangle {{")
+            grid_lines.append("rectangle {{")
             grid_lines.append(f"  x = {region.x}")
             grid_lines.append(f"  y = {region.y}")
             grid_lines.append(f"  width = {region.width}")
             grid_lines.append(f"  height = {region.height}")
             grid_lines.append(f'  stroke = "{color}"')
-            grid_lines.append(f"  stroke_width = 1")
-            grid_lines.append(f'  fill = "none"')
+            grid_lines.append("  stroke_width = 1")
+            grid_lines.append('  fill = "none"')
             grid_lines.append("}")
 
         return "\n".join(grid_lines)
 
-    def _embed_metadata_comment(self, page: PageLayout) -> str:
+    @staticmethod
+    def _embed_metadata_comment(page: PageLayout) -> str:
         """Embed metadata as HCL comment."""
         if not page.metadata:
             return ""
@@ -332,7 +311,8 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
 
         return f"# METADATA: {json.dumps(metadata_dict)}"
 
-    def _extract_page_metadata(self, page: PageLayout) -> Dict[str, Any]:
+    @staticmethod
+    def _extract_page_metadata(page: PageLayout) -> Dict[str, Any]:
         """Extract metadata for a page."""
         return {
             "page_number": page.page_number,

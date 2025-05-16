@@ -78,9 +78,8 @@ Try editing this text on your device!
                     "Check your reMarkable device - you should be able to edit the text!"
                 )
                 return True
-            else:
-                logger.error(f"Failed to upload notebook: {message}")
-                return False
+            logger.error(f"Failed to upload notebook: {message}")
+            return False
 
     except Exception as e:
         logger.error(f"Error creating editable ink notebook: {e}")

@@ -48,9 +48,8 @@ def test_basic_drawj2d():
                 file_size = os.path.getsize(result["output_path"])
                 logger.info(f"Output file size: {file_size} bytes")
                 return True
-            else:
-                logger.error("Output file not found!")
-                return False
+            logger.error("Output file not found!")
+            return False
         else:
             logger.error(f"✗ drawj2d processing failed: {result.get('error')}")
             if result.get("stdout"):
@@ -90,9 +89,8 @@ if __name__ == "__main__":
             logger.info("✓ Code rendering successful!")
             logger.info(f"Output file: {result['output_path']}")
             return True
-        else:
-            logger.error(f"✗ Code rendering failed: {result.get('error')}")
-            return False
+        logger.error(f"✗ Code rendering failed: {result.get('error')}")
+        return False
 
     except Exception as e:
         logger.error(f"Code rendering test failed: {e}")

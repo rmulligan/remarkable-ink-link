@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Test script for Phase 3: Enhanced Scanner with Regex Pattern Matching"""
-
-import json
 import logging
 import sys
 import tempfile
@@ -13,14 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.inklink.services.drawj2d_service import Drawj2dService  # noqa: E402
 from src.inklink.services.syntax_highlight_compiler import (  # noqa: E402
     SyntaxHighlightCompiler,
-    Theme,
-)
+    )
 from src.inklink.services.syntax_scanner import (  # noqa: E402
     JavaScriptScanner,
     PythonScanner,
-    ScannerFactory,
-)
-from src.inklink.services.syntax_tokens import Token, TokenType  # noqa: E402
+    )
+from src.inklink.services.syntax_tokens import TokenType  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -263,7 +259,7 @@ if __name__ == "__main__":
         success, result = drawj2d.process_hcl(hcl_path)
 
         if success:
-            print(f"✓ drawj2d processing successful!")
+            print("✓ drawj2d processing successful!")
             print(f"Output file: {result['output_path']}")
             if "file_size" in result:
                 print(f"File size: {result['file_size']} bytes")

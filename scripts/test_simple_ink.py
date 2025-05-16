@@ -3,7 +3,6 @@
 
 import os
 import sys
-import tempfile
 
 import inklink.services.ink_generation_service as ink_mod
 

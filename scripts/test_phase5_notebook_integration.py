@@ -12,7 +12,6 @@ from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
 )
 from inklink.services.document_service import DocumentService  # noqa: E402
-from inklink.services.syntax_highlight_compiler_v2 import Language  # noqa: E402
 
 
 def test_syntax_highlighted_document():
@@ -40,32 +39,11 @@ for i in range(10):
     # Skip this test for now due to drawj2d dependency
     print("⚠️ Skipping actual document creation (drawj2d dependency)")
     print("✓ Test would create syntax-highlighted document with:")
-    print(f"  - Language: Python")
-    print(f"  - Line numbers: Yes")
-    print(f"  - Metadata: Yes")
+    print("  - Language: Python")
+    print("  - Line numbers: Yes")
+    print("  - Metadata: Yes")
     print()
     return
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        doc_service = DocumentService(temp_dir=temp_dir)
-
-        # Create syntax-highlighted document
-        rm_path = doc_service.create_syntax_highlighted_document(
-            code=code,
-            language="python",
-            title="Fibonacci Example",
-            filename="fibonacci.py",
-            author="Test Author",
-            show_line_numbers=True,
-            show_metadata=True,
-        )
-
-        if rm_path:
-            print(f"✓ Created syntax-highlighted document: {rm_path}")
-        else:
-            print("✗ Failed to create document")
-
-    print()
 
 
 def test_mixed_content_response():

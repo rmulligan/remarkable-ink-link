@@ -145,7 +145,7 @@ for i in range(10):
         success, result = drawj2d.process_hcl(hcl_path)
 
         if success:
-            print(f"✓ drawj2d processing successful!")
+            print("✓ drawj2d processing successful!")
             print(f"Output file: {result['output_path']}")
             if "file_size" in result:
                 print(f"File size: {result['file_size']} bytes")

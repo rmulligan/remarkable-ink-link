@@ -42,7 +42,7 @@ class Drawj2dService:
                 capture_output=True,
                 text=True,
                 timeout=5,
-            )
+            check=True)
             return result.returncode == 0
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
@@ -89,19 +89,16 @@ class Drawj2dService:
                 "-T",
                 output_format,  # Output format
                 "-o",
-                output_path,  # Output file
+                output_path,hcl_path  # Output file
             ]
-
-            # Add input file
-            cmd.append(hcl_path)
 
             logger.info(f"Executing drawj2d: {' '.join(cmd)}")
 
             # Execute drawj2d
             start_time = os.times()
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30  # 30 second timeout
-            )
+                cmd, capture_output=True, text=True, timeout=30,   # 30 second timeout
+            check=True)
             end_time = os.times()
 
             duration = end_time.elapsed - start_time.elapsed
@@ -114,14 +111,13 @@ class Drawj2dService:
                     "stderr": result.stderr,
                     "duration": duration,
                 }
-            else:
-                logger.error(f"drawj2d failed with code {result.returncode}")
-                return False, {
-                    "error": f"drawj2d failed with code {result.returncode}",
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "duration": duration,
-                }
+            logger.error(f"drawj2d failed with code {result.returncode}")
+            return False, {
+                "error": f"drawj2d failed with code {result.returncode}",
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "duration": duration,
+            }
 
         except subprocess.TimeoutExpired:
             logger.error("drawj2d command timed out")
@@ -130,7 +126,8 @@ class Drawj2dService:
             logger.error(f"Error running drawj2d: {e}")
             return False, {"error": str(e)}
 
-    def create_test_hcl(self, output_dir: Optional[str] = None) -> str:
+    @staticmethod
+    def create_test_hcl(output_dir: Optional[str] = None) -> str:
         """
         Create a basic test HCL file for verification.
 

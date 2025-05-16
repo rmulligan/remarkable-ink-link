@@ -43,17 +43,17 @@ class AugmentedNotebookServiceV2(AugmentedNotebookService):
                 return self._create_mixed_response_document(
                     response, code_blocks, include_sources
                 )
-            else:
-                # No code blocks - use the original method
-                return super()._append_response_to_notebook(
-                    rm_file_path, response, include_sources
-                )
+            # No code blocks - use the original method
+            return super()._append_response_to_notebook(
+                rm_file_path, response, include_sources
+            )
 
         except Exception as e:
             logger.error(f"Error appending response with syntax highlighting: {e}")
             return False, {"error": f"Failed to append response: {str(e)}"}
 
-    def _extract_code_blocks(self, text: str) -> list:
+    @staticmethod
+    def _extract_code_blocks(text: str) -> list:
         """
         Extract code blocks from markdown text.
 

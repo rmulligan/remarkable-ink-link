@@ -8,11 +8,9 @@ import rmscene
 from rmscene.scene_stream import (
     SceneInfo,
     TaggedBlockWriter,
-    build_tree,
     read_tree,
     simple_text_document,
-    write_blocks,
-)
+    )
 
 print("Testing simple_text_document function...")
 

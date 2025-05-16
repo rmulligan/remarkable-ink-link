@@ -101,7 +101,7 @@ def test_multipage_layout():
         code_lines.append(f'    """Docstring for function {i}"""')
         code_lines.append(f"    result = {i} * 2")
         code_lines.append(f"    print(f'Function {i}: {{result}}')")
-        code_lines.append(f"    return result")
+        code_lines.append("    return result")
         code_lines.append("")
 
     code = "\n".join(code_lines)

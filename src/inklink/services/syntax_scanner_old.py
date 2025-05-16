@@ -2,7 +2,7 @@
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Pattern, Tuple
 
 from src.inklink.services.syntax_tokens import Token, TokenType
@@ -42,7 +42,7 @@ class LanguageScanner:
 
     def _compile_patterns(self):
         """Compile regex patterns for the language. Override in subclasses."""
-        pass
+        raise NotImplementedError()
 
     def add_rule(
         self,
@@ -123,10 +123,11 @@ class LanguageScanner:
 
         return tokens
 
-    def _handle_multiline(self, code: str, state: ScannerState) -> Optional[Token]:
+    @staticmethod
+    def _handle_multiline(code: str, state: ScannerState) -> Optional[Token]:
         """Handle multiline tokens like block comments or multiline strings."""
         # Find the end delimiter
-        if state.multiline_delimiter == '"""' or state.multiline_delimiter == "'''":
+        if state.multiline_delimiter in ('"""', "'''"):
             # Triple-quoted string
             end_pos = code.find(state.multiline_delimiter, state.position)
         elif state.in_multiline == TokenType.COMMENT:
@@ -168,8 +169,9 @@ class LanguageScanner:
 
         return token
 
+    @staticmethod
     def _create_token(
-        self, match: re.Match, rule: ScannerRule, state: ScannerState
+        match: re.Match, rule: ScannerRule, state: ScannerState
     ) -> Token:
         """Create a token from a regex match."""
         if rule.capture_group is not None:

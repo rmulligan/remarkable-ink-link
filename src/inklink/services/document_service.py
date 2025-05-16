@@ -107,9 +107,8 @@ class DocumentService(IDocumentService):
                 if result:
                     logger.info(f"Created editable ink document: {result}")
                     return result
-                else:
-                    logger.error("Failed to create editable ink document")
-                    return None
+                logger.error("Failed to create editable ink document")
+                return None
             else:
                 logger.error("Ink converter not available")
                 return None
@@ -160,9 +159,8 @@ class DocumentService(IDocumentService):
                 if result:
                     logger.info(f"Created syntax-highlighted document: {result}")
                     return result
-                else:
-                    logger.error("Failed to create syntax-highlighted document")
-                    return None
+                logger.error("Failed to create syntax-highlighted document")
+                return None
             else:
                 logger.error("Syntax highlighting converter not available")
                 return None

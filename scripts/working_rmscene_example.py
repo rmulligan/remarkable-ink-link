@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """Working example based on test_rmscene_extraction_updated.py"""
-
-import logging
 import tempfile
-import time
-import uuid
 
 # Try importing rmscene
 try:

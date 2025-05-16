@@ -6,11 +6,9 @@ import uuid
 
 import rmscene
 import rmscene.scene_items as si
-import rmscene.scene_tree as st
 from rmscene.scene_stream import (
     SceneLineItemBlock,
     SceneTree,
-    SceneTreeBlock,
     TreeNodeBlock,
     read_tree,
     write_blocks,

@@ -2,7 +2,7 @@
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Pattern, Tuple
 
 from .syntax_tokens import Token, TokenType
@@ -44,7 +44,7 @@ class LanguageScanner:
 
     def _compile_patterns(self):
         """Compile regex patterns for the language. Override in subclasses."""
-        pass
+        raise NotImplementedError()
 
     def add_rule(
         self,
@@ -147,7 +147,8 @@ class LanguageScanner:
 
         return tokens
 
-    def _handle_multiline(self, code: str, state: ScannerState) -> Optional[Token]:
+    @staticmethod
+    def _handle_multiline(code: str, state: ScannerState) -> Optional[Token]:
         """Handle multiline tokens like block comments or multiline strings."""
         start_pos = state.position
         start_line = state.line
@@ -220,8 +221,9 @@ class LanguageScanner:
 
         return token
 
+    @staticmethod
     def _create_token(
-        self, match: re.Match, rule: ScannerRule, state: ScannerState
+        match: re.Match, rule: ScannerRule, state: ScannerState
     ) -> Token:
         """Create a token from a regex match."""
         if rule.capture_group is not None:
@@ -242,8 +244,8 @@ class LanguageScanner:
             column=state.column,
         )
 
+    @staticmethod
     def _create_token_at_position(
-        self,
         start: int,
         end: int,
         value: str,
