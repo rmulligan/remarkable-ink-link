@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Type
 
-from .agent import LocalAgent, AgentState
+from .agent import AgentState, LocalAgent
 
 
 class AgentRegistry:

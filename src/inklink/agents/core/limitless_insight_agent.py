@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from inklink.agents.base.agent import AgentConfig, AgentState
-from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.adapters.ollama_adapter import OllamaAdapter
+from inklink.agents.base.agent import AgentConfig, AgentState
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 
 

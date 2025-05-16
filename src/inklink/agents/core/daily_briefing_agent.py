@@ -2,14 +2,14 @@
 
 import asyncio
 import json
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
 from inklink.adapters.ollama_adapter import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
+from inklink.agents.base.agent import AgentConfig
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.remarkable_service import RemarkableService
 
 
