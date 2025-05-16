@@ -17,6 +17,7 @@ class MockAIAdapter:
         """Initialize with test data."""
         self.generate_completion_calls = []
         self.generate_structured_completion_calls = []
+        self.process_with_context_calls = []
         self.system_prompt = "You are a helpful assistant."
         self.provider = kwargs.get("provider", "openai")
         self.model = kwargs.get("model", "gpt-3.5-turbo")
@@ -93,6 +94,25 @@ class MockAIAdapter:
 
         return True, self.default_response
 
+    def process_with_context(
+        self, prompt: str, new_conversation: bool = False, **kwargs
+    ) -> Tuple[bool, str, str]:
+        """Mock implementation of process_with_context."""
+        # Track the call
+        self.process_with_context_calls.append(
+            {"prompt": prompt, "new_conversation": new_conversation, **kwargs}
+        )
+
+        # Simulate the behavior of ClaudeCliAdapter.process_with_context
+        # It returns (success, response, conversation_id)
+        if self.should_fail:
+            return False, "Mock AI error", ""
+
+        response = self.default_response
+        conversation_id = "mock_conversation_123"
+
+        return True, response, conversation_id
+
 
 @pytest.fixture
 def mock_adapter():
@@ -103,7 +123,7 @@ def mock_adapter():
 @pytest.fixture
 def ai_service(mock_adapter):
     """Create an AIService with a mock adapter."""
-    return AIService(ai_adapter=mock_adapter)
+    return AIService(adapter=mock_adapter)
 
 
 def test_ask_success(ai_service, mock_adapter):
@@ -114,9 +134,10 @@ def test_ask_success(ai_service, mock_adapter):
     assert response == mock_adapter.default_response
 
     # Verify adapter was called correctly
-    assert len(mock_adapter.generate_completion_calls) == 1
-    call = mock_adapter.generate_completion_calls[0]
+    assert len(mock_adapter.process_with_context_calls) == 1
+    call = mock_adapter.process_with_context_calls[0]
     assert call["prompt"] == "What is machine learning?"
+    assert call["new_conversation"] is True
 
 
 def test_ask_failure(ai_service, mock_adapter):
@@ -128,7 +149,7 @@ def test_ask_failure(ai_service, mock_adapter):
     assert response == ""
 
     # Verify adapter was still called
-    assert len(mock_adapter.generate_completion_calls) == 1
+    assert len(mock_adapter.process_with_context_calls) == 1
 
 
 def test_process_query_simple(ai_service, mock_adapter):

@@ -37,14 +37,24 @@ def test_auth_submit(monkeypatch, returncode, stderr, expected):
     monkeypatch.setattr("os.access", lambda x, y: True)
 
     # Fake subprocess.run to simulate rmapi pairing
-    def fake_run(cmd, capture_output, text, shell=False, timeout=None):
+    def fake_run(cmd, capture_output, text, shell=False, timeout=None, check=False):
+        # The check parameter is used in the auth code but not in the test
+        if check and returncode != 0:
+            raise subprocess.CalledProcessError(returncode, cmd, stderr=stderr)
         return subprocess.CompletedProcess(cmd, returncode, stdout="", stderr=stderr)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    # Use the 'code' form field for pairing code (6-8 alphanumeric)
-    response = client.post("/auth", data={"code": "ABC12345"})
-    # Successful pairing returns 200, failure returns 400
-    assert response.status_code in (200, 400)
+
+    # Use a code from the allowlist defined in auth.py
+    # The allowlist contains: {"123456", "abcdef", "A1B2C3D4"}
+    response = client.post("/auth", data={"code": "A1B2C3D4"})
+
+    # Expected status depends on the mock returncode
+    if returncode == 0:
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 400
+
     assert expected in response.text
 
 

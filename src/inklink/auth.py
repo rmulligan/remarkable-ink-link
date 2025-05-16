@@ -103,6 +103,7 @@ def auth_submit(code: str = Form(...)):
             text=True,
             shell=False,  # Never use shell
             timeout=30,  # Add timeout to prevent hanging
+            check=True,
         )
 
         if result.returncode == 0:
@@ -115,12 +116,17 @@ def auth_submit(code: str = Form(...)):
                 """,
                 status_code=200,
             )
-        else:
-            # Don't expose stderr/stdout in the response to prevent information leakage
-            return HTMLResponse(
-                "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
-                status_code=400,
-            )
+        # Don't expose stderr/stdout in the response to prevent information leakage
+        return HTMLResponse(
+            "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
+            status_code=400,
+        )
+    except subprocess.CalledProcessError:
+        # This happens when check=True and returncode is non-zero
+        return HTMLResponse(
+            "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
+            status_code=400,
+        )
     except subprocess.TimeoutExpired:
         return HTMLResponse(
             "<html><body><h2>Request timed out</h2><p>Please try again.</p></body></html>",

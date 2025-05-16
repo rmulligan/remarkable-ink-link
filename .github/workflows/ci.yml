@@ -49,9 +49,17 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create true
           poetry install --no-interaction --no-ansi
-      - name: Run tests
+      - name: Run tests with coverage
         # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
+        # Coverage will be generated automatically based on pyproject.toml configuration
         run: poetry run pytest --maxfail=1 --disable-warnings -q
+      - name: Report test coverage to DeepSource
+        uses: deepsourcelabs/test-coverage-action@v1.1.0
+        continue-on-error: true
+        with:
+          key: python
+          coverage-file: coverage.xml
+          dsn: ${{ secrets.DEEPSOURCE_DSN }}
 
   code-review:
     name: Code Review GPT
@@ -81,12 +89,16 @@ jobs:
       - name: Install Dependencies
         run: |
           poetry install --no-interaction --no-ansi
-      - name: Code Review GPT
-        uses: mattzcarey/shippie@v0.14.0
-        with:
-          MODEL_STRING: openai:gpt-4.1-mini
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ github.token }}
+      # Code Review with Shippie (requires OPENAI_API_KEY)
+      # Note: Shippie does not support GitHub Models directly
+      # Uncomment below to enable when OPENAI_API_KEY is set
+      # - name: Code Review GPT
+      #   uses: mattzcarey/shippie@v0.14.0
+      #   if: ${{ secrets.OPENAI_API_KEY != '' }}
+      #   with:
+      #     MODEL_STRING: openai:gpt-4.1-mini
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     GITHUB_TOKEN: ${{ github.token }}
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 

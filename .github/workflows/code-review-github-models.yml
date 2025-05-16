@@ -1,0 +1,310 @@
+name: Code Review with GitHub Models
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  models: read  # Required for GitHub Models API access
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          pip install requests
+          
+      - name: Get Changed Files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        
+      - name: Review Code with GitHub Models
+        env:
+          # Try PAT first, fallback to regular token
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN != '' && secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          cat > review.py << 'EOF'
+          import os
+          import json
+          import requests
+          from typing import List, Dict, Any
+
+          def get_diff_content(repo_full_name: str, pr_number: int) -> str:
+              """Get the PR diff content."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return ""
+                  
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github.v3.diff"
+              }
+              url = f"https://api.github.com/repos/{repo_full_name}/pulls/{pr_number}"
+              response = requests.get(url, headers=headers)
+              response.raise_for_status()
+              return response.text
+
+          def analyze_diff_locally(diff_content: str) -> str:
+              """Perform a basic local analysis of the diff."""
+              lines = diff_content.split('\n')
+              added_lines = sum(1 for line in lines if line.startswith('+') and not line.startswith('+++'))
+              removed_lines = sum(1 for line in lines if line.startswith('-') and not line.startswith('---'))
+              
+              # Basic pattern detection
+              security_patterns = ['eval(', 'exec(', '__import__', 'os.system', 'subprocess.call']
+              test_patterns = ['def test_', '@pytest.mark', 'assert ', 'unittest']
+              
+              # Check for patterns
+              security_issues = []
+              has_tests = False
+              
+              for i, line in enumerate(lines):
+                  if line.startswith('+'):
+                      for pattern in security_patterns:
+                          if pattern in line:
+                              security_issues.append((i, pattern, line))
+                      for pattern in test_patterns:
+                          if pattern in line:
+                              has_tests = True
+              
+              # Build review
+              review = f"""## Code Review Summary
+              
+              ### Change Statistics
+              - Lines added: {added_lines}
+              - Lines removed: {removed_lines}
+              - Net change: {added_lines - removed_lines}
+              
+              ### Observations
+              """
+              
+              if security_issues:
+                  review += "\n#### ⚠️ Security Concerns\n"
+                  for line_num, pattern, line in security_issues:
+                      review += f"\n**Issue**: Potential security concern - `{pattern}` found\n"
+                      review += f"**Line**: `{line.strip()}`\n"
+                      review += f"**Suggestion**: Consider using safer alternatives\n"
+                      
+                      # Provide specific suggestions for common patterns
+                      if pattern == 'eval(':
+                          review += "```suggestion\nimport ast\nresult = ast.literal_eval(user_input)\n```\n"
+                      elif pattern == 'os.system':
+                          review += "```suggestion\nimport subprocess\nresult = subprocess.run(['command', 'arg'], capture_output=True, text=True)\n```\n"
+              
+              review += f"\n#### Testing\n"
+              if has_tests:
+                  review += "✅ Test changes detected\n"
+              else:
+                  review += "⚠️ No test changes detected\n"
+                  review += "**Suggestion**: Add tests for your changes\n"
+                  review += "```suggestion\ndef test_your_new_function():\n    \"\"\"Test the new functionality.\"\"\"\n    # Add test cases here\n    assert your_function(input) == expected_output\n```\n"
+              
+              review += "\n### General Recommendations\n"
+              review += "- Review the changes for logic errors and edge cases\n"
+              review += "- Ensure proper error handling is in place\n"
+              review += "- Verify that the changes align with project standards\n"
+              review += "- Add docstrings to new functions and classes\n"
+              
+              return review
+
+          def review_with_github_models(diff_content: str) -> Dict[str, Any]:
+              """Use GitHub Models API to review code."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return None
+                  
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+                  "Accept": "application/json"
+              }
+              
+              # Using GitHub Models endpoint (Azure AI Inference)
+              url = "https://models.inference.ai.azure.com/chat/completions"
+              
+              prompt = f"""You are an expert code reviewer. Please review the following git diff and provide:
+              1. A brief summary of the changes
+              2. Any potential issues or bugs
+              3. Suggestions for improvements
+              4. Code quality assessment
+              5. When you identify issues, provide specific code suggestions to fix them.
+
+              Format your response with clear sections. When providing code suggestions, format them exactly like this so they can be applied via GitHub's suggestion feature:
+              
+              **Issue**: [Description of the issue]
+              
+              ```suggestion
+              [exact lines of corrected code that should replace the problematic lines]
+              ```
+              
+              IMPORTANT: 
+              - The ```suggestion block must contain the EXACT code to replace the existing lines
+              - Include only the changed lines, not the entire function or file
+              - Match the indentation exactly
+              - Do NOT include diff markers (+ or -) in the suggestion block
+              - Provide complete, syntactically correct code in the suggestion block
+
+              Please be concise and focus on actionable feedback.
+
+              Diff:
+              {diff_content[:4000]}  # Limit context size
+              """
+              
+              payload = {
+                  "model": "gpt-4.1",  # Changed to gpt-4.1 for enhanced code review
+                  "messages": [
+                      {"role": "system", "content": "You are an expert code reviewer who provides detailed feedback with specific code suggestions."},
+                      {"role": "user", "content": prompt}
+                  ],
+                  "temperature": 0.2,  # Lower temperature for more focused suggestions
+                  "max_tokens": 2500  # Increased to accommodate code suggestions
+              }
+              
+              response = requests.post(url, headers=headers, json=payload)
+              if response.status_code == 200:
+                  return response.json()
+              else:
+                  print(f"Error: {response.status_code} - {response.text}")
+                  # Try to provide more detailed error info
+                  try:
+                      error_data = response.json()
+                      print(f"Error details: {json.dumps(error_data, indent=2)}")
+                  except:
+                      pass
+                  return None
+
+          def post_review_comment(repo_full_name: str, pr_number: int, review_body: str, is_ai_review: bool = True):
+              """Post review as PR comment."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return False
+                  
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+              }
+              
+              url = f"https://api.github.com/repos/{repo_full_name}/issues/{pr_number}/comments"
+              
+              if is_ai_review:
+                  title = "## 🤖 Code Review by GitHub Models"
+                  footer = "*Powered by GitHub Models (gpt-4.1)*"
+              else:
+                  title = "## 📋 Automated Code Review"
+                  footer = "*This is a basic automated analysis. Consider having a human review these changes.*"
+              
+              body = f"{title}\n\n{review_body}\n\n---\n{footer}"
+              
+              # If the review contains ```suggestion blocks, we should create a proper review
+              # with line comments instead of a general PR comment
+              if "```suggestion" in review_body:
+                  return create_pr_review_with_suggestions(repo_full_name, pr_number, review_body, title, footer)
+              
+              payload = {
+                  "body": body
+              }
+              
+              response = requests.post(url, headers=headers, json=payload)
+              return response.status_code == 201
+              
+          def create_pr_review_with_suggestions(repo_full_name: str, pr_number: int, review_body: str, title: str, footer: str):
+              """Create a PR review with inline suggestions."""
+              token = os.environ.get('GITHUB_TOKEN')
+              if not token:
+                  print("Error: GITHUB_TOKEN not found in environment")
+                  return False
+                  
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+                  "Accept": "application/vnd.github+json"
+              }
+              
+              # For now, post as a regular comment since parsing diffs for line numbers is complex
+              # GitHub will still recognize suggestion blocks in regular comments
+              url = f"https://api.github.com/repos/{repo_full_name}/issues/{pr_number}/comments"
+              
+              body = f"{title}\n\n{review_body}\n\n---\n{footer}"
+              
+              payload = {
+                  "body": body
+              }
+              
+              response = requests.post(url, headers=headers, json=payload)
+              return response.status_code == 201
+
+          def main():
+              # Check for required environment variables
+              if not os.environ.get("GITHUB_TOKEN"):
+                  print("Error: GITHUB_TOKEN environment variable is not set")
+                  print("Please set up a Personal Access Token with models:read permission")
+                  print("See: https://github.com/settings/tokens")
+                  return 1
+                  
+              repo_full_name = os.environ.get("GITHUB_REPOSITORY")
+              pr_number = int(os.environ.get("PR_NUMBER"))
+              
+              print(f"Reviewing PR #{pr_number} in {repo_full_name}")
+              
+              # Get PR diff
+              diff_content = get_diff_content(repo_full_name, pr_number)
+              if not diff_content:
+                  print("Failed to get PR diff content")
+                  return 1
+                  
+              print(f"Got diff with {len(diff_content)} characters")
+              
+              # Try AI review first
+              print("Attempting AI review...")
+              review_result = review_with_github_models(diff_content)
+              
+              if review_result and review_result.get("choices"):
+                  # Extract review from AI response
+                  try:
+                      review_content = review_result["choices"][0]["message"]["content"]
+                      print("Successfully generated AI review")
+                      success = post_review_comment(repo_full_name, pr_number, review_content, is_ai_review=True)
+                  except (KeyError, IndexError):
+                      print("Failed to extract AI review content")
+                      success = False
+              else:
+                  # Check if the error is permission related
+                  if review_result is None:
+                      print("AI review failed, falling back to local analysis...")
+                      review_content = analyze_diff_locally(diff_content)
+                      success = post_review_comment(repo_full_name, pr_number, review_content, is_ai_review=False)
+                  else:
+                      print("Failed to generate review.")
+                      success = False
+              
+              if success:
+                  print("Review posted successfully!")
+                  return 0
+              else:
+                  print("Failed to post review.")
+                  return 1
+
+          if __name__ == "__main__":
+              import sys
+              sys.exit(main())
+          EOF
+          
+          python review.py

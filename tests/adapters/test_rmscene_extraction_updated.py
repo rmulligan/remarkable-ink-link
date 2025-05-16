@@ -205,13 +205,13 @@ def test_extract_strokes_manually():
 
     if not RMSCENE_AVAILABLE:
         print("❌ Test failed: rmscene not available")
-        return False
+        return False, []
 
     # Create a test .rm file
     test_file_path = create_and_save_test_rm_file()
     if not test_file_path:
         print("❌ Test failed: Could not create test .rm file")
-        return False
+        return False, []
 
     try:
         # Read the .rm file directly using rmscene
