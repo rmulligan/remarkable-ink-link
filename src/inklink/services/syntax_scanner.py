@@ -1,9 +1,9 @@
 """Enhanced scanner for syntax highlighting with regex pattern matching."""
 
-import re
-from typing import List, Dict, Pattern, Optional, Tuple
-from dataclasses import dataclass, field
 import logging
+import re
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Pattern, Tuple
 
 from .syntax_tokens import Token, TokenType
 
