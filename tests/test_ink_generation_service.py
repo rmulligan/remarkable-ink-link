@@ -139,9 +139,13 @@ class TestInkGenerationService:
         assert abs(first_point.y - custom_y) < 50
 
 
-@pytest.mark.skipif(RMSCENE_AVAILABLE, reason="Test for when rmscene is not available")
-def test_rmscene_not_available():
+def test_rmscene_not_available(monkeypatch):
     """Test behavior when rmscene is not available."""
+    # Mock RMSCENE_AVAILABLE to be False
+    monkeypatch.setattr(
+        "inklink.services.ink_generation_service.RMSCENE_AVAILABLE", False
+    )
+
     service = InkGenerationService()
 
     with pytest.raises(ImportError):
