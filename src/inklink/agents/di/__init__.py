@@ -165,4 +165,8 @@ def setup_agents():
             agent = factory()
             registry._agents[agent_name] = agent
         else:
-            print(f"Warning: No factory found for agent class {agent_class_name}")
+            import logging
+
+            logging.getLogger(__name__).warning(
+                f"No factory found for agent class {agent_class_name}"
+            )
