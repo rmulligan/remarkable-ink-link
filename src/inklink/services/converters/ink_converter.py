@@ -9,7 +9,7 @@ import os
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
-from inklink.services.ink_generation_service import get_ink_generation_service
+from inklink.services.ink_generation_service import InkGenerationService
 from inklink.utils import retry_operation
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class InkConverter(BaseConverter):
             temp_dir: Directory for temporary files
         """
         super().__init__(temp_dir)
-        self.ink_service = get_ink_generation_service()
+        self.ink_service = InkGenerationService()
 
     @staticmethod
     def can_convert(content_type: str) -> bool:
