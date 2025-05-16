@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
+from inklink.agents.exceptions import AgentError
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
 
@@ -21,7 +21,7 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
         self,
         config: AgentConfig,
         limitless_adapter: LimitlessAdapter,
-        ollama_adapter: EnhancedOllamaAdapter,
+        ollama_adapter: OllamaAdapter,
         storage_path: Path,
     ):
         """Initialize the Limitless insight agent."""
@@ -110,7 +110,7 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
                 # Wait before next check (5 minutes)
                 await asyncio.sleep(300)
 
-            except AgentException as e:
+            except AgentError as e:
                 self.logger.error(f"Agent error: {e}")
                 await asyncio.sleep(60)  # Shorter wait on error
             except Exception as e:
@@ -144,7 +144,7 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
         try:
             # Validate configuration
             if not self.config.ollama_model:
-                raise AgentConfigurationError("Ollama model not configured")
+                raise AgentError("Ollama model not configured")
 
             # Extract action items
             action_items_prompt = (
@@ -187,12 +187,12 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
             with open(analysis_path, "w") as f:
                 json.dump(analysis, f, indent=2)
 
-        except AgentConfigurationError as e:
+        except AgentError as e:
             self.logger.error(f"Configuration error: {e}")
             raise
         except Exception as e:
             self.logger.error(f"Error analyzing transcript: {e}")
-            raise AgentException(f"Failed to analyze transcript: {e}")
+            raise AgentError(f"Failed to analyze transcript: {e}")
 
     async def _handle_get_spoken_summary(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle request for spoken content summary."""
