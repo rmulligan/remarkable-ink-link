@@ -34,7 +34,6 @@ class BaseController(ABC):
             *args: Variable positional arguments
             **kwargs: Variable keyword arguments
         """
-        pass
 
     def get_server(self) -> ServerType:
         """Get the HTTP server instance."""

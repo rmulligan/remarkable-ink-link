@@ -1,8 +1,8 @@
 """Base classes for the agent framework."""
 
 from .agent import LocalAgent
-from .registry import AgentRegistry
 from .lifecycle import AgentLifecycle
+from .registry import AgentRegistry
 
 __all__ = [
     "LocalAgent",

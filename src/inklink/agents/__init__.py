@@ -5,8 +5,8 @@ with MCP protocol support and Ollama integration.
 """
 
 from .base.agent import LocalAgent
-from .base.registry import AgentRegistry
 from .base.lifecycle import AgentLifecycle
+from .base.registry import AgentRegistry
 
 __all__ = [
     "LocalAgent",

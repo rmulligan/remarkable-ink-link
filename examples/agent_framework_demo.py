@@ -4,17 +4,17 @@ import asyncio
 import logging
 from pathlib import Path
 
+from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
+from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.base.lifecycle import AgentLifecycle
+from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.core import (
-    LimitlessContextualInsightAgent,
     DailyBriefingAgent,
+    LimitlessContextualInsightAgent,
     ProactiveProjectTrackerAgent,
 )
-from inklink.adapters.ollama_adapter import OllamaAdapter
-from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.remarkable_adapter import RemarkableAdapter
 
 
 async def main():

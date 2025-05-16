@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
 
