@@ -6,8 +6,8 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from inklink.services.ink_generation_service import InkGenerationService  # noqa: E402
 from inklink.services.character_strokes import CharacterStrokes  # noqa: E402
+from inklink.services.ink_generation_service import InkGenerationService  # noqa: E402
 
 
 def create_demo_notebook():

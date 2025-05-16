@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Test the enhanced Control Center implementation."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.inklink.control_center.core_enhanced import EnhancedInkControlCenter
 from src.inklink.control_center.state_manager import StateEventType

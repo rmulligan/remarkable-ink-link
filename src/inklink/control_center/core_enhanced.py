@@ -12,7 +12,7 @@ from inklink.services.remarkable_service import RemarkableService
 
 from .canvas import DynamicCanvas
 from .processor import CommandType, InkCommand, InkProcessor
-from .state_manager import ControlCenterState, StateEventType, StateEvent
+from .state_manager import ControlCenterState, StateEvent, StateEventType
 
 
 class EnhancedInkControlCenter:

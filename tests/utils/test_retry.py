@@ -2,10 +2,11 @@
 
 import asyncio
 import time
-import pytest
 from unittest.mock import Mock, patch
 
-from inklink.utils.retry import retry, RetryError
+import pytest
+
+from inklink.utils.retry import RetryError, retry
 
 
 class TestRetryError(Exception):
