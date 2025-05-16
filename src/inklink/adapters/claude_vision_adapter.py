@@ -7,7 +7,6 @@ to recognize handwritten text from rendered images of reMarkable notebook pages.
 """
 
 import concurrent.futures
-import json
 import logging
 import os
 import random
@@ -19,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 # PIL for image processing
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter
 
 from .adapter import Adapter
 

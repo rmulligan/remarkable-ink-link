@@ -23,7 +23,6 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime
 from urllib.parse import urljoin
 
 import requests

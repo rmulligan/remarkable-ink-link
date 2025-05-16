@@ -8,8 +8,6 @@ import logging
 import os
 import shutil
 import sys
-import uuid
-from datetime import datetime
 
 # Setup logging
 logging.basicConfig(

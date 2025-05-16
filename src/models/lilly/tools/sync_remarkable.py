@@ -4,13 +4,9 @@ Sync reMarkable notebooks to Lilly's workspace.
 """
 
 import argparse
-import json
 import os
 import shutil
 import subprocess
-import sys
-import tempfile
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # Configure paths

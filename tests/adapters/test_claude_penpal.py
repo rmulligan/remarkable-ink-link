@@ -7,11 +7,8 @@ and pre-filtering functionality to process handwritten queries.
 
 import argparse
 import logging
-import os
 import sys
 import time
-
-from inklink.config import CONFIG
 from inklink.services.claude_penpal_service import ClaudePenpalService
 
 # Setup logging

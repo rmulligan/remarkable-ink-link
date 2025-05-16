@@ -1,13 +1,9 @@
 """Tests for the Claude Vision Adapter."""
-
-import concurrent.futures
-import os
-import tempfile
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from PIL import Image, ImageEnhance
+from PIL import Image
 
 from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.adapters.handwriting_adapter import HandwritingAdapter

@@ -2,11 +2,9 @@
 """Test Claude Penpal Service with properly structured notebook."""
 
 import argparse
-import json
 import logging
 import os
 import sys
-import time
 
 # Set up logging
 logging.basicConfig(

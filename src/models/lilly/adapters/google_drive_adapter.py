@@ -14,7 +14,6 @@ import os
 import tempfile
 from dataclasses import dataclass
 from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
-from urllib.parse import quote
 
 # Google API client libraries
 try:

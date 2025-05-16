@@ -2,12 +2,9 @@
 """
 Live test script for Limitless integration.
 """
-
-import json
 import logging
 import os
 import sys
-from datetime import datetime, timedelta
 
 import requests
 

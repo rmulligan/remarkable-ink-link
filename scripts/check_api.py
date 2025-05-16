@@ -2,9 +2,6 @@
 """
 Simple test to check Limitless API connectivity.
 """
-
-import json
-import os
 from pprint import pprint
 
 import requests

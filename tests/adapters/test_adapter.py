@@ -2,11 +2,8 @@
 """
 Simple test script for Limitless adapter.
 """
-
-import json
 import os
 import sys
-from datetime import datetime
 
 # Need to add path before local imports
 if os.path.dirname(os.path.abspath(__file__)) not in sys.path:

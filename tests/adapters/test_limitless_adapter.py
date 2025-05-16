@@ -2,11 +2,8 @@
 """
 Simple test script for Limitless adapter.
 """
-
-import json
 import os
 import sys
-from datetime import datetime
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.."))

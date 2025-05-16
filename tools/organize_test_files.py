@@ -6,7 +6,6 @@ Script to organize test files into appropriate test directories based on their c
 import os
 import re
 import shutil
-import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 

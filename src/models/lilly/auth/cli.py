@@ -6,7 +6,6 @@ used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 """
 
 import getpass
-import os
 from typing import Optional
 
 import click

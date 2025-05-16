@@ -8,12 +8,10 @@ for testing purposes.
 """
 
 import importlib
-import inspect
 import logging
 import os
 import sys
 from functools import wraps
-from unittest.mock import MagicMock
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.dirname(__file__))

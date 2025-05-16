@@ -2,11 +2,9 @@
 """Simple test of Claude Penpal Service without tagging."""
 
 import argparse
-import json
 import logging
 import os
 import sys
-import time
 
 # Set up logging
 logging.basicConfig(
