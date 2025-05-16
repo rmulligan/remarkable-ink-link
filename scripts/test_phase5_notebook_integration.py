@@ -100,8 +100,23 @@ Both implementations have O(log n) time complexity.
     class MockDocService:
         pass
 
+    # Create mock services to avoid initialization issues
+    class MockRemarkableAdapter:
+        def __init__(self):
+            pass
+
+    class MockRemarkableService:
+        def __init__(self, adapter=None):
+            self.adapter = adapter or MockRemarkableAdapter()
+
     mock_doc_service = MockDocService()
-    service = AugmentedNotebookServiceV2(document_service=mock_doc_service)
+    mock_remarkable_service = MockRemarkableService()
+
+    service = AugmentedNotebookServiceV2(
+        document_service=mock_doc_service,
+        remarkable_service=mock_remarkable_service,
+        knowledge_graph_service=None,
+    )
 
     # Extract code blocks
     code_blocks = service._extract_code_blocks(response)

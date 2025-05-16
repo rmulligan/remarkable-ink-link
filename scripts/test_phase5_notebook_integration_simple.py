@@ -30,7 +30,7 @@ result = hello_world()
 print(f"Result: {result}")
 '''
 
-    compiler = SyntaxHighlightCompilerV2()
+    compiler = SyntaxHighlightCompilerV2()  # noqa: F841
     metadata = CodeMetadata(
         filename="hello.py",
         language="Python",
