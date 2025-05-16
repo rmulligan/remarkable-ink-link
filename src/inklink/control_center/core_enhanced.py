@@ -1,6 +1,7 @@
 """Enhanced core control center implementation with improved state management."""
 
 import asyncio
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
