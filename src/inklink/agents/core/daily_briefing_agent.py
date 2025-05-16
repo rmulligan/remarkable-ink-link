@@ -277,8 +277,6 @@ class DailyBriefingAgent(MCPEnabledAgent):
 
     async def _handle_generate_briefing(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle manual briefing generation request."""
-        date_str = data.get("date")
-
         # Generate briefing for today
         return await self._generate_daily_briefing()
 

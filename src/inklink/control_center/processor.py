@@ -293,7 +293,7 @@ class GestureDetector:
 
     @staticmethod
     def _combine_bounds(
-        bounds_list: List[Tuple[float, float, float, float]]
+        bounds_list: List[Tuple[float, float, float, float]],
     ) -> Tuple[float, float, float, float]:
         """Combine multiple bounds into one."""
         if not bounds_list:
