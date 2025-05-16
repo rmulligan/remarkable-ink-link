@@ -8,12 +8,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from inklink.services.syntax_highlight_compiler_v2 import (  # noqa: E402
-    SyntaxHighlightCompilerV2,
-    RenderOptions,
     CodeMetadata,
     Language,
+    RenderOptions,
+    SyntaxHighlightCompilerV2,
 )
-from inklink.services.syntax_layout import PageSize, Margins, FontMetrics  # noqa: E402
+from inklink.services.syntax_layout import FontMetrics, Margins, PageSize  # noqa: E402
 
 
 def create_test_metadata() -> CodeMetadata:

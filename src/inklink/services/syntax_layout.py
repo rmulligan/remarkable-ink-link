@@ -1,10 +1,10 @@
 """Layout calculator for syntax highlighting with advanced formatting."""
 
+import logging
 import math
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
 from enum import Enum
-import logging
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
