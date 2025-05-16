@@ -1,7 +1,6 @@
 """Dynamic canvas system for the control center."""
 
-import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from .zones import BaseZone
@@ -78,9 +77,12 @@ class DynamicCanvas:
         pos = CanvasPosition(position[0], position[1])
 
         for zone_id, canvas_zone in self.zones.items():
-            if canvas_zone.visible and canvas_zone.interactive:
-                if pos.in_bounds(canvas_zone.position, canvas_zone.size):
-                    return zone_id
+            if (
+                canvas_zone.visible
+                and canvas_zone.interactive
+                and pos.in_bounds(canvas_zone.position, canvas_zone.size)
+            ):
+                return zone_id
 
         return None
 
@@ -157,13 +159,10 @@ class DynamicCanvas:
         """Convert canvas to SVG format."""
         svg_parts = [
             f'<svg width="{self.width}" height="{self.height}" '
-            'xmlns="http://www.w3.org/2000/svg">'
+            'xmlns="http://www.w3.org/2000/svg">',
+            f'<rect width="{self.width}" height="{self.height}" ' 'fill="white"/>',
+            "</svg>",
         ]
-
-        # Add background
-        svg_parts.append(
-            f'<rect width="{self.width}" height="{self.height}" ' 'fill="white"/>'
-        )
 
         # Render each zone
         for zone_id, canvas_zone in self.zones.items():
@@ -185,8 +184,6 @@ class DynamicCanvas:
                 svg_parts.append(zone_svg)
 
                 svg_parts.append("</g>")
-
-        svg_parts.append("</svg>")
         return "\n".join(svg_parts)
 
 
@@ -202,7 +199,8 @@ class LayoutEngine:
         elif layout_type == "stack":
             self._apply_stack_layout(zones)
 
-    def _apply_grid_layout(self, zones: Dict[str, CanvasZone]):
+    @staticmethod
+    def _apply_grid_layout(zones: Dict[str, CanvasZone]):
         """Apply a grid layout."""
         visible_zones = [z for z in zones.values() if z.visible]
         if not visible_zones:
@@ -226,7 +224,8 @@ class LayoutEngine:
             zone.position = (col * cell_width, row * cell_height)
             zone.size = (cell_width - 10, cell_height - 10)  # Add padding
 
-    def _apply_flow_layout(self, zones: Dict[str, CanvasZone]):
+    @staticmethod
+    def _apply_flow_layout(zones: Dict[str, CanvasZone]):
         """Apply a flow layout (left to right, top to bottom)."""
         visible_zones = [z for z in zones.values() if z.visible]
         if not visible_zones:
@@ -253,7 +252,8 @@ class LayoutEngine:
             row_width += zone.size[0] + 10
             max_height = max(max_height, zone.size[1])
 
-    def _apply_stack_layout(self, zones: Dict[str, CanvasZone]):
+    @staticmethod
+    def _apply_stack_layout(zones: Dict[str, CanvasZone]):
         """Apply a vertical stack layout."""
         visible_zones = [z for z in zones.values() if z.visible]
         if not visible_zones:

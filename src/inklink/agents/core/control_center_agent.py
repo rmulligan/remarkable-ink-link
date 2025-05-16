@@ -336,14 +336,12 @@ class ControlCenterAgent(MCPEnabledAgent):
         if request_type == "create_control_center":
             return await self._handle_generate_notebook({})
 
-        elif request_type == "process_ink":
+        if request_type == "process_ink":
             return await self._handle_process_ink_input(request.get("data", {}))
 
-        elif request_type == "sync":
+        if request_type == "sync":
             return await self._handle_sync_status({})
-
-        else:
-            return {"error": f"Unknown request type: {request_type}"}
+        return {"error": f"Unknown request type: {request_type}"}
 
     async def start(self):
         """Start the control center agent."""

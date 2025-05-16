@@ -1,13 +1,12 @@
 """Test suite for agent monitoring and error handling."""
 
 import asyncio
-from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
-from inklink.agents.base.agent import AgentConfig, AgentState, LocalAgent
+from inklink.agents.base.agent import AgentConfig, LocalAgent
 from inklink.agents.base.exceptions import (
     AgentCommunicationError,
     AgentConfigurationError,
@@ -371,13 +370,12 @@ class TestEnhancedOllamaAdapter:
                 response.text = AsyncMock(return_value="Server error")
                 response.raise_for_status.side_effect = Exception("HTTP 500")
                 return response
-            else:
-                # Success on third try
-                response = Mock()
-                response.status = 200
-                response.json = AsyncMock(return_value={"response": "Success"})
-                response.raise_for_status = Mock()
-                return response
+            # Success on third try
+            response = Mock()
+            response.status = 200
+            response.json = AsyncMock(return_value={"response": "Success"})
+            response.raise_for_status = Mock()
+            return response
 
         # Patch the HTTP client
         with patch.object(adapter.client, "post", side_effect=mock_post):
@@ -394,9 +392,10 @@ class TestEnhancedOllamaAdapter:
         async def mock_post(*args, **kwargs):
             await asyncio.sleep(5)  # Longer than timeout
 
-        with patch.object(adapter.client, "post", side_effect=mock_post):
-            with pytest.raises(AgentTimeoutError):
-                await adapter.query("model", "prompt")
+        with patch.object(adapter.client, "post", side_effect=mock_post), pytest.raises(
+            AgentTimeoutError
+        ):
+            await adapter.query("model", "prompt")
 
     @pytest.mark.asyncio
     async def test_health_check(self, adapter):

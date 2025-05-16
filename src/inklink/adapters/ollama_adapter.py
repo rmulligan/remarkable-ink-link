@@ -1,6 +1,5 @@
 """Ollama adapter for local LLM integration."""
 
-import asyncio
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -41,9 +40,8 @@ class OllamaAdapter:
                 if response.status == 200:
                     data = await response.json()
                     return data.get("models", [])
-                else:
-                    self.logger.error(f"Failed to list models: {response.status}")
-                    return []
+                self.logger.error(f"Failed to list models: {response.status}")
+                return []
         except Exception as e:
             self.logger.error(f"Error listing models: {e}")
             return []
@@ -64,9 +62,8 @@ class OllamaAdapter:
                             progress = json.loads(line)
                             self.logger.info(f"Pull progress: {progress}")
                     return True
-                else:
-                    self.logger.error(f"Failed to pull model: {response.status}")
-                    return False
+                self.logger.error(f"Failed to pull model: {response.status}")
+                return False
         except Exception as e:
             self.logger.error(f"Error pulling model: {e}")
             return False
@@ -105,10 +102,9 @@ class OllamaAdapter:
                 if response.status == 200:
                     result = await response.json()
                     return result["message"]["content"]
-                else:
-                    error = await response.text()
-                    self.logger.error(f"Query failed: {error}")
-                    raise Exception(f"Query failed: {error}")
+                error = await response.text()
+                self.logger.error(f"Query failed: {error}")
+                raise Exception(f"Query failed: {error}")
 
         except Exception as e:
             self.logger.error(f"Error querying model: {e}")
@@ -176,10 +172,9 @@ class OllamaAdapter:
                             progress = json.loads(line)
                             self.logger.info(f"Create progress: {progress}")
                     return True
-                else:
-                    error = await response.text()
-                    self.logger.error(f"Failed to create model: {error}")
-                    return False
+                error = await response.text()
+                self.logger.error(f"Failed to create model: {error}")
+                return False
 
         except Exception as e:
             self.logger.error(f"Error creating model: {e}")
@@ -198,10 +193,9 @@ class OllamaAdapter:
                 if response.status == 200:
                     self.logger.info(f"Deleted model: {model_name}")
                     return True
-                else:
-                    error = await response.text()
-                    self.logger.error(f"Failed to delete model: {error}")
-                    return False
+                error = await response.text()
+                self.logger.error(f"Failed to delete model: {error}")
+                return False
 
         except Exception as e:
             self.logger.error(f"Error deleting model: {e}")
@@ -219,9 +213,8 @@ class OllamaAdapter:
             ) as response:
                 if response.status == 200:
                     return await response.json()
-                else:
-                    self.logger.error(f"Failed to get model info: {response.status}")
-                    return None
+                self.logger.error(f"Failed to get model info: {response.status}")
+                return None
 
         except Exception as e:
             self.logger.error(f"Error getting model info: {e}")

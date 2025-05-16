@@ -50,12 +50,10 @@ class LocalAgent(ABC):
     @abstractmethod
     async def _agent_logic(self) -> None:
         """Main agent logic - implemented by subclasses."""
-        pass
 
     @abstractmethod
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming requests - implemented by subclasses."""
-        pass
 
     async def start(self) -> None:
         """Start the agent."""
@@ -125,13 +123,9 @@ class LocalAgent(ABC):
 
     async def _initialize_mcp(self) -> None:
         """Initialize MCP server for the agent."""
-        # TODO: Implement MCP server initialization
-        pass
 
     async def _cleanup_mcp(self) -> None:
         """Clean up MCP server resources."""
-        # TODO: Implement MCP server cleanup
-        pass
 
     def get_state(self) -> AgentState:
         """Get current agent state."""

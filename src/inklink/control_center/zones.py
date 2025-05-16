@@ -1,7 +1,7 @@
 """Zone implementations for the control center."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -32,32 +32,26 @@ class BaseZone(ABC):
     @abstractmethod
     async def handle_strokes(self, strokes: List[Stroke]) -> Dict[str, Any]:
         """Handle ink strokes within this zone."""
-        pass
 
     @abstractmethod
     async def update(self):
         """Update the zone's state."""
-        pass
 
     @abstractmethod
     async def refresh(self):
         """Force a complete refresh of the zone."""
-        pass
 
     @abstractmethod
     def render(self) -> Dict[str, Any]:
         """Render the zone's content."""
-        pass
 
     @abstractmethod
     def to_svg(self, width: int, height: int) -> str:
         """Convert zone to SVG format."""
-        pass
 
     @abstractmethod
     async def generate_page(self) -> Dict[str, Any]:
         """Generate page data for the notebook."""
-        pass
 
     def add_element(self, element: ZoneElement):
         """Add an element to the zone."""
@@ -129,8 +123,6 @@ class RoadmapZone(BaseZone):
 
     async def refresh(self):
         """Refresh roadmap data."""
-        # Would fetch latest roadmap data from backend
-        pass
 
     def render(self) -> Dict[str, Any]:
         """Render the roadmap."""
@@ -145,13 +137,10 @@ class RoadmapZone(BaseZone):
 
     def to_svg(self, width: int, height: int) -> str:
         """Convert roadmap to SVG."""
-        svg_parts = []
-
-        # Draw timeline
-        svg_parts.append(
+        svg_parts = [
             f'<line x1="50" y1="{height // 2}" x2="{width - 50}" y2="{height // 2}" '
             'stroke="black" stroke-width="2"/>'
-        )
+        ]
 
         # Draw milestones
         for milestone in self.milestones:
@@ -175,9 +164,8 @@ class RoadmapZone(BaseZone):
         """Generate page for the roadmap."""
         return {"title": "Roadmap", "content": self.render()}
 
-    def _get_stroke_bounds(
-        self, strokes: List[Stroke]
-    ) -> Tuple[float, float, float, float]:
+    @staticmethod
+    def _get_stroke_bounds(strokes: List[Stroke]) -> Tuple[float, float, float, float]:
         """Get combined bounds of strokes."""
         all_points = []
         for stroke in strokes:
@@ -279,13 +267,9 @@ class KanbanZone(BaseZone):
 
     async def update(self):
         """Update kanban state."""
-        # Could update task priorities, check deadlines, etc.
-        pass
 
     async def refresh(self):
         """Refresh kanban data."""
-        # Would fetch latest task data from backend
-        pass
 
     def render(self) -> Dict[str, Any]:
         """Render the kanban board."""
@@ -398,13 +382,9 @@ class AgentDashboardZone(BaseZone):
 
     async def update(self):
         """Update agent dashboard."""
-        # Could check agent health, update metrics, etc.
-        pass
 
     async def refresh(self):
         """Refresh agent data."""
-        # Would fetch latest agent status from backend
-        pass
 
     def render(self) -> Dict[str, Any]:
         """Render the agent dashboard."""
@@ -495,11 +475,9 @@ class DiscussionZone(BaseZone):
 
     async def update(self):
         """Update discussion zone."""
-        pass
 
     async def refresh(self):
         """Refresh discussion data."""
-        pass
 
     def render(self) -> Dict[str, Any]:
         """Render the discussion area."""
@@ -566,11 +544,9 @@ class QuickActionsZone(BaseZone):
 
     async def update(self):
         """Update quick actions."""
-        pass
 
     async def refresh(self):
         """Refresh quick actions."""
-        pass
 
     def render(self) -> Dict[str, Any]:
         """Render the quick actions."""

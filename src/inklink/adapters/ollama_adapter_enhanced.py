@@ -72,10 +72,9 @@ class OllamaAdapter:
                                     self.config.retry_delay * (2**attempt)
                                 )
                                 continue
-                            else:
-                                raise OllamaConnectionError(
-                                    f"Server error: {response.status} - {await response.text()}"
-                                )
+                            raise OllamaConnectionError(
+                                f"Server error: {response.status} - {await response.text()}"
+                            )
 
                         return response
 
@@ -108,8 +107,7 @@ class OllamaAdapter:
             if response.status == 200:
                 data = await response.json()
                 return data.get("models", [])
-            else:
-                raise OllamaModelError(f"Failed to list models: {response.status}")
+            raise OllamaModelError(f"Failed to list models: {response.status}")
 
         except OllamaConnectionError:
             raise
@@ -144,9 +142,8 @@ class OllamaAdapter:
                                 await progress_callback(progress)
 
                     return True
-                else:
-                    error_text = await response.text()
-                    raise OllamaModelError(f"Failed to pull model: {error_text}")
+                error_text = await response.text()
+                raise OllamaModelError(f"Failed to pull model: {error_text}")
 
         except OllamaConnectionError:
             raise
@@ -190,9 +187,8 @@ class OllamaAdapter:
             if response.status == 200:
                 result = await response.json()
                 return result["message"]["content"]
-            else:
-                error = await response.text()
-                raise OllamaQueryError(f"Query failed: {error}")
+            error = await response.text()
+            raise OllamaQueryError(f"Query failed: {error}")
 
         except (OllamaConnectionError, OllamaQueryError):
             raise

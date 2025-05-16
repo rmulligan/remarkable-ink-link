@@ -32,7 +32,8 @@ class ConfigLoader:
         self._config = yaml.safe_load(config_str)
         return self._config
 
-    def _substitute_env_vars(self, config_str: str) -> str:
+    @staticmethod
+    def _substitute_env_vars(config_str: str) -> str:
         """Substitute environment variables in the format ${VAR} or ${VAR:default}."""
         import re
 

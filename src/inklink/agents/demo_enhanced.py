@@ -3,7 +3,6 @@
 import asyncio
 import logging
 from datetime import time
-from pathlib import Path
 from typing import Any, Dict
 
 from dependency_injector.wiring import Provide, inject
@@ -11,8 +10,8 @@ from dependency_injector.wiring import Provide, inject
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
-from inklink.agents.base.agent import AgentConfig, LocalAgent
-from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
+from inklink.agents.base.agent import AgentConfig
+from inklink.agents.base.exceptions import AgentConfigurationError
 from inklink.agents.base.monitoring import MonitoringService
 from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.di import AgentContainer, init_container
@@ -83,8 +82,6 @@ class EnhancedDemo:
                 initial_state="active",
                 # Missing ollama_model
             )
-            # This should raise an error when trying to use Ollama
-            pass
         except AgentConfigurationError as e:
             self.logger.error(f"Configuration error caught: {e}")
 

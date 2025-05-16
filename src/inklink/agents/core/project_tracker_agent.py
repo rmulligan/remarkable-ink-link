@@ -344,8 +344,7 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
 
         if project_name in self._projects:
             return self._projects[project_name]
-        else:
-            return {"error": f"Project '{project_name}' not found"}
+        return {"error": f"Project '{project_name}' not found"}
 
     async def _handle_list_projects(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle list projects request."""

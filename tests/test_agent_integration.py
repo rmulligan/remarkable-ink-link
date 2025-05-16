@@ -1,21 +1,14 @@
 """Integration tests for agent framework."""
 
 import asyncio
-from datetime import time
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
-from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
-from inklink.agents.base.monitoring import HealthStatus, MonitoringService
-from inklink.agents.base.registry import AgentRegistry
-from inklink.agents.core.daily_briefing_agent import DailyBriefingAgent
-from inklink.agents.core.limitless_insight_agent import LimitlessContextualInsightAgent
-from inklink.agents.core.project_tracker_agent import ProactiveProjectTrackerAgent
-from inklink.agents.di import AgentContainer, init_container
+from inklink.agents.base.exceptions import AgentException
+from inklink.agents.base.monitoring import HealthStatus
+from inklink.agents.di import init_container
 
 
 class TestAgentIntegration:
