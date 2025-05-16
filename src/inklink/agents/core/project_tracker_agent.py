@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Optional, Set
 
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
-from inklink.adapters.ollama_adapter import OllamaAdapter
+from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
 
 
 class ProactiveProjectTrackerAgent(MCPEnabledAgent):
@@ -17,7 +18,7 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
     def __init__(
         self,
         config: AgentConfig,
-        ollama_adapter: OllamaAdapter,
+        ollama_adapter: EnhancedOllamaAdapter,
         storage_path: Path,
         check_interval: int = 3600,
     ):  # Check every hour
@@ -150,8 +151,11 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 # Wait for next check
                 await asyncio.sleep(self.check_interval)
 
+            except AgentException as e:
+                self.logger.error(f"Agent error: {e}")
+                await asyncio.sleep(60)
             except Exception as e:
-                self.logger.error(f"Error in agent logic: {e}")
+                self.logger.error(f"Unexpected error in agent logic: {e}")
                 await asyncio.sleep(60)
 
     async def _check_spoken_commitments(self) -> None:
@@ -182,8 +186,12 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 Format as JSON.
                 """
 
+                # Validate configuration
+                if not self.config.ollama_model:
+                    raise AgentConfigurationError("Ollama model not configured")
+
                 analysis = await self.ollama_adapter.query(
-                    self.config.ollama_model or "llama3:8b",
+                    self.config.ollama_model,
                     analysis_prompt,
                     context=context["context"],
                 )
@@ -205,8 +213,12 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 except json.JSONDecodeError:
                     self.logger.warning("Failed to parse commitment analysis")
 
+        except AgentConfigurationError as e:
+            self.logger.error(f"Configuration error: {e}")
+            raise
         except Exception as e:
             self.logger.error(f"Error checking spoken commitments: {e}")
+            raise AgentException(f"Failed to check spoken commitments: {e}")
 
     async def _update_project_statuses(self) -> None:
         """Update status of all projects based on recent activity."""

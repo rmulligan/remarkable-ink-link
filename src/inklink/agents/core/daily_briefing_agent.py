@@ -8,9 +8,10 @@ from typing import Any, Dict, List, Optional
 
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
-from inklink.adapters.ollama_adapter import OllamaAdapter
+from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.services.remarkable_service import RemarkableService
+from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
 
 
 class DailyBriefingAgent(MCPEnabledAgent):
@@ -19,7 +20,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
     def __init__(
         self,
         config: AgentConfig,
-        ollama_adapter: OllamaAdapter,
+        ollama_adapter: EnhancedOllamaAdapter,
         remarkable_adapter: RemarkableAdapter,
         storage_path: Path,
         briefing_time: time = time(6, 0),
@@ -81,8 +82,11 @@ class DailyBriefingAgent(MCPEnabledAgent):
                 # Wait for next check (1 minute)
                 await asyncio.sleep(60)
 
+            except AgentException as e:
+                self.logger.error(f"Agent error: {e}")
+                await asyncio.sleep(60)
             except Exception as e:
-                self.logger.error(f"Error in agent logic: {e}")
+                self.logger.error(f"Unexpected error in agent logic: {e}")
                 await asyncio.sleep(60)
 
     async def _generate_daily_briefing(self) -> Dict[str, Any]:
@@ -126,8 +130,11 @@ class DailyBriefingAgent(MCPEnabledAgent):
 
             return briefing_record
 
+        except AgentException as e:
+            self.logger.error(f"Agent error generating daily briefing: {e}")
+            return {"error": str(e)}
         except Exception as e:
-            self.logger.error(f"Error generating daily briefing: {e}")
+            self.logger.error(f"Unexpected error generating daily briefing: {e}")
             return {"error": str(e)}
 
     async def _gather_briefing_data(self) -> Dict[str, Any]:
@@ -169,6 +176,10 @@ class DailyBriefingAgent(MCPEnabledAgent):
 
     async def _create_briefing_content(self, data: Dict[str, Any]) -> str:
         """Create the briefing content using Ollama."""
+        # Validate configuration
+        if not self.config.ollama_model:
+            raise AgentConfigurationError("Ollama model not configured")
+
         # Prepare the prompt
         prompt = f"""
         Create a comprehensive daily briefing based on the following information:
@@ -200,9 +211,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
         """
 
         # Generate briefing using Ollama
-        briefing = await self.ollama_adapter.query(
-            self.config.ollama_model or "llama3:8b", prompt
-        )
+        briefing = await self.ollama_adapter.query(self.config.ollama_model, prompt)
 
         return briefing
 
