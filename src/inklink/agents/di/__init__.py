@@ -1,5 +1,6 @@
 """Dependency injection for the agent framework."""
 
+import logging
 from pathlib import Path
 from typing import Any, Dict
 
@@ -165,8 +166,6 @@ def setup_agents():
             agent = factory()
             registry._agents[agent_name] = agent
         else:
-            import logging
-
             logging.getLogger(__name__).warning(
                 f"No factory found for agent class {agent_class_name}"
             )
