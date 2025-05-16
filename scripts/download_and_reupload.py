@@ -162,9 +162,8 @@ def main():
         if success:
             logger.info(f"✅ SUCCESS: Upload succeeded: {message}")
             return True
-        else:
-            logger.error(f"❌ FAILURE: Upload failed: {message}")
-            return False
+        logger.error(f"❌ FAILURE: Upload failed: {message}")
+        return False
 
     finally:
         # Clean up

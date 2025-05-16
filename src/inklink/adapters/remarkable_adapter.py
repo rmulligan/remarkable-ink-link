@@ -172,9 +172,8 @@ class RemarkableAdapter(Adapter):
             if result.returncode == 0:
                 logger.info(f"File uploaded successfully: {title}")
                 return True, f"File uploaded to reMarkable: {title}"
-            else:
-                logger.error(f"Upload failed: {result.stderr or result.stdout}")
-                return False, result.stderr or result.stdout or "Upload failed"
+            logger.error(f"Upload failed: {result.stderr or result.stdout}")
+            return False, result.stderr or result.stdout or "Upload failed"
 
         except Exception as e:
             logger.error(f"Error uploading file: {str(e)}")
@@ -229,9 +228,8 @@ class RemarkableAdapter(Adapter):
             if result.returncode == 0:
                 logger.info(f"File downloaded successfully: {output_path}")
                 return True, output_path
-            else:
-                logger.error(f"Download failed: {result.stderr}")
-                return False, result.stderr or "Download failed"
+            logger.error(f"Download failed: {result.stderr}")
+            return False, result.stderr or "Download failed"
 
         except Exception as e:
             logger.error(f"Error downloading file: {str(e)}")

@@ -84,9 +84,8 @@ class MarkdownConverter(BaseConverter):
                         f"Successfully converted to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error(f"Markdown conversion failed: {result}")
-                    return None
+                logger.error(f"Markdown conversion failed: {result}")
+                return None
             else:
                 logger.error("drawj2d not available for Markdown conversion")
                 return None

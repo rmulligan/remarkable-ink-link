@@ -67,9 +67,8 @@ class HTMLConverter(BaseConverter):
                     f"Successfully converted HTML to reMarkable format: {result}"
                 )
                 return result
-            else:
-                logger.error(f"HTML conversion failed: {result}")
-                return None
+            logger.error(f"HTML conversion failed: {result}")
+            return None
         except Exception as e:
             logger.error(f"Error converting HTML: {str(e)}")
             return None

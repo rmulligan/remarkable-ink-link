@@ -126,15 +126,13 @@ class DocumentService(IDocumentService):
                     self._update_index_notebook(content)
 
                     return result
-                else:
-                    logger.error("Conversion failed using primary converter")
-                    # If primary converter fails, try legacy method
-                    if self.use_drawj2d:
-                        logger.info("Falling back to legacy conversion method...")
-                        return self.create_rmdoc_legacy(url, qr_path, content)
-                    else:
-                        logger.error("No available conversion method.")
-                        return None
+                logger.error("Conversion failed using primary converter")
+                # If primary converter fails, try legacy method
+                if self.use_drawj2d:
+                    logger.info("Falling back to legacy conversion method...")
+                    return self.create_rmdoc_legacy(url, qr_path, content)
+                logger.error("No available conversion method.")
+                return None
             else:
                 logger.error("No suitable converter found for structured content")
                 return None
@@ -182,9 +180,8 @@ class DocumentService(IDocumentService):
                         f"Successfully converted HTML to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error("HTML conversion failed")
-                    return None
+                logger.error("HTML conversion failed")
+                return None
             else:
                 logger.error("No HTML converter found")
                 return None
@@ -226,9 +223,8 @@ class DocumentService(IDocumentService):
                         f"Successfully converted PDF to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error("PDF conversion failed")
-                    return None
+                logger.error("PDF conversion failed")
+                return None
             else:
                 logger.error("No PDF converter found")
                 return None
@@ -276,9 +272,8 @@ class DocumentService(IDocumentService):
             if result:
                 logger.info(f"Legacy conversion successful: {result}")
                 return result
-            else:
-                logger.error("Legacy conversion failed")
-                return None
+            logger.error("Legacy conversion failed")
+            return None
 
         except Exception as e:
             logger.error(f"Error in legacy document creation: {str(e)}")

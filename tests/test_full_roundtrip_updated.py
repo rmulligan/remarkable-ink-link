@@ -121,28 +121,28 @@ class ControllerTestHelper:
             from inklink.services.qr_service import QRCodeService
 
             return QRCodeService(temp_dir=self.temp_dir)
-        elif interface == IWebScraperService:
+        if interface == IWebScraperService:
             from inklink.services.web_scraper_service import WebScraperService
 
             return WebScraperService()
-        elif interface == IDocumentService:
+        if interface == IDocumentService:
             from inklink.services.document_service import DocumentService
 
             return DocumentService(temp_dir=self.temp_dir)
-        elif interface == IPDFService:
+        if interface == IPDFService:
             from inklink.services.pdf_service import PDFService
 
             return PDFService(temp_dir=self.temp_dir, output_dir=self.output_dir)
-        elif interface == IRemarkableService:
+        if interface == IRemarkableService:
             from inklink.services.remarkable_service import RemarkableService
 
             rmapi_path = self.config.get("rmapi_path", "/usr/bin/rmapi")
             return RemarkableService(rmapi_path=rmapi_path)
-        elif interface == IAIService:
+        if interface == IAIService:
             from inklink.services.ai_service import AIService
 
             return AIService()
-        elif neo4j_installed and interface == IKnowledgeGraphService:
+        if neo4j_installed and interface == IKnowledgeGraphService:
             from inklink.services.knowledge_graph_service import KnowledgeGraphService
 
             return KnowledgeGraphService(
@@ -150,13 +150,12 @@ class ControllerTestHelper:
                 username=self.config.get("neo4j_username"),
                 password=self.config.get("neo4j_password"),
             )
-        else:
-            # Default to container resolution as fallback
-            try:
-                return self.container.resolve(interface)
-            except Exception as e:
-                logger.error(f"Failed to resolve service: {e}")
-                return None
+        # Default to container resolution as fallback
+        try:
+            return self.container.resolve(interface)
+        except Exception as e:
+            logger.error(f"Failed to resolve service: {e}")
+            return None
 
 
 @pytest.mark.integration

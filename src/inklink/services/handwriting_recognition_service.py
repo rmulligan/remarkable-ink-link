@@ -81,10 +81,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             text = result.get("result", "").strip().lower()
             if "math" in text:
                 return "Math"
-            elif "diagram" in text:
+            if "diagram" in text:
                 return "Diagram"
-            else:
-                return "Text"
+            return "Text"
         else:
             # Default to Text on failure
             return "Text"
@@ -576,10 +575,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 current_pos = end_pos
 
             return sections
-        else:
-            # Not enough page markers, divide evenly
-            avg_length = len(result) // page_count
-            return [
-                result[i * avg_length : (i + 1) * avg_length].strip()
-                for i in range(page_count)
-            ]
+        # Not enough page markers, divide evenly
+        avg_length = len(result) // page_count
+        return [
+            result[i * avg_length : (i + 1) * avg_length].strip()
+            for i in range(page_count)
+        ]

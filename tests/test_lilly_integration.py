@@ -66,10 +66,9 @@ def mock_file_reads():
     def mock_read_file(file_path):
         if "lilly_persona.md" in file_path:
             return SAMPLE_PERSONA
-        elif "workflow_examples.md" in file_path:
+        if "workflow_examples.md" in file_path:
             return SAMPLE_WORKFLOWS
-        else:
-            return ""
+        return ""
 
     # Create a more flexible mock for open that handles different file paths
     m = mock_open()

@@ -158,9 +158,8 @@ def tag_notebook(notebook_name):
                 "You can now run the Claude Penpal service to process this notebook."
             )
             return True
-        else:
-            logger.error(f"Failed to upload modified notebook: {message}")
-            return False
+        logger.error(f"Failed to upload modified notebook: {message}")
+        return False
 
 
 if __name__ == "__main__":

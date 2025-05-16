@@ -188,9 +188,8 @@ def create_complete_notebook():
         if not success:
             logger.error(f"Failed to upload notebook: {stderr}")
             return False
-        else:
-            logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
-            return True
+        logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
+        return True
 
     finally:
         # Clean up the temporary directory

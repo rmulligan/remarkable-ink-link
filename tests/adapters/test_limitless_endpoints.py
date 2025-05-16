@@ -174,9 +174,8 @@ class LimitlessLiveTest:
         if result.get("success"):
             logger.info("✅ Manual sync trigger successful")
             return True
-        else:
-            logger.error("❌ Manual sync trigger failed")
-            return False
+        logger.error("❌ Manual sync trigger failed")
+        return False
 
     def run_all_tests(self):
         """Run all tests."""

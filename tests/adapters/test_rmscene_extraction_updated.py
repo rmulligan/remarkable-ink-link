@@ -260,9 +260,8 @@ def test_extract_strokes_manually():
             print("\nFirst stroke data:")
             print(json.dumps(strokes[0], indent=2))
             return True, strokes
-        else:
-            print("❌ No strokes extracted from test file")
-            return False, []
+        print("❌ No strokes extracted from test file")
+        return False, []
 
     except Exception as e:
         print(f"❌ Test failed with error: {e}")
@@ -331,9 +330,8 @@ def test_adapter_extraction():
             ):
                 print("\n✅ Successfully converted strokes to iink format")
                 return True
-            else:
-                print("\n❌ Failed to convert strokes to iink format")
-                return False
+            print("\n❌ Failed to convert strokes to iink format")
+            return False
 
         else:
             print("❌ No strokes extracted from test file")
