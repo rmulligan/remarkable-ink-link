@@ -14,10 +14,7 @@ try:
 except ImportError:
     RMSCENE_AVAILABLE = False
 
-from inklink.services.ink_generation_service import (
-    InkGenerationService,
-    get_ink_generation_service,
-)
+from inklink.services.ink_generation_service import InkGenerationService
 
 
 @pytest.mark.skipif(not RMSCENE_AVAILABLE, reason="rmscene not available")
@@ -25,11 +22,15 @@ class TestInkGenerationService:
     """Test ink generation functionality."""
 
     @staticmethod
-    def test_singleton_instance():
-        """Test that service returns singleton instance."""
-        service1 = get_ink_generation_service()
-        service2 = get_ink_generation_service()
-        assert service1 is service2
+    def test_instance_creation():
+        """Test that service can be instantiated."""
+        service1 = InkGenerationService()
+        service2 = InkGenerationService()
+        # Each instance is separate (not singleton)
+        assert service1 is not service2
+        # But they have the same default settings
+        assert service1.pen_type == service2.pen_type
+        assert service1.color == service2.color
 
     @staticmethod
     def test_text_to_strokes():
