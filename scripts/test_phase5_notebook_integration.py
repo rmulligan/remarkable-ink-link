@@ -12,7 +12,6 @@ from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
 )
 
 
-
 def test_syntax_highlighted_document():
     """Test creating a syntax-highlighted document."""
     print("=== Test 1: Syntax Highlighted Document ===")

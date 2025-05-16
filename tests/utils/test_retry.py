@@ -1,4 +1,5 @@
 """Tests for the retry decorator."""
+
 from unittest.mock import Mock, patch
 
 import pytest
