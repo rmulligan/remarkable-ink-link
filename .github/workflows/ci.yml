@@ -54,7 +54,7 @@ jobs:
         # Coverage will be generated automatically based on pyproject.toml configuration
         run: poetry run pytest --maxfail=1 --disable-warnings -q
       - name: Report test coverage to DeepSource
-        uses: deepsourcelabs/test-coverage-action@v1.0.0
+        uses: deepsourcelabs/test-coverage-action@v1.1.0
         with:
           key: python
           coverage-file: coverage.xml
