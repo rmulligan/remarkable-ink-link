@@ -1,20 +1,20 @@
 """Enhanced syntax highlighting compiler with layout support for Phase 4."""
 
+import json
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple, Any
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional, Tuple
 
-from .syntax_highlight_compiler import SyntaxHighlightCompiler, Language, Theme
+from .syntax_highlight_compiler import Language, SyntaxHighlightCompiler, Theme
 from .syntax_layout import (
-    LayoutCalculator,
-    PageLayout,
-    LineLayout,
     CodeMetadata,
-    PageSize,
-    Margins,
     FontMetrics,
+    LayoutCalculator,
+    LineLayout,
+    Margins,
+    PageLayout,
+    PageSize,
 )
 from .syntax_tokens import TokenType
 
