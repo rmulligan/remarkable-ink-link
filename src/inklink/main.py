@@ -455,7 +455,6 @@ def lilly(interval, tag, rmapi, output_dir, claude_command, lilly_workspace, onc
     if not rmapi:
         rmapi = CONFIG.get("RMAPI_PATH")
         if not rmapi:
-            import os
 
             home_dir = os.path.expanduser("~")
             potential_paths = [
@@ -626,7 +625,6 @@ def penpal(
     use_conversation_ids,
 ):
     """Start the Claude Penpal monitoring service."""
-    import logging
 
     from inklink.services.claude_penpal_service import ClaudePenpalService
 

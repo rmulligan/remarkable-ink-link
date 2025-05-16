@@ -124,7 +124,6 @@ class RmapiAdapter:
                     binary_path = os.path.join(temp_dir, binary_name)
 
                 elif asset_name.endswith(".zip"):
-                    import zipfile
 
                     with zipfile.ZipFile(download_path, "r") as zip_ref:
                         zip_ref.extractall(temp_dir)

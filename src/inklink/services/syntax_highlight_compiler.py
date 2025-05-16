@@ -530,8 +530,9 @@ class SyntaxHighlightCompiler:
 
         return tokens
 
+    @staticmethod
     def _handle_whitespace(
-        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
+        line: str, start: int, line_num: int, position: int, tokens: List[Token]
     ) -> int:
         """Handle whitespace tokens."""
         i = start

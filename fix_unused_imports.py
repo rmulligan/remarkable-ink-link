@@ -3,7 +3,6 @@
 
 import re
 import subprocess
-import sys
 
 
 def get_unused_imports():
@@ -13,7 +12,7 @@ def get_unused_imports():
         capture_output=True,
         text=True,
         cwd="/home/ryan/dev/remarkable-ink-link",
-    )
+    check=True)
     lines = result.stdout.strip().split("\n")
     unused_imports = []
 
