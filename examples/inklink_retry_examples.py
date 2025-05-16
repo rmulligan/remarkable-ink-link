@@ -2,13 +2,14 @@
 
 import asyncio
 import logging
-import requests
-from typing import Dict, Any
+from typing import Any, Dict
 
-from inklink.utils.retry import retry
+import requests
+
 from inklink.adapters.handwriting_web_adapter import HandwritingWebAdapter
 from inklink.agents.base.lifecycle import AgentLifecycle
 from inklink.agents.base.registry import AgentRegistry
+from inklink.utils.retry import retry
 
 # Set up logging
 logging.basicConfig(

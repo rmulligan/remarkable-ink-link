@@ -3,12 +3,12 @@
 
 import asyncio
 import json
-from datetime import datetime
-from pathlib import Path
+import os
 
 # Add project root to path
 import sys
-import os
+from datetime import datetime
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -16,12 +16,12 @@ sys.path.append(
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 )
 
+from inklink.control_center.core_enhanced import EnhancedInkControlCenter  # noqa: E402
 from inklink.control_center.state_manager import (  # noqa: E402
     ControlCenterState,
     StateEvent,
     StateEventType,
 )
-from inklink.control_center.core_enhanced import EnhancedInkControlCenter  # noqa: E402
 
 
 class StateManagementDemo:

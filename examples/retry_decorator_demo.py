@@ -3,10 +3,11 @@
 import logging
 import random
 import time
-import requests
-from typing import Dict, Any
+from typing import Any, Dict
 
-from inklink.utils.retry import retry, RetryError
+import requests
+
+from inklink.utils.retry import RetryError, retry
 
 # Set up logging to see retry attempts
 logging.basicConfig(

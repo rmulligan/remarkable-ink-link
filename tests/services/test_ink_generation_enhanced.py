@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+
 import pytest
 
 from inklink.services.ink_generation_service import InkGenerationService

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Test the enhanced Control Center state management."""
 
-import pytest
 import asyncio
-import os
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.inklink.control_center.state_manager import (
     ControlCenterState,

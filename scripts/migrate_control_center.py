@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Migrate from the basic Control Center to the enhanced version with state management."""
 
-import os
-import sys
 import json
+import os
 import shutil
+import sys
 from pathlib import Path
 
 # Add project root to path
