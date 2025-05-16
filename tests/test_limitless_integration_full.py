@@ -280,6 +280,12 @@ def mock_controller():
     """Create a mock HTTP handler for testing the controller."""
 
     class MockHandler:
+        def __init__(self):
+            self.wfile = self  # Mock wfile points to self for testing
+            self.headers = {}
+            self.content = None
+            self.status_code = None
+
         @staticmethod
         def get_query_params():
             return {}
@@ -290,7 +296,8 @@ def mock_controller():
 
         def send_response(self, status_code, headers=None):
             self.status_code = status_code
-            self.headers = headers or {}
+            if headers:
+                self.headers.update(headers)
             return self
 
         def send_header(self, name, value):

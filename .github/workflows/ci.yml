@@ -55,6 +55,7 @@ jobs:
         run: poetry run pytest --maxfail=1 --disable-warnings -q
       - name: Report test coverage to DeepSource
         uses: deepsourcelabs/test-coverage-action@v1.1.0
+        continue-on-error: true
         with:
           key: python
           coverage-file: coverage.xml

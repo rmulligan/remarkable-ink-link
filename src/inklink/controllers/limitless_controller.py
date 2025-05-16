@@ -34,6 +34,40 @@ class LimitlessController(BaseController):
         self.limitless_service = limitless_service
         self.limitless_scheduler = limitless_scheduler
 
+    def handle(self, *args, **kwargs) -> None:
+        """
+        Handle the HTTP request.
+
+        Args:
+            *args: Variable positional arguments
+            **kwargs: Variable keyword arguments
+        """
+        # This method delegates to handle_request
+        if len(args) >= 4:
+            path, method, query, body = args[:4]
+            self.handle_request(path, method, query, body)
+        else:
+            # Default behavior
+            self.handle_request("", "GET", {}, {})
+
+    def json_response(self, data: Dict[str, Any], status: int = 200) -> Dict[str, Any]:
+        """
+        Return JSON response data.
+
+        Args:
+            data: Response data
+            status: HTTP status code
+
+        Returns:
+            Response data (for testing)
+        """
+        # If we have a handler, send the response
+        if hasattr(self, "handler") and self.handler:
+            self.send_json(data, status)
+
+        # Return data for testing purposes
+        return data
+
     def handle_request(self, path: str, method: str, query: Dict[str, str], body: Dict):
         """
         Handle HTTP requests for Limitless endpoints.
@@ -93,7 +127,7 @@ class LimitlessController(BaseController):
 
         # Check for force flag
         force_full_sync = query.get("force", "").lower() == "true" or (
-            body and body.get("force_full_sync", False)
+            body.get("force_full_sync", False) if body else False
         )
 
         # Trigger sync via scheduler
