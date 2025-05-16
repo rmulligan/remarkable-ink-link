@@ -42,6 +42,18 @@ class AgentRegistry:
             self.logger.info(f"Created agent '{config.name}' of type {class_name}")
             return agent
 
+    async def register_agent(self, agent: LocalAgent) -> None:
+        """Register a pre-initialized agent instance."""
+        async with self._lock:
+            if agent.config.name in self._agents:
+                raise ValueError(
+                    f"Agent with name '{agent.config.name}' already exists"
+                )
+
+            self._agents[agent.config.name] = agent
+            self.logger.info(f"Registered agent '{agent.config.name}'")
+            return agent
+
     async def get_agent(self, name: str) -> Optional[LocalAgent]:
         """Get an agent by name."""
         return self._agents.get(name)

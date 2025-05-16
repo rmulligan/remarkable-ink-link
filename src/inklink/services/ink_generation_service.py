@@ -137,8 +137,7 @@ class InkGenerationService:
         )
         return line
 
-    @staticmethod
-    def create_rm_file_with_text(text: str, output_path: str) -> bool:
+    def create_rm_file_with_text(self, text: str, output_path: str) -> bool:
         """
         Create a .rm file with editable text strokes.
 
@@ -154,12 +153,42 @@ class InkGenerationService:
             return False
 
         try:
-            # Create the most minimal possible .rm file just to pass the test
-            with open(output_path, "wb") as f:
-                # Write the rmscene header
-                f.write(rmscene.HEADER_V6)
+            # Create a new scene tree
+            scene_tree = si.SceneTree()
 
-            logger.info(f"Created minimal .rm file at {output_path}")
+            # Create root group
+            root_group = si.Group(children=[], node_id=scene_tree.root_id)
+
+            # Add root group to tree
+            scene_tree.add_item(root_group)
+
+            # Generate strokes from text
+            strokes = self.text_to_strokes(text)
+
+            # Add strokes to the root group
+            for stroke in strokes:
+                # Add stroke to tree and get its ID
+                stroke_id = scene_tree.add_item(stroke)
+                # Add stroke ID to root group's children
+                root_group.children.append(stroke_id)
+
+            # Write to file
+            with open(output_path, "wb") as f:
+                # Create a TaggedBlockWriter
+                writer = TaggedBlockWriter(f)
+
+                # Write the header
+                writer.write_tag(
+                    tag=rmscene.scene_stream.TagType.FILE_ID_V2, data=rmscene.HEADER_V6
+                )
+
+                # Write tree structure
+                scene_tree.to_stream(writer)
+
+                # Finalize
+                writer.flush()
+
+            logger.info(f"Created .rm file with text at {output_path}")
             return True
 
         except Exception as e:
