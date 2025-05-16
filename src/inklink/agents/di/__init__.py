@@ -15,8 +15,9 @@ from inklink.services.handwriting_recognition_service import (
 from inklink.services.remarkable_service import RemarkableService
 
 from ..base.lifecycle import AgentLifecycle
+from ..base.monitoring import MonitoringService
 from ..base.registry import AgentRegistry
-from ..config import config_loader
+from ..config import ConfigLoader
 from ..core import (
     ControlCenterAgent,
     DailyBriefingAgent,
@@ -29,30 +30,34 @@ class AgentContainer(containers.DeclarativeContainer):
     """DI container for agent framework."""
 
     # Configuration
-    config = providers.Singleton(config_loader.load)
+    config_loader = providers.Singleton(ConfigLoader)
 
-    framework_config = providers.Singleton(config_loader.get_framework_config)
+    config = providers.Singleton(lambda: ConfigLoader().load())
+
+    framework_config = providers.Singleton(
+        lambda: ConfigLoader().get_framework_config()
+    )
 
     # Storage paths
     storage_base_path = providers.Singleton(
-        lambda: Path(config_loader.get_framework_config()["storage_base"]).expanduser()
+        lambda: Path(ConfigLoader().get_framework_config()["storage_base"]).expanduser()
     )
 
     # Adapters
     ollama_adapter = providers.Singleton(
         OllamaAdapter,
-        base_url=lambda: config_loader.get_adapter_config("ollama")["base_url"],
+        base_url=lambda: ConfigLoader().get_adapter_config("ollama")["base_url"],
     )
 
     limitless_adapter = providers.Singleton(
         LimitlessAdapter,
-        api_key=lambda: config_loader.get_adapter_config("limitless")["api_key"],
-        base_url=lambda: config_loader.get_adapter_config("limitless")["base_url"],
+        api_key=lambda: ConfigLoader().get_adapter_config("limitless")["api_key"],
+        base_url=lambda: ConfigLoader().get_adapter_config("limitless")["base_url"],
     )
 
     remarkable_adapter = providers.Singleton(
         RemarkableAdapter,
-        device_token=lambda: config_loader.get_adapter_config("remarkable")[
+        device_token=lambda: ConfigLoader().get_adapter_config("remarkable")[
             "device_token"
         ],
     )
@@ -77,6 +82,11 @@ class AgentContainer(containers.DeclarativeContainer):
         AgentRegistry,
     )
 
+    monitoring_service = providers.Singleton(
+        MonitoringService,
+        registry=agent_registry,
+    )
+
     agent_lifecycle = providers.Singleton(
         AgentLifecycle,
         registry=agent_registry,
@@ -85,7 +95,7 @@ class AgentContainer(containers.DeclarativeContainer):
     # Agent Factories with automatic dependency injection
     limitless_insight_agent_factory = providers.Factory(
         LimitlessContextualInsightAgent,
-        config=lambda: config_loader.get_agent_config("limitless_insight")["config"],
+        config=lambda: ConfigLoader().get_agent_config("limitless_insight")["config"],
         limitless_adapter=limitless_adapter,
         ollama_adapter=ollama_adapter,
         storage_path=lambda: storage_base_path() / "limitless",
@@ -93,7 +103,7 @@ class AgentContainer(containers.DeclarativeContainer):
 
     daily_briefing_agent_factory = providers.Factory(
         DailyBriefingAgent,
-        config=lambda: config_loader.get_agent_config("daily_briefing")["config"],
+        config=lambda: ConfigLoader().get_agent_config("daily_briefing")["config"],
         ollama_adapter=ollama_adapter,
         remarkable_adapter=remarkable_adapter,
         storage_path=lambda: storage_base_path() / "briefings",
@@ -101,14 +111,14 @@ class AgentContainer(containers.DeclarativeContainer):
 
     project_tracker_agent_factory = providers.Factory(
         ProactiveProjectTrackerAgent,
-        config=lambda: config_loader.get_agent_config("project_tracker")["config"],
+        config=lambda: ConfigLoader().get_agent_config("project_tracker")["config"],
         ollama_adapter=ollama_adapter,
         storage_path=lambda: storage_base_path() / "projects",
     )
 
     control_center_agent_factory = providers.Factory(
         ControlCenterAgent,
-        config=lambda: config_loader.get_agent_config("control_center")["config"],
+        config=lambda: ConfigLoader().get_agent_config("control_center")["config"],
         remarkable_service=remarkable_service,
         handwriting_service=handwriting_service,
         storage_path=lambda: storage_base_path() / "control_center",
@@ -144,7 +154,7 @@ def setup_agents():
         registry.register_agent_class(agent_class)
 
     # Create enabled agents
-    enabled_agents = config_loader.get_all_enabled_agents()
+    enabled_agents = ConfigLoader().get_all_enabled_agents()
 
     for agent_name, agent_config in enabled_agents.items():
         agent_class_name = agent_config["class"]

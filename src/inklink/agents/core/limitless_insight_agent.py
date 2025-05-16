@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.agents.exceptions import AgentError
@@ -42,6 +42,11 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
             knowledge_graph_service=knowledge_graph_service,
         )
         self._setup_mcp_capabilities()
+
+        # Initialize analysis cache for efficient lookup
+        self._analysis_cache = {}
+        self._cache_timestamp = None
+        self._cache_ttl = 300  # 5 minutes cache TTL
 
     def _setup_mcp_capabilities(self) -> None:
         """Set up MCP capabilities specific to Limitless insights."""
@@ -207,6 +212,32 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
         except Exception as e:
             self.logger.error(f"Error analyzing transcript: {e}")
 
+    def _refresh_analysis_cache(self) -> None:
+        """Refresh the analysis cache if expired."""
+        now = datetime.now()
+        if (
+            self._cache_timestamp is None
+            or (now - self._cache_timestamp).total_seconds() > self._cache_ttl
+        ):
+
+            self._analysis_cache = {}
+            analyses_dir = self.storage_path / "analyses"
+
+            if analyses_dir.exists():
+                # Index all analysis files once
+                for analysis_file in analyses_dir.glob("*.json"):
+                    try:
+                        with open(analysis_file) as f:
+                            data = json.load(f)
+                            file_id = analysis_file.stem
+                            self._analysis_cache[file_id] = data
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error loading analysis {analysis_file}: {e}"
+                        )
+
+            self._cache_timestamp = now
+
     async def _handle_get_spoken_summary(
         self, params: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -267,45 +298,88 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
         self, params: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Handle recall action items request."""
-        # Implementation similar to summary, but focused on action items
-        analyses_dir = self.storage_path / "analyses"
-        if not analyses_dir.exists():
-            return {"action_items": []}
+        # Refresh cache if needed
+        self._refresh_analysis_cache()
 
         action_items = []
-        for analysis_file in analyses_dir.glob("*.json"):
-            with open(analysis_file) as f:
-                data = json.load(f)
-                if "analysis" in data and "action_items" in data["analysis"]:
-                    action_items.extend(data["analysis"]["action_items"])
+        time_period = params.get("time_period")
+        context_filter = params.get("context")
+
+        # Filter by time period if provided
+        end_time = datetime.now()
+        start_time = None
+
+        if time_period == "last_24_hours":
+            start_time = end_time - timedelta(hours=24)
+        elif time_period == "last_week":
+            start_time = end_time - timedelta(days=7)
+
+        # Extract action items from cached analyses
+        for data in self._analysis_cache.values():
+            # Check time filter
+            if start_time and "timestamp" in data:
+                try:
+                    analysis_time = datetime.fromisoformat(data["timestamp"])
+                    if analysis_time < start_time:
+                        continue
+                except Exception:
+                    pass
+
+            if "analysis" in data and "action_items" in data["analysis"]:
+                items = data["analysis"]["action_items"]
+                # Apply context filter if provided
+                if context_filter:
+                    items = [
+                        i for i in items if context_filter.lower() in str(i).lower()
+                    ]
+                action_items.extend(items)
 
         return {"action_items": action_items}
 
     async def _handle_find_context(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle find context request."""
         topic = params["topic"]
+        time_period = params.get("time_period")
 
-        # Search through stored analyses
-        analyses_dir = self.storage_path / "analyses"
-        if not analyses_dir.exists():
-            return {"contexts": []}
+        # Refresh cache if needed
+        self._refresh_analysis_cache()
+
+        # Filter by time period if provided
+        end_time = datetime.now()
+        start_time = None
+
+        if time_period == "last_24_hours":
+            start_time = end_time - timedelta(hours=24)
+        elif time_period == "last_week":
+            start_time = end_time - timedelta(days=7)
 
         contexts = []
-        for analysis_file in analyses_dir.glob("*.json"):
-            with open(analysis_file) as f:
-                data = json.load(f)
-                if topic.lower() in str(data).lower():
-                    contexts.append(
-                        {
-                            "timestamp": data.get("timestamp"),
-                            "relevance": (
-                                "high"
-                                if topic.lower()
-                                in str(data.get("analysis", {})).lower()
-                                else "medium"
-                            ),
-                            "content": data.get("analysis"),
-                        }
-                    )
+        for data in self._analysis_cache.values():
+            # Check time filter
+            if start_time and "timestamp" in data:
+                try:
+                    analysis_time = datetime.fromisoformat(data["timestamp"])
+                    if analysis_time < start_time:
+                        continue
+                except Exception:
+                    pass
 
+            if topic.lower() in str(data).lower():
+                contexts.append(
+                    {
+                        "timestamp": data.get("timestamp"),
+                        "relevance": (
+                            "high"
+                            if topic.lower() in str(data.get("analysis", {})).lower()
+                            else "medium"
+                        ),
+                        "content": data.get("analysis"),
+                    }
+                )
+
+        # Sort by relevance and timestamp
+        contexts.sort(
+            key=lambda x: (x["relevance"] == "high", x.get("timestamp", "")),
+            reverse=True,
+        )
         return {"contexts": contexts[:10]}  # Limit to 10 most relevant
