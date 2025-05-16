@@ -137,8 +137,10 @@ class RoadmapZone(BaseZone):
 
     def to_svg(self, width: int, height: int) -> str:
         """Convert roadmap to SVG."""
-        svg_parts = [f'<line x1="50" y1="{height // 2}" x2="{width - 50}" y2="{height // 2}" '
-            'stroke="black" stroke-width="2"/>']
+        svg_parts = [
+            f'<line x1="50" y1="{height // 2}" x2="{width - 50}" y2="{height // 2}" '
+            'stroke="black" stroke-width="2"/>'
+        ]
 
         # Draw milestones
         for milestone in self.milestones:
@@ -163,9 +165,7 @@ class RoadmapZone(BaseZone):
         return {"title": "Roadmap", "content": self.render()}
 
     @staticmethod
-    def _get_stroke_bounds(
-        strokes: List[Stroke]
-    ) -> Tuple[float, float, float, float]:
+    def _get_stroke_bounds(strokes: List[Stroke]) -> Tuple[float, float, float, float]:
         """Get combined bounds of strokes."""
         all_points = []
         for stroke in strokes:

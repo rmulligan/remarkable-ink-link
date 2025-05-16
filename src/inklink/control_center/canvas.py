@@ -1,4 +1,5 @@
 """Dynamic canvas system for the control center."""
+
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -158,7 +159,9 @@ class DynamicCanvas:
         """Convert canvas to SVG format."""
         svg_parts = [
             f'<svg width="{self.width}" height="{self.height}" '
-            'xmlns="http://www.w3.org/2000/svg">', f'<rect width="{self.width}" height="{self.height}" ' 'fill="white"/>', "</svg>"
+            'xmlns="http://www.w3.org/2000/svg">',
+            f'<rect width="{self.width}" height="{self.height}" ' 'fill="white"/>',
+            "</svg>",
         ]
 
         # Render each zone

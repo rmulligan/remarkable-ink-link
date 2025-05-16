@@ -392,7 +392,9 @@ class TestEnhancedOllamaAdapter:
         async def mock_post(*args, **kwargs):
             await asyncio.sleep(5)  # Longer than timeout
 
-        with patch.object(adapter.client, "post", side_effect=mock_post), pytest.raises(AgentTimeoutError):
+        with patch.object(adapter.client, "post", side_effect=mock_post), pytest.raises(
+            AgentTimeoutError
+        ):
             await adapter.query("model", "prompt")
 
     @pytest.mark.asyncio

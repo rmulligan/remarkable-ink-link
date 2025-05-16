@@ -3,6 +3,7 @@
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )

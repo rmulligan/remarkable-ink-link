@@ -1,4 +1,5 @@
 """Ink processing and command parsing."""
+
 import re
 from dataclasses import dataclass, field
 from enum import Enum
