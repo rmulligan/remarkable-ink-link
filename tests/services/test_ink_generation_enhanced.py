@@ -9,8 +9,15 @@ from inklink.services.ink_generation_service import InkGenerationService
 # Mark as integration test that requires rmscene
 pytestmark = pytest.mark.integration
 
+try:
+    import rmscene
 
-@pytest.mark.skipif("not pytest.config.getoption('--integration', default=False)")
+    RMSCENE_AVAILABLE = True
+except ImportError:
+    RMSCENE_AVAILABLE = False
+
+
+@pytest.mark.skipif(not RMSCENE_AVAILABLE, reason="rmscene not available")
 class TestEnhancedInkGeneration:
     """Test enhanced ink generation with comprehensive character set."""
 

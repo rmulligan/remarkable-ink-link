@@ -244,3 +244,15 @@ class InkGenerationService:
         except Exception as e:
             logger.error(f"Failed to append to .rm file: {e}")
             return False
+
+
+# Global instance for singleton access
+_ink_generation_service = None
+
+
+def get_ink_generation_service() -> InkGenerationService:
+    """Get the global ink generation service instance."""
+    global _ink_generation_service
+    if _ink_generation_service is None:
+        _ink_generation_service = InkGenerationService()
+    return _ink_generation_service
