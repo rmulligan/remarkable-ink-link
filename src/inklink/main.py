@@ -10,13 +10,12 @@ from typing import Any, Dict, List, Optional
 
 import click
 
-from src.inklink.config import CONFIG
+from inklink.config import CONFIG
 
 
 @click.group()
 def cli():
     """InkLink CLI entry point."""
-    pass
 
 
 @cli.command()

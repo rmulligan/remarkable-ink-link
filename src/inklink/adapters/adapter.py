@@ -18,4 +18,3 @@ class Adapter(ABC):
         Returns:
             True if available, False otherwise
         """
-        pass
