@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
-from inklink.agents.base.exceptions import AgentException
+from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.agents.base.monitoring import HealthStatus
-from inklink.agents.di import init_container
+from inklink.agents.di import container
+from inklink.agents.exceptions import AgentError
 
 
 class TestAgentIntegration:
@@ -55,14 +55,15 @@ storage:
         config_path = tmp_path / "agent_config.yaml"
         config_path.write_text(config_content)
         # Initialize container with test config
-        container = init_container(config_path=str(config_path))
+        # Note: the container is already imported from inklink.agents.di
+        # We just need to configure it for testing
         return container
 
     @pytest.fixture
     async def mock_adapters(self):
         """Create mock adapters for testing."""
         # Mock Ollama adapter
-        ollama_mock = Mock(spec=EnhancedOllamaAdapter)
+        ollama_mock = Mock(spec=OllamaAdapter)
         ollama_mock.query = AsyncMock(return_value="Mock response")
         ollama_mock.health_check = AsyncMock(return_value=True)
         # Mock Limitless adapter
@@ -97,7 +98,7 @@ storage:
             container, "remarkable_adapter", return_value=mock_adapters["remarkable"]
         ):
             # Create agent
-            agent = container.limitless_insight_agent()
+            agent = container.limitless_insight_agent_factory()
             # Test initial state
             assert agent.state == "initialized"
             # Start agent
@@ -121,9 +122,9 @@ storage:
             # Create and register agents
             registry = container.agent_registry()
             # Create agents
-            limitless_agent = container.limitless_insight_agent()
+            limitless_agent = container.limitless_insight_agent_factory()
             await registry.register_agent("limitless_insight", limitless_agent)
-            briefing_agent = container.daily_briefing_agent()
+            briefing_agent = container.daily_briefing_agent_factory()
             await registry.register_agent("daily_briefing", briefing_agent)
             # Start agents
             await limitless_agent.start()
@@ -145,8 +146,8 @@ storage:
     async def test_error_recovery(self, container, mock_adapters):
         """Test error recovery mechanisms."""
         # Create failing adapter
-        failing_ollama = Mock(spec=EnhancedOllamaAdapter)
-        failing_ollama.query = AsyncMock(side_effect=AgentException("Mock failure"))
+        failing_ollama = Mock(spec=OllamaAdapter)
+        failing_ollama.query = AsyncMock(side_effect=AgentError("Mock failure"))
         failing_ollama.health_check = AsyncMock(return_value=False)
         with patch.object(
             container, "ollama_adapter", return_value=failing_ollama
@@ -154,7 +155,7 @@ storage:
             container, "limitless_adapter", return_value=mock_adapters["limitless"]
         ):
             # Create agent
-            agent = container.limitless_insight_agent()
+            agent = container.limitless_insight_agent_factory()
             # Start monitoring service
             monitoring = container.monitoring_service()
             monitoring.register_agent("test_agent", agent)
@@ -205,9 +206,9 @@ storage:
             registry = container.agent_registry()
             monitoring = container.monitoring_service()
             # Create all agents
-            limitless_agent = container.limitless_insight_agent()
-            briefing_agent = container.daily_briefing_agent()
-            tracker_agent = container.project_tracker_agent()
+            limitless_agent = container.limitless_insight_agent_factory()
+            briefing_agent = container.daily_briefing_agent_factory()
+            tracker_agent = container.project_tracker_agent_factory()
             # Register agents
             await registry.register_agent("limitless_insight", limitless_agent)
             await registry.register_agent("daily_briefing", briefing_agent)
@@ -282,7 +283,7 @@ storage:
             nonlocal call_count
             call_count += 1
             if call_count % 3 == 0:
-                raise AgentException("Intermittent failure")
+                raise AgentError("Intermittent failure")
             return "Success"
 
         mock_adapters["ollama"].query = intermittent_query
@@ -292,7 +293,7 @@ storage:
             container, "limitless_adapter", return_value=mock_adapters["limitless"]
         ):
             # Create agent with retry logic
-            agent = container.limitless_insight_agent()
+            agent = container.limitless_insight_agent_factory()
             # Test that agent can handle intermittent failures
             await agent.start()
             # Process some transcripts

@@ -8,13 +8,13 @@ from typing import Any, Dict
 from dependency_injector.wiring import Provide, inject
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.exceptions import AgentConfigurationError
 from inklink.agents.base.monitoring import MonitoringService
 from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.di import AgentContainer, init_container
+from inklink.agents.exceptions import ConfigurationError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +30,7 @@ class EnhancedDemo:
         monitoring_service: MonitoringService = Provide[
             AgentContainer.monitoring_service
         ],
-        ollama_adapter: EnhancedOllamaAdapter = Provide[AgentContainer.ollama_adapter],
+        ollama_adapter: OllamaAdapter = Provide[AgentContainer.ollama_adapter],
         limitless_adapter: LimitlessAdapter = Provide[AgentContainer.limitless_adapter],
         remarkable_adapter: RemarkableAdapter = Provide[
             AgentContainer.remarkable_adapter
@@ -82,7 +82,7 @@ class EnhancedDemo:
                 initial_state="active",
                 # Missing ollama_model
             )
-        except AgentConfigurationError as e:
+        except ConfigurationError as e:
             self.logger.error(f"Configuration error caught: {e}")
 
         # Test service health check

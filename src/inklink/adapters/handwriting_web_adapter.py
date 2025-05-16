@@ -18,6 +18,7 @@ from urllib.parse import urljoin
 import requests
 
 from inklink.adapters.adapter import Adapter
+from inklink.utils.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,12 @@ class HandwritingWebAdapter(Adapter):
         self.hmac_key = hmac_key
         self.initialized = bool(application_key and hmac_key)
 
+    @retry(
+        max_attempts=2,
+        base_delay=1.0,
+        exceptions=(requests.exceptions.RequestException, requests.exceptions.Timeout),
+        logger=logger,
+    )
     def ping(self) -> bool:
         """
         Check if the handwriting recognition service is available.
@@ -312,6 +319,12 @@ class HandwritingWebAdapter(Adapter):
                 "conversionState": "DIGITAL_EDIT",
             }
 
+    @retry(
+        max_attempts=3,
+        base_delay=2.0,
+        exceptions=(requests.exceptions.RequestException, requests.exceptions.Timeout),
+        logger=logger,
+    )
     def recognize_handwriting(
         self,
         iink_data: Dict[str, Any],

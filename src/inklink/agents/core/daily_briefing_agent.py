@@ -6,11 +6,11 @@ from datetime import datetime, time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
+from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
+from inklink.agents.exceptions import AgentError
 from inklink.services.remarkable_service import RemarkableService
 
 
@@ -20,7 +20,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
     def __init__(
         self,
         config: AgentConfig,
-        ollama_adapter: EnhancedOllamaAdapter,
+        ollama_adapter: OllamaAdapter,
         remarkable_adapter: RemarkableAdapter,
         storage_path: Path,
         briefing_time: time = time(6, 0),
@@ -82,7 +82,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
                 # Wait for next check (1 minute)
                 await asyncio.sleep(60)
 
-            except AgentException as e:
+            except AgentError as e:
                 self.logger.error(f"Agent error: {e}")
                 await asyncio.sleep(60)
             except Exception as e:
@@ -130,7 +130,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
 
             return briefing_record
 
-        except AgentException as e:
+        except AgentError as e:
             self.logger.error(f"Agent error generating daily briefing: {e}")
             return {"error": str(e)}
         except Exception as e:
@@ -178,7 +178,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
         """Create the briefing content using Ollama."""
         # Validate configuration
         if not self.config.ollama_model:
-            raise AgentConfigurationError("Ollama model not configured")
+            raise AgentError("Ollama model not configured")
 
         # Prepare the prompt
         prompt = f"""
