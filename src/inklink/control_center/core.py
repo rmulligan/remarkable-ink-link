@@ -8,15 +8,15 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from inklink.agents.base.mcp_integration import MCPEnabledAgent, MCPCapability
 from inklink.agents.base.agent import AgentConfig
-from inklink.services.remarkable_service import RemarkableService
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
+from inklink.services.remarkable_service import RemarkableService
 
 from .canvas import DynamicCanvas
-from .processor import InkProcessor, InkCommand, CommandType
+from .processor import CommandType, InkCommand, InkProcessor
 from .zones import BaseZone
 
 
@@ -47,11 +47,11 @@ class InkControlCenter:
     def _setup_zones(self):
         """Initialize the default zones."""
         from .zones import (
-            RoadmapZone,
-            KanbanZone,
             AgentDashboardZone,
             DiscussionZone,
+            KanbanZone,
             QuickActionsZone,
+            RoadmapZone,
         )
 
         # Create zone layout

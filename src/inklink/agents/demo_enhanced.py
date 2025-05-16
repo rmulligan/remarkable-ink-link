@@ -2,20 +2,20 @@
 
 import asyncio
 import logging
-from pathlib import Path
 from datetime import time
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any, Dict
 
-from dependency_injector.wiring import inject, Provide
+from dependency_injector.wiring import Provide, inject
 
-from inklink.agents.di import AgentContainer, init_container
-from inklink.agents.base.agent import AgentConfig, LocalAgent
-from inklink.agents.base.registry import AgentRegistry
-from inklink.agents.base.monitoring import MonitoringService
-from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
-from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
+from inklink.agents.base.agent import AgentConfig, LocalAgent
+from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
+from inklink.agents.base.monitoring import MonitoringService
+from inklink.agents.base.registry import AgentRegistry
+from inklink.agents.di import AgentContainer, init_container
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -1,14 +1,14 @@
 """InkLink Control Center - Ink-based agent and task management system."""
 
-from .core import InkControlCenter
 from .canvas import DynamicCanvas
+from .core import InkControlCenter
 from .processor import InkProcessor
 from .zones import (
-    RoadmapZone,
-    KanbanZone,
     AgentDashboardZone,
     DiscussionZone,
+    KanbanZone,
     QuickActionsZone,
+    RoadmapZone,
 )
 
 __all__ = [

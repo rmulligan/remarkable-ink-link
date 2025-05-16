@@ -6,12 +6,12 @@ from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
+from inklink.agents.base.agent import AgentConfig
+from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
+from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.remarkable_service import RemarkableService
-from inklink.agents.base.exceptions import AgentException, AgentConfigurationError
 
 
 class DailyBriefingAgent(MCPEnabledAgent):

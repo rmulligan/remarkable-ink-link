@@ -3,16 +3,16 @@
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 from aiohttp import ClientTimeout
 
 from inklink.agents.exceptions import (
     OllamaConnectionError,
-    OllamaQueryError,
     OllamaModelError,
+    OllamaQueryError,
 )
 
 

@@ -1,26 +1,27 @@
 """Dependency injection for the agent framework."""
 
-from dependency_injector import containers, providers
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from inklink.adapters.ollama_adapter import OllamaAdapter
-from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.remarkable_adapter import RemarkableAdapter
+from dependency_injector import containers, providers
+
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
-from inklink.services.remarkable_service import RemarkableService
+from inklink.adapters.limitless_adapter import LimitlessAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
+from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
+from inklink.services.remarkable_service import RemarkableService
 
-from ..config import config_loader
-from ..base.registry import AgentRegistry
 from ..base.lifecycle import AgentLifecycle
+from ..base.registry import AgentRegistry
+from ..config import config_loader
 from ..core import (
-    LimitlessContextualInsightAgent,
-    DailyBriefingAgent,
-    ProactiveProjectTrackerAgent,
     ControlCenterAgent,
+    DailyBriefingAgent,
+    LimitlessContextualInsightAgent,
+    ProactiveProjectTrackerAgent,
 )
 
 
