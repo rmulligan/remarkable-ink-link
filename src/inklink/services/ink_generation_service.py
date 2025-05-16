@@ -6,8 +6,7 @@ replacing the old approach of using drawj2d to create static text.
 
 import logging
 import math
-import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List
 
 from inklink.services.character_strokes import CharacterStrokes
 
@@ -16,8 +15,7 @@ logger = logging.getLogger(__name__)
 try:
     import rmscene
     import rmscene.scene_items as si
-    import rmscene.scene_tree as st
-    from rmscene.scene_stream import TaggedBlockWriter, read_tree, write_blocks
+    from rmscene.scene_stream import TaggedBlockWriter, read_tree
 
     RMSCENE_AVAILABLE = True
 except ImportError:

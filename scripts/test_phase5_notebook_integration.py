@@ -11,30 +11,30 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
 )
-from inklink.services.document_service import DocumentService  # noqa: E402
+# from inklink.services.document_service import DocumentService  # noqa: E402
 
 
 def test_syntax_highlighted_document():
     """Test creating a syntax-highlighted document."""
     print("=== Test 1: Syntax Highlighted Document ===")
 
-    # Sample Python code
-    code = '''
-def fibonacci(n):
-    """Calculate the nth Fibonacci number."""
-    if n <= 1:
-        return n
-
-    a, b = 0, 1
-    for _ in range(2, n + 1):
-        a, b = b, a + b
-
-    return b
-
-# Test the function
-for i in range(10):
-    print(f"F({i}) = {fibonacci(i)}")
-'''
+    # Sample Python code (commented out since it's not used yet)
+    # code = '''
+    # def fibonacci(n):
+    #     """Calculate the nth Fibonacci number."""
+    #     if n <= 1:
+    #         return n
+    #
+    #     a, b = 0, 1
+    #     for _ in range(2, n + 1):
+    #         a, b = b, a + b
+    #
+    #     return b
+    #
+    # # Test the function
+    # for i in range(10):
+    #     print(f"F({i}) = {fibonacci(i)}")
+    # '''
 
     # Skip this test for now due to drawj2d dependency
     print("⚠️ Skipping actual document creation (drawj2d dependency)")
