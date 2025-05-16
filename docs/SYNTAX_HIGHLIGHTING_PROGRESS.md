@@ -26,6 +26,16 @@ Implementation of the "Claude" color syntax highlighting feature for reMarkable 
 - Fixed tokenization issues for complex code
 - All tests passing with improved accuracy in `test_phase3_scanner.py`
 
+### Phase 4: Advanced Layout & Refinements ✓
+- Implemented page layout calculation with PageLayout and LayoutCalculator
+- Added line numbers support with right-alignment
+- Implemented code wrapping and continuation for long lines
+- Added metadata headers showing filename, language, and author
+- Full multi-page support for long files
+- Debug grid mode for visual testing
+- Created SyntaxHighlightCompilerV2 with full layout support
+- All tests passing in `test_phase4_layout.py`
+
 ## Key Components Created
 
 ### Services
@@ -50,10 +60,23 @@ Implementation of the "Claude" color syntax highlighting feature for reMarkable 
    - Defines Token and TokenType classes
    - Centralized token definitions to avoid circular imports
 
+5. **SyntaxLayout** (`/src/inklink/services/syntax_layout.py`)
+   - PageLayout, LayoutCalculator, and metadata classes
+   - Handles page dimensions, margins, and regions
+   - Line wrapping and multi-page support
+   - Debug grid generation
+
+6. **SyntaxHighlightCompilerV2** (`/src/inklink/services/syntax_highlight_compiler_v2.py`)
+   - Enhanced compiler with full layout support
+   - Integrates all previous phases
+   - Generates HCL with proper page layout
+   - Supports metadata embedding and line numbers
+
 ### Test Scripts
 1. **test_drawj2d_basic.py** - Verifies drawj2d functionality
 2. **test_syntax_compiler.py** - Tests tokenization, themes, and HCL generation
 3. **test_phase3_scanner.py** - Tests enhanced scanner with various code patterns
+4. **test_phase4_layout.py** - Tests layout calculation, line wrapping, metadata, and multi-page support
 
 ## Technical Details
 
@@ -95,11 +118,14 @@ Currently using basic drawj2d colors mapped from hex themes:
 
 ## Next Steps
 
-### Phase 4: Advanced Layout & Refinements
-- Add page layout calculation
-- Implement line numbers
-- Handle code wrapping
-- Add metadata embedding
+## Phase 4 Achievements
+- Complete page layout system with margins and regions
+- Line numbers with proper alignment
+- Automatic line wrapping for long lines
+- Metadata headers displaying file information
+- Multi-page support for long files
+- Debug mode with visual grid overlay
+- Full integration of all previous phases
 
 ### Phase 5: Notebook Integration
 - Integrate with AugmentedNotebookService

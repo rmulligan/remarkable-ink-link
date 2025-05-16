@@ -6,14 +6,39 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.inklink.services.syntax_tokens import Token, TokenType
-from src.inklink.services.syntax_scanner import ScannerFactory
+from .syntax_tokens import Token, TokenType
+from .syntax_scanner import ScannerFactory
 
 logger = logging.getLogger(__name__)
 
 
+class Language(Enum):
+    """Supported programming languages"""
+
+    PYTHON = "python"
+    JAVASCRIPT = "javascript"
+    JAVA = "java"
+    C = "c"
+    CPP = "cpp"
+    GO = "go"
+    RUST = "rust"
+    RUBY = "ruby"
+    PHP = "php"
+    TYPESCRIPT = "typescript"
+
+
+class Theme(Enum):
+    """Available color themes"""
+
+    MONOKAI = "monokai"
+    DARK = "dark"
+    LIGHT = "light"
+    GITHUB = "github"
+    SOLARIZED = "solarized"
+
+
 @dataclass
-class Theme:
+class ThemeColors:
     """Color theme for syntax highlighting"""
 
     name: str
@@ -23,7 +48,7 @@ class Theme:
     line_height: float = 1.2
 
     @classmethod
-    def default_theme(cls) -> "Theme":
+    def default_theme(cls) -> "ThemeColors":
         """Get the default dark theme"""
         return cls(
             name="default_dark",
@@ -47,7 +72,7 @@ class Theme:
         )
 
     @classmethod
-    def light_theme(cls) -> "Theme":
+    def light_theme(cls) -> "ThemeColors":
         """Get the light theme"""
         return cls(
             name="light",
@@ -320,10 +345,11 @@ class SyntaxHighlightCompiler:
             "javascript": LanguageDefinition.javascript(),
             "js": LanguageDefinition.javascript(),  # Alias
         }
-        self.themes: Dict[str, Theme] = {
-            "default": Theme.default_theme(),
-            "default_dark": Theme.default_theme(),
-            "light": Theme.light_theme(),
+        self.themes: Dict[str, ThemeColors] = {
+            "default": ThemeColors.default_theme(),
+            "default_dark": ThemeColors.default_theme(),
+            "light": ThemeColors.light_theme(),
+            "monokai": ThemeColors.default_theme(),  # Use default for now
         }
         self.current_theme = self.themes["default"]
         self.current_language: Optional[LanguageDefinition] = None
@@ -337,7 +363,7 @@ class SyntaxHighlightCompiler:
         logger.error(f"Theme not found: {theme_name}")
         return False
 
-    def add_theme(self, theme: Theme) -> None:
+    def add_theme(self, theme: ThemeColors) -> None:
         """Add a custom theme"""
         self.themes[theme.name] = theme
         logger.info(f"Added theme: {theme.name}")
