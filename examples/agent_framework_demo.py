@@ -15,7 +15,6 @@ from inklink.agents.core import (
     LimitlessContextualInsightAgent,
     ProactiveProjectTrackerAgent,
 )
-from inklink.services.knowledge_graph_service import KnowledgeGraphService
 
 
 async def main():

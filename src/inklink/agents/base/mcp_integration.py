@@ -1,13 +1,10 @@
 """MCP integration for LocalAgent framework."""
-
-import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Coroutine, Dict, List, Optional
 
 from inklink.mcp.server import JSONRPCMessage as MCP_JSONRPCMessage
 from inklink.mcp.server import Server as MCPServer
-from inklink.mcp.types import MCPMessage
 
 from .agent import AgentConfig, LocalAgent
 
