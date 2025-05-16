@@ -5,6 +5,7 @@ import logging
 import signal
 from typing import Callable, List, Optional
 
+from inklink.utils.retry import retry
 from .registry import AgentRegistry
 
 
@@ -99,13 +100,21 @@ class AgentLifecycle:
                 self.logger.warning(
                     f"Agent '{agent.config.name}' in error state, attempting restart"
                 )
-                try:
-                    await self.registry.stop_agent(agent.config.name)
-                    await self.registry.start_agent(agent.config.name)
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to restart agent '{agent.config.name}': {e}"
-                    )
+                await self._restart_agent(agent.config.name)
+
+    @retry(
+        max_attempts=3,
+        base_delay=1.0,
+        exceptions=(Exception,),
+        on_retry=lambda e, attempt: logging.getLogger("agent.lifecycle").warning(
+            f"Retry attempt {attempt} for agent restart: {e}"
+        ),
+    )
+    async def _restart_agent(self, agent_name: str) -> None:
+        """Restart an agent with retry logic."""
+        await self.registry.stop_agent(agent_name)
+        await self.registry.start_agent(agent_name)
+        self.logger.info(f"Successfully restarted agent '{agent_name}'")
 
     def add_shutdown_handler(self, handler: Callable) -> None:
         """Add a shutdown handler."""
