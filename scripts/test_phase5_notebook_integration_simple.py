@@ -103,7 +103,7 @@ Also some inline `code` here.
 
     print(f"Found {len(code_blocks)} code blocks:")
     for i, block in enumerate(code_blocks):
-        print(f"  {i+1}. Language: {block['language']}")
+        print(f"  {i + 1}. Language: {block['language']}")
         print(f"     Lines: {len(block['code'].splitlines())}")
         print(f"     Preview: {block['code'].split(chr(10))[0][:50]}...")
 
@@ -161,7 +161,7 @@ Here's the algorithm:
 ```python
 def binary_search(arr, target):
     left, right = 0, len(arr) - 1
-    
+
     while left <= right:
         mid = (left + right) // 2
         if arr[mid] == target:
@@ -170,7 +170,7 @@ def binary_search(arr, target):
             left = mid + 1
         else:
             right = mid - 1
-    
+
     return -1
 ```
 
@@ -231,7 +231,7 @@ function binarySearch(arr, target) {
     print(f"Document structure ({len(sections)} sections):")
     for i, section in enumerate(sections):
         content_preview = section["content"].strip()[:40].replace("\n", " ")
-        print(f"  {i+1}. {section['type']:<6} - {content_preview}...")
+        print(f"  {i + 1}. {section['type']:<6} - {content_preview}...")
 
     print("\n✓ Mixed content planning test passed")
     print()

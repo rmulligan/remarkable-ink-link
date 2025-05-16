@@ -21,7 +21,7 @@ for name, method in inspect.getmembers(SceneTree):
         try:
             sig = inspect.signature(method)
             print(f"{name}: {sig}")
-        except:
+        except Exception:
             print(f"{name}: (no signature)")
 print()
 

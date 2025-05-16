@@ -35,9 +35,6 @@ def create_test_rm_file():
         return None
 
     try:
-        # Create a SceneTree
-        scene_tree = SceneTree()
-
         # We need to build the blocks manually for a reMarkable file
         blocks = []
 

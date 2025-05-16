@@ -5,7 +5,7 @@ import os
 import tempfile
 
 import rmscene
-from rmscene.scene_stream import SceneInfo, TaggedBlockWriter, simple_text_document
+from rmscene.scene_stream import TaggedBlockWriter, simple_text_document
 
 print("Testing simple_text_document function...")
 
@@ -28,7 +28,7 @@ with open(tmp_path, "wb") as f:
     writer = TaggedBlockWriter(f)
 
     # First write the scene info
-    from rmscene.scene_stream import SceneInfo, SceneTree
+    from rmscene.scene_stream import SceneInfo
 
     si_block = SceneInfo(file_type=si.file_type, x_max=si.x_max, y_max=si.y_max)
     writer.write(si_block)
