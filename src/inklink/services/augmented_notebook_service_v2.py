@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Optional, Tuple, Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 from inklink.services.augmented_notebook_service import AugmentedNotebookService
 

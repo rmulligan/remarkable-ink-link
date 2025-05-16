@@ -8,10 +8,10 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from inklink.services.document_service import DocumentService  # noqa: E402
-from inklink.services.augmented_notebook_service_v2 import (
+from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
-)  # noqa: E402
+)
+from inklink.services.document_service import DocumentService  # noqa: E402
 from inklink.services.syntax_highlight_compiler_v2 import Language  # noqa: E402
 
 

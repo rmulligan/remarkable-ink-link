@@ -11,14 +11,14 @@ import time
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
+from inklink.services.drawj2d_service import Drawj2dService
 from inklink.services.syntax_highlight_compiler_v2 import (
-    SyntaxHighlightCompilerV2,
-    RenderOptions,
     CodeMetadata,
     Language,
+    RenderOptions,
+    SyntaxHighlightCompilerV2,
 )
 from inklink.services.syntax_layout import PageSize
-from inklink.services.drawj2d_service import Drawj2dService
 from inklink.utils import retry_operation
 
 logger = logging.getLogger(__name__)

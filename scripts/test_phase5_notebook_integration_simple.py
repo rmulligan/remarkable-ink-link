@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Simplified test script for Phase 5: Notebook Integration with syntax highlighting."""
 
-import sys
 import re
+import sys
 import tempfile
 from pathlib import Path
 
@@ -10,10 +10,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from inklink.services.syntax_highlight_compiler_v2 import (  # noqa: E402
-    SyntaxHighlightCompilerV2,
-    RenderOptions,
     CodeMetadata,
     Language,
+    RenderOptions,
+    SyntaxHighlightCompilerV2,
 )
 from inklink.services.syntax_layout import PageSize  # noqa: E402
 
