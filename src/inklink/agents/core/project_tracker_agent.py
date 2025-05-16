@@ -129,8 +129,12 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
             with open(projects_dir / "commitments.json", "w") as f:
                 json.dump(self._commitments, f, indent=2)
 
+        except (IOError, OSError) as e:
+            self.logger.error(f"Error saving data to file: {e}")
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Error encoding JSON data: {e}")
         except Exception as e:
-            self.logger.error(f"Error saving data: {e}")
+            self.logger.error(f"Unexpected error saving data: {e}")
 
     async def _agent_logic(self) -> None:
         """Main agent logic - monitor for updates and check status."""

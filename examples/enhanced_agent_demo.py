@@ -75,8 +75,9 @@ async def main():
 
     # Print registered agents
     print("\nRegistered agents:")
-    for agent_name, agent in registry._agents.items():
-        print(f"  - {agent_name}: {agent.config.description}")
+    agents_list = await registry.list_agents()
+    for agent in agents_list:
+        print(f"  - {agent.config.name}: {agent.config.description}")
 
     # Start monitoring
     monitoring_task = asyncio.create_task(run_monitoring(monitoring_service, registry))
