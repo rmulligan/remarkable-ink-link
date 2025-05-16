@@ -12,9 +12,7 @@ sys.path.insert(0, project_root)
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter  # noqa: E402
 from inklink.config import CONFIG  # noqa: E402
-from inklink.services.ink_generation_service import (  # noqa: E402
-    get_ink_generation_service,
-)
+from inklink.services.ink_generation_service import InkGenerationService  # noqa: E402
 from inklink.services.remarkable_service import RemarkableService  # noqa: E402
 
 # Setup logging
@@ -28,7 +26,7 @@ def create_editable_ink_notebook():
     """Create a notebook with editable ink strokes."""
     try:
         # Initialize services
-        ink_service = get_ink_generation_service()
+        ink_service = InkGenerationService()
         rmapi_adapter = RmapiAdapter(CONFIG.get("RMAPI_PATH", "./local-rmapi"))
         remarkable_service = RemarkableService(rmapi_adapter)
 
@@ -89,7 +87,7 @@ Try editing this text on your device!
 def create_multipage_demo():
     """Create a demo with multiple pages of editable ink."""
     try:
-        ink_service = get_ink_generation_service()
+        ink_service = InkGenerationService()
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Page 1
