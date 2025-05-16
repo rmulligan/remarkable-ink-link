@@ -234,7 +234,7 @@ class ControlCenterState:
     async def save_state(self) -> None:
         """Save the current state to disk."""
         await self._save_state()
-    
+
     async def restore_snapshot(self, snapshot: StateSnapshot) -> None:
         """Restore state from a snapshot."""
         async with self._lock:
