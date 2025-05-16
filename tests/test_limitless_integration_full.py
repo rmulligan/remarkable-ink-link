@@ -280,6 +280,12 @@ def mock_controller():
     """Create a mock HTTP handler for testing the controller."""
 
     class MockHandler:
+        def __init__(self):
+            self.wfile = self  # Mock wfile points to self for testing
+            self.headers = {}
+            self.content = None
+            self.status_code = None
+
         @staticmethod
         def get_query_params():
             return {}
@@ -290,7 +296,8 @@ def mock_controller():
 
         def send_response(self, status_code, headers=None):
             self.status_code = status_code
-            self.headers = headers or {}
+            if headers:
+                self.headers.update(headers)
             return self
 
         def send_header(self, name, value):
@@ -328,7 +335,10 @@ class TestLimitlessMockIntegration:
     @staticmethod
     def test_adapter_ping(mock_limitless_adapter, mock_http_adapter):
         """Test the adapter ping method."""
-        # Setup mock response
+        # Reset side_effect to use return_value
+        mock_http_adapter.get.side_effect = None
+
+        # Setup mock response for successful ping
         mock_http_adapter.get.return_value = (True, {"data": []})
 
         # Test successful ping
@@ -341,6 +351,9 @@ class TestLimitlessMockIntegration:
     @staticmethod
     def test_adapter_get_life_logs(mock_limitless_adapter, mock_http_adapter):
         """Test fetching life logs."""
+        # Reset side_effect to use return_value
+        mock_http_adapter.get.side_effect = None
+
         # Setup mock response for a single page
         mock_http_adapter.get.return_value = (
             True,
@@ -384,6 +397,9 @@ class TestLimitlessMockIntegration:
         mock_limitless_service, mock_limitless_adapter, mock_http_adapter
     ):
         """Test synchronizing life logs to the knowledge graph."""
+        # Reset side_effect to use return_value
+        mock_http_adapter.get.side_effect = None
+
         # Setup mock response for get_all_life_logs
         mock_http_adapter.get.return_value = (
             True,
