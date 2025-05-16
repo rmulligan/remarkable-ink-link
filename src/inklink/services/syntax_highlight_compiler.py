@@ -408,19 +408,7 @@ class SyntaxHighlightCompiler:
             while i < len(line):
                 # Skip whitespace
                 if line[i].isspace():
-                    start = i
-                    while i < len(line) and line[i].isspace():
-                        i += 1
-                    tokens.append(
-                        Token(
-                            type=TokenType.WHITESPACE,
-                            value=line[start:i],
-                            start=position + start,
-                            end=position + i,
-                            line=line_num,
-                            column=start + 1,
-                        )
-                    )
+                    i = self._handle_whitespace(line, i, line_num, position, tokens)
                     continue
 
                 # Check for comments
@@ -541,6 +529,23 @@ class SyntaxHighlightCompiler:
             position += len(line) + 1  # +1 for newline
 
         return tokens
+
+    def _handle_whitespace(self, line: str, start: int, line_num: int, position: int, tokens: List[Token]) -> int:
+        """Handle whitespace tokens."""
+        i = start
+        while i < len(line) and line[i].isspace():
+            i += 1
+        tokens.append(
+            Token(
+                type=TokenType.WHITESPACE,
+                value=line[start:i],
+                start=position + start,
+                end=position + i,
+                line=line_num,
+                column=start + 1,
+            )
+        )
+        return i
 
     def generate_hcl_from_tokens(
         self, tokens: List[Token], width: float = 8.5, height: float = 11.0
