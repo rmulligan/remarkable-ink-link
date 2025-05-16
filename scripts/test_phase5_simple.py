@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import what we can actually import
 try:
-    from src.inklink.services.syntax_scanner import ScannerFactory, PythonScanner
+    from src.inklink.services.syntax_scanner import PythonScanner, ScannerFactory
 
     print("✓ Scanner imports successful")
 except ImportError as e:
