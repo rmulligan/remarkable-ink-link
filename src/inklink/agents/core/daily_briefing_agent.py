@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.exceptions import AgentError
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
+from inklink.agents.exceptions import AgentError
 from inklink.services.remarkable_service import RemarkableService
 
 

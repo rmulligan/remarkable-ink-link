@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
-from inklink.agents.exceptions import AgentError
 from inklink.agents.base.monitoring import HealthStatus
 from inklink.agents.di import container
+from inklink.agents.exceptions import AgentError
 
 
 class TestAgentIntegration:

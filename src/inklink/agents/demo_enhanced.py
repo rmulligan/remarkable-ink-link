@@ -11,10 +11,10 @@ from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.exceptions import ConfigurationError
 from inklink.agents.base.monitoring import MonitoringService
 from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.di import AgentContainer, init_container
+from inklink.agents.exceptions import ConfigurationError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
