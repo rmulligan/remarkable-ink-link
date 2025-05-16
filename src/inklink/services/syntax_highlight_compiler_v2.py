@@ -94,7 +94,12 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
 
     def _render_page(self, page: PageLayout, tokens: List, lines: List[str]) -> str:
         """Render a single page to HCL."""
-        hcl_content = [f"# Page {page.page_number}", f"page_size = [{page.page_size.width}, {page.page_size.height}]", "", self._render_code_lines(page, tokens, lines)]
+        hcl_content = [
+            f"# Page {page.page_number}",
+            f"page_size = [{page.page_size.width}, {page.page_size.height}]",
+            "",
+            self._render_code_lines(page, tokens, lines),
+        ]
 
         # Add debug grid if enabled
         if self.options.debug_mode:
@@ -268,7 +273,18 @@ class SyntaxHighlightCompilerV2(SyntaxHighlightCompiler):
     @staticmethod
     def _generate_debug_grid(page: PageLayout) -> str:
         """Generate debug grid for testing."""
-        grid_lines = ["# Debug grid", "rectangle {{", f"  x = {page.margins.left}", f"  y = {page.margins.top}", f"  width = {page.content_width}", f"  height = {page.content_height}", '  stroke = "0xFF0000"', "  stroke_width = 2", '  fill = "none"', "}"]
+        grid_lines = [
+            "# Debug grid",
+            "rectangle {{",
+            f"  x = {page.margins.left}",
+            f"  y = {page.margins.top}",
+            f"  width = {page.content_width}",
+            f"  height = {page.content_height}",
+            '  stroke = "0xFF0000"',
+            "  stroke_width = 2",
+            '  fill = "none"',
+            "}",
+        ]
 
         # Draw regions
         for region in page.regions:

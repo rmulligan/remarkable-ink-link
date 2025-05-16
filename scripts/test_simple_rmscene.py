@@ -10,7 +10,7 @@ from rmscene.scene_stream import (
     TaggedBlockWriter,
     read_tree,
     simple_text_document,
-    )
+)
 
 print("Testing simple_text_document function...")
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Minimal test of rmscene functionality."""
 import uuid
+
 from rmscene import scene_stream
 from rmscene.scene_stream import simple_text_document
 

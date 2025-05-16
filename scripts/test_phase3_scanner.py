@@ -11,11 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.inklink.services.drawj2d_service import Drawj2dService  # noqa: E402
 from src.inklink.services.syntax_highlight_compiler import (  # noqa: E402
     SyntaxHighlightCompiler,
-    )
+)
 from src.inklink.services.syntax_scanner import (  # noqa: E402
     JavaScriptScanner,
     PythonScanner,
-    )
+)
 from src.inklink.services.syntax_tokens import TokenType  # noqa: E402
 
 # Configure logging

@@ -222,9 +222,7 @@ class LanguageScanner:
         return token
 
     @staticmethod
-    def _create_token(
-        match: re.Match, rule: ScannerRule, state: ScannerState
-    ) -> Token:
+    def _create_token(match: re.Match, rule: ScannerRule, state: ScannerState) -> Token:
         """Create a token from a regex match."""
         if rule.capture_group is not None:
             value = match.group(rule.capture_group)

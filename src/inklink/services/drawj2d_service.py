@@ -42,7 +42,8 @@ class Drawj2dService:
                 capture_output=True,
                 text=True,
                 timeout=5,
-            check=True)
+                check=True,
+            )
             return result.returncode == 0
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
@@ -89,7 +90,8 @@ class Drawj2dService:
                 "-T",
                 output_format,  # Output format
                 "-o",
-                output_path,hcl_path  # Output file
+                output_path,
+                hcl_path,  # Output file
             ]
 
             logger.info(f"Executing drawj2d: {' '.join(cmd)}")
@@ -97,8 +99,12 @@ class Drawj2dService:
             # Execute drawj2d
             start_time = os.times()
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30,   # 30 second timeout
-            check=True)
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,  # 30 second timeout
+                check=True,
+            )
             end_time = os.times()
 
             duration = end_time.elapsed - start_time.elapsed
