@@ -412,119 +412,29 @@ class SyntaxHighlightCompiler:
                     continue
 
                 # Check for comments
-                if self.current_language.line_comment and line[i:].startswith(
-                    self.current_language.line_comment
-                ):
-                    tokens.append(
-                        Token(
-                            type=TokenType.COMMENT,
-                            value=line[i:],
-                            start=position + i,
-                            end=position + len(line),
-                            line=line_num,
-                            column=i + 1,
-                        )
-                    )
+                if self._handle_comment(line, i, line_num, position, tokens):
                     break
 
                 # Check for strings (simple version)
                 if line[i] in ['"', "'"]:
-                    quote = line[i]
-                    start = i
-                    i += 1
-                    while i < len(line) and line[i] != quote:
-                        if line[i] == "\\":
-                            i += 2
-                        else:
-                            i += 1
-                    if i < len(line):
-                        i += 1
-                    tokens.append(
-                        Token(
-                            type=TokenType.STRING,
-                            value=line[start:i],
-                            start=position + start,
-                            end=position + i,
-                            line=line_num,
-                            column=start + 1,
-                        )
-                    )
+                    i = self._handle_string(line, i, line_num, position, tokens)
                     continue
 
                 # Check for numbers
                 if line[i].isdigit():
-                    start = i
-                    while i < len(line) and (line[i].isdigit() or line[i] == "."):
-                        i += 1
-                    tokens.append(
-                        Token(
-                            type=TokenType.NUMBER,
-                            value=line[start:i],
-                            start=position + start,
-                            end=position + i,
-                            line=line_num,
-                            column=start + 1,
-                        )
-                    )
+                    i = self._handle_number(line, i, line_num, position, tokens)
                     continue
 
                 # Check for identifiers and keywords
                 if line[i].isalpha() or line[i] == "_":
-                    start = i
-                    while i < len(line) and (line[i].isalnum() or line[i] == "_"):
-                        i += 1
-                    word = line[start:i]
-
-                    token_type = TokenType.IDENTIFIER
-                    if word in self.current_language.keywords:
-                        token_type = TokenType.KEYWORD
-                    elif word in self.current_language.builtin_functions:
-                        token_type = TokenType.BUILTIN
-
-                    tokens.append(
-                        Token(
-                            type=token_type,
-                            value=word,
-                            start=position + start,
-                            end=position + i,
-                            line=line_num,
-                            column=start + 1,
-                        )
-                    )
+                    i = self._handle_identifier(line, i, line_num, position, tokens)
                     continue
 
                 # Check for operators and punctuation
                 if i < len(line):
-                    # Multi-character operators
-                    for op_len in [3, 2, 1]:
-                        if i + op_len <= len(line):
-                            op = line[i : i + op_len]
-                            if op in self.current_language.operators:
-                                tokens.append(
-                                    Token(
-                                        type=TokenType.OPERATOR,
-                                        value=op,
-                                        start=position + i,
-                                        end=position + i + op_len,
-                                        line=line_num,
-                                        column=i + 1,
-                                    )
-                                )
-                                i += op_len
-                                break
-                    else:
-                        # Single character (punctuation or unknown)
-                        tokens.append(
-                            Token(
-                                type=TokenType.PUNCTUATION,
-                                value=line[i],
-                                start=position + i,
-                                end=position + i + 1,
-                                line=line_num,
-                                column=i + 1,
-                            )
-                        )
-                        i += 1
+                    i = self._handle_operator_or_punctuation(
+                        line, i, line_num, position, tokens
+                    )
 
             position += len(line) + 1  # +1 for newline
 
@@ -549,6 +459,133 @@ class SyntaxHighlightCompiler:
             )
         )
         return i
+
+    def _handle_comment(
+        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
+    ) -> bool:
+        """Handle comment tokens."""
+        if self.current_language.line_comment and line[start:].startswith(
+            self.current_language.line_comment
+        ):
+            tokens.append(
+                Token(
+                    type=TokenType.COMMENT,
+                    value=line[start:],
+                    start=position + start,
+                    end=position + len(line),
+                    line=line_num,
+                    column=start + 1,
+                )
+            )
+            return True
+        return False
+
+    @staticmethod
+    def _handle_string(
+        line: str, start: int, line_num: int, position: int, tokens: List[Token]
+    ) -> int:
+        """Handle string tokens."""
+        quote = line[start]
+        i = start + 1
+        while i < len(line) and line[i] != quote:
+            if line[i] == "\\":
+                i += 2
+            else:
+                i += 1
+        if i < len(line):
+            i += 1
+        tokens.append(
+            Token(
+                type=TokenType.STRING,
+                value=line[start:i],
+                start=position + start,
+                end=position + i,
+                line=line_num,
+                column=start + 1,
+            )
+        )
+        return i
+
+    @staticmethod
+    def _handle_number(
+        line: str, start: int, line_num: int, position: int, tokens: List[Token]
+    ) -> int:
+        """Handle number tokens."""
+        i = start
+        while i < len(line) and (line[i].isdigit() or line[i] == "."):
+            i += 1
+        tokens.append(
+            Token(
+                type=TokenType.NUMBER,
+                value=line[start:i],
+                start=position + start,
+                end=position + i,
+                line=line_num,
+                column=start + 1,
+            )
+        )
+        return i
+
+    def _handle_identifier(
+        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
+    ) -> int:
+        """Handle identifier and keyword tokens."""
+        i = start
+        while i < len(line) and (line[i].isalnum() or line[i] == "_"):
+            i += 1
+        word = line[start:i]
+
+        token_type = TokenType.IDENTIFIER
+        if word in self.current_language.keywords:
+            token_type = TokenType.KEYWORD
+        elif word in self.current_language.builtin_functions:
+            token_type = TokenType.BUILTIN
+
+        tokens.append(
+            Token(
+                type=token_type,
+                value=word,
+                start=position + start,
+                end=position + i,
+                line=line_num,
+                column=start + 1,
+            )
+        )
+        return i
+
+    def _handle_operator_or_punctuation(
+        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
+    ) -> int:
+        """Handle operator and punctuation tokens."""
+        # Multi-character operators
+        for op_len in [3, 2, 1]:
+            if start + op_len <= len(line):
+                op = line[start : start + op_len]
+                if op in self.current_language.operators:
+                    tokens.append(
+                        Token(
+                            type=TokenType.OPERATOR,
+                            value=op,
+                            start=position + start,
+                            end=position + start + op_len,
+                            line=line_num,
+                            column=start + 1,
+                        )
+                    )
+                    return start + op_len
+
+        # Single character (punctuation or unknown)
+        tokens.append(
+            Token(
+                type=TokenType.PUNCTUATION,
+                value=line[start],
+                start=position + start,
+                end=position + start + 1,
+                line=line_num,
+                column=start + 1,
+            )
+        )
+        return start + 1
 
     def generate_hcl_from_tokens(
         self, tokens: List[Token], width: float = 8.5, height: float = 11.0
