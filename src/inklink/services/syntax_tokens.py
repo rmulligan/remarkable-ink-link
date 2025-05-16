@@ -1,8 +1,8 @@
 """Token definitions for syntax highlighting."""
 
-from typing import Optional, Dict, Any
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class TokenType(Enum):

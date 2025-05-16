@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.inklink.services.syntax_tokens import Token, TokenType
 from src.inklink.services.syntax_scanner import ScannerFactory
+from src.inklink.services.syntax_tokens import Token, TokenType
 
 logger = logging.getLogger(__name__)
 
