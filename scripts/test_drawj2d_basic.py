@@ -50,13 +50,12 @@ def test_basic_drawj2d():
                 return True
             logger.error("Output file not found!")
             return False
-        else:
-            logger.error(f"✗ drawj2d processing failed: {result.get('error')}")
-            if result.get("stdout"):
-                logger.error(f"STDOUT: {result['stdout']}")
-            if result.get("stderr"):
-                logger.error(f"STDERR: {result['stderr']}")
-            return False
+        logger.error(f"✗ drawj2d processing failed: {result.get('error')}")
+        if result.get("stdout"):
+            logger.error(f"STDOUT: {result['stdout']}")
+        if result.get("stderr"):
+            logger.error(f"STDERR: {result['stderr']}")
+        return False
 
     except Exception as e:
         logger.error(f"Test failed with exception: {e}")

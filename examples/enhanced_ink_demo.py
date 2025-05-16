@@ -65,7 +65,6 @@ Hashtags: #InkLink #ReMarkable
 def create_character_visualization():
     """Create a visual representation of character strokes for debugging."""
     import matplotlib.pyplot as plt
-    import numpy as np
 
     # Create figure
     fig, axes = plt.subplots(6, 10, figsize=(20, 12))

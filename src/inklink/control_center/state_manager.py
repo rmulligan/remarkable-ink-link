@@ -7,7 +7,6 @@ event notifications, and recovery capabilities.
 import asyncio
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum

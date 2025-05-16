@@ -86,13 +86,12 @@ class InkConverter(BaseConverter):
                     return append_to
                 logger.error(f"Failed to append ink to {append_to}")
                 return None
-            else:
-                # Create new file
-                success = self.ink_service.create_rm_file_with_text(text, output_path)
-                if success:
-                    return output_path
-                logger.error(f"Failed to create ink file at {output_path}")
-                return None
+            # Create new file
+            success = self.ink_service.create_rm_file_with_text(text, output_path)
+            if success:
+                return output_path
+            logger.error(f"Failed to create ink file at {output_path}")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting text to ink: {str(e)}")

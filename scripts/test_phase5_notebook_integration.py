@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
 )
-from inklink.services.document_service import DocumentService  # noqa: E402
 
 
 def test_syntax_highlighted_document():
@@ -43,7 +42,6 @@ for i in range(10):
     print("  - Line numbers: Yes")
     print("  - Metadata: Yes")
     print()
-    return
 
 
 def test_mixed_content_response():

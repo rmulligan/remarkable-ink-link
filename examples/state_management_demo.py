@@ -15,8 +15,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 )
-
-from inklink.control_center.core_enhanced import EnhancedInkControlCenter  # noqa: E402
 from inklink.control_center.state_manager import (  # noqa: E402
     ControlCenterState,
     StateEvent,
@@ -235,7 +233,7 @@ class StateManagementDemo:
         recovered_zones = await new_state.get_zones()
         recovered_tasks = await new_state.get_tasks()
 
-        print(f"\nRecovered state:")
+        print("\nRecovered state:")
         print(f"  Zones: {len(recovered_zones)}")
         print(f"  Tasks: {len(recovered_tasks)}")
 

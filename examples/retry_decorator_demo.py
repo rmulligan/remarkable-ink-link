@@ -2,7 +2,6 @@
 
 import logging
 import random
-import time
 from typing import Any, Dict
 
 import requests
@@ -73,8 +72,7 @@ class APIClient:
         if self.request_count < 4:
             if random.random() < 0.5:
                 raise ConnectionError("Network connection lost")
-            else:
-                raise TimeoutError("Operation timed out")
+            raise TimeoutError("Operation timed out")
 
         return "Complex operation completed successfully"
 
@@ -123,8 +121,7 @@ def main():
         # This will not retry TypeError but will retry ValueError
         if random.random() < 0.5:
             raise ValueError("This will be retried")
-        else:
-            raise TypeError("This won't be retried")
+        raise TypeError("This won't be retried")
 
     try:
         selective_retry()
