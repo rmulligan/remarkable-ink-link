@@ -29,9 +29,9 @@ class AgentContainer(containers.DeclarativeContainer):
     """DI container for agent framework."""
 
     # Configuration
-    config = providers.Singleton(lambda: config_loader.load())
+    config = providers.Singleton(config_loader.load)
 
-    framework_config = providers.Singleton(lambda: config_loader.get_framework_config())
+    framework_config = providers.Singleton(config_loader.get_framework_config)
 
     # Storage paths
     storage_base_path = providers.Singleton(

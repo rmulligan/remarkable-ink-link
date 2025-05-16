@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
 from inklink.adapters.ollama_adapter_enhanced import EnhancedOllamaAdapter
-from inklink.agents.base.agent import AgentConfig, AgentState
+from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.exceptions import AgentConfigurationError, AgentException
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.limitless_life_log_service import LimitlessLifeLogService
@@ -383,9 +383,7 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
             await self._analyze_transcript(transcript)
             return {"status": "processed"}
 
-        elif request_type == "get_insights":
+        if request_type == "get_insights":
             topic = request.get("topic")
             return await self._handle_find_spoken_context({"topic": topic})
-
-        else:
-            return {"error": f"Unknown request type: {request_type}"}
+        return {"error": f"Unknown request type: {request_type}"}

@@ -73,18 +73,9 @@ class MCPAgentMixin:
 
         async def handler(message: MCPMessage) -> Dict[str, Any]:
             try:
-                # Validate input against schema if provided
-                if capability.input_schema:
-                    # TODO: Implement schema validation
-                    pass
 
                 # Call the capability handler
                 result = await capability.handler(message.data)
-
-                # Validate output against schema if provided
-                if capability.output_schema:
-                    # TODO: Implement schema validation
-                    pass
 
                 return result
 

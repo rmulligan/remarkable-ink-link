@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-from pathlib import Path
 
 from inklink.agents.base.monitoring import MonitoringService
 from inklink.agents.config import config_loader

@@ -1,15 +1,8 @@
 """Core control center implementation."""
 
 import asyncio
-import json
-from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
-from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,
 )
@@ -17,7 +10,6 @@ from inklink.services.remarkable_service import RemarkableService
 
 from .canvas import DynamicCanvas
 from .processor import CommandType, InkCommand, InkProcessor
-from .zones import BaseZone
 
 
 class InkControlCenter:
@@ -110,16 +102,15 @@ class InkControlCenter:
         """Execute a parsed command."""
         if command.type == CommandType.AGENT_INSTRUCTION:
             return await self._execute_agent_instruction(command)
-        elif command.type == CommandType.CREATE_TASK:
+        if command.type == CommandType.CREATE_TASK:
             return await self._execute_create_task(command)
-        elif command.type == CommandType.ASSIGN_TASK:
+        if command.type == CommandType.ASSIGN_TASK:
             return await self._execute_assign_task(command)
-        elif command.type == CommandType.COMPLETE_TASK:
+        if command.type == CommandType.COMPLETE_TASK:
             return await self._execute_complete_task(command)
-        elif command.type == CommandType.QUICK_ACTION:
+        if command.type == CommandType.QUICK_ACTION:
             return await self._execute_quick_action(command)
-        else:
-            return {"error": f"Unknown command type: {command.type}"}
+        return {"error": f"Unknown command type: {command.type}"}
 
     async def _execute_agent_instruction(self, command: InkCommand) -> Dict[str, Any]:
         """Execute an agent instruction command."""
@@ -190,14 +181,13 @@ class InkControlCenter:
         if action == "sync":
             await self.sync_all()
             return {"action": "sync", "status": "completed"}
-        elif action == "refresh":
+        if action == "refresh":
             await self.refresh_display()
             return {"action": "refresh", "status": "completed"}
-        elif action == "new_task":
+        if action == "new_task":
             # Switch to task creation mode
             return {"action": "new_task", "mode": "create"}
-        else:
-            return {"error": f"Unknown action: {action}"}
+        return {"error": f"Unknown action: {action}"}
 
     async def sync_all(self):
         """Sync all data with backend systems."""
@@ -268,7 +258,8 @@ class SyncService:
 
         await self.update_queue.put({"type": "complete_task", "task_id": task_id})
 
-    async def get_all_tasks(self) -> List[Dict[str, Any]]:
+    @staticmethod
+    async def get_all_tasks() -> List[Dict[str, Any]]:
         """Get all tasks from the backend."""
         # Mock implementation
         return [
@@ -282,7 +273,8 @@ class SyncService:
             {"id": "3", "title": "Base agent", "status": "done"},
         ]
 
-    async def get_roadmap(self) -> Dict[str, Any]:
+    @staticmethod
+    async def get_roadmap() -> Dict[str, Any]:
         """Get roadmap data from the backend."""
         # Mock implementation
         return {
@@ -306,8 +298,9 @@ class AgentManager:
     def __init__(self):
         self.agents = {}
 
+    @staticmethod
     async def send_to_agent(
-        self, agent_name: str, capability: str, data: Dict[str, Any]
+        agent_name: str, capability: str, data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Send a message to a specific agent."""
         # Mock implementation
@@ -317,7 +310,8 @@ class AgentManager:
             "response": f"Executing {capability}",
         }
 
-    async def get_all_status(self) -> Dict[str, Dict[str, Any]]:
+    @staticmethod
+    async def get_all_status() -> Dict[str, Dict[str, Any]]:
         """Get status of all agents."""
         # Mock implementation
         return {

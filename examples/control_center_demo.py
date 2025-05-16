@@ -7,7 +7,6 @@ from pathlib import Path
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
-from inklink.agents.base.registry import AgentRegistry
 from inklink.agents.core.control_center_agent import ControlCenterAgent
 from inklink.services.handwriting_recognition_service import (
     HandwritingRecognitionService,

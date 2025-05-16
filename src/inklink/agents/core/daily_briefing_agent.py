@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -254,7 +254,8 @@ class DailyBriefingAgent(MCPEnabledAgent):
             self.logger.error(f"Error creating template: {e}")
             return None
 
-    async def _get_calendar_events(self) -> List[Dict[str, Any]]:
+    @staticmethod
+    async def _get_calendar_events() -> List[Dict[str, Any]]:
         """Get today's calendar events (placeholder)."""
         # This would integrate with Proton Calendar
         return [
@@ -262,12 +263,14 @@ class DailyBriefingAgent(MCPEnabledAgent):
             {"time": "14:00", "title": "Project Review", "duration": "1 hour"},
         ]
 
-    async def _get_email_summary(self) -> str:
+    @staticmethod
+    async def _get_email_summary() -> str:
         """Get email summary (placeholder)."""
         # This would integrate with ProtonMail
         return "3 unread emails requiring attention: Project update from Sarah, Code review request, Meeting rescheduling"
 
-    async def _get_weather_forecast(self) -> str:
+    @staticmethod
+    async def _get_weather_forecast() -> str:
         """Get weather forecast (placeholder)."""
         # This could integrate with a weather API
         return "Partly cloudy, 72°F (22°C), 20% chance of rain"
@@ -275,11 +278,6 @@ class DailyBriefingAgent(MCPEnabledAgent):
     async def _handle_generate_briefing(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle manual briefing generation request."""
         date_str = data.get("date")
-
-        if date_str:
-            # Generate briefing for specific date
-            # (Implementation would need to handle historical data)
-            pass
 
         # Generate briefing for today
         return await self._generate_daily_briefing()
@@ -303,7 +301,7 @@ class DailyBriefingAgent(MCPEnabledAgent):
         if request_type == "generate_briefing":
             return await self._generate_daily_briefing()
 
-        elif request_type == "set_briefing_time":
+        if request_type == "set_briefing_time":
             new_time = request.get("time")
             if new_time:
                 self.briefing_time = time.fromisoformat(new_time)

@@ -1,6 +1,4 @@
 """Ink processing and command parsing."""
-
-import asyncio
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -124,7 +122,8 @@ class InkProcessor:
 
         return commands
 
-    def _strokes_to_ink_data(self, strokes: List[Stroke]) -> Dict[str, Any]:
+    @staticmethod
+    def _strokes_to_ink_data(strokes: List[Stroke]) -> Dict[str, Any]:
         """Convert strokes to format for handwriting recognition."""
         return {
             "strokes": [
@@ -203,7 +202,8 @@ class GestureDetector:
 
         return gestures
 
-    def _is_circle(self, stroke: Stroke) -> bool:
+    @staticmethod
+    def _is_circle(stroke: Stroke) -> bool:
         """Check if stroke is a circle."""
         if len(stroke.points) < 10:
             return False
@@ -223,7 +223,8 @@ class GestureDetector:
             distance < width * 0.2 and 0.8 < aspect_ratio < 1.2  # Start/end are close
         )  # Roughly square bounds
 
-    def _is_arrow(self, stroke: Stroke) -> bool:
+    @staticmethod
+    def _is_arrow(stroke: Stroke) -> bool:
         """Check if stroke is an arrow."""
         if len(stroke.points) < 5:
             return False
@@ -249,7 +250,8 @@ class GestureDetector:
         linearity = line_dist / path_dist if path_dist > 0 else 0
         return linearity > 0.8
 
-    def _is_cross_out(self, strokes: List[Stroke]) -> bool:
+    @staticmethod
+    def _is_cross_out(strokes: List[Stroke]) -> bool:
         """Check if strokes form a cross-out."""
         if len(strokes) != 2:
             return False
@@ -267,7 +269,8 @@ class GestureDetector:
             and bounds2[1] < bounds1[3]
         )
 
-    def _is_box(self, strokes: List[Stroke]) -> bool:
+    @staticmethod
+    def _is_box(strokes: List[Stroke]) -> bool:
         """Check if strokes form a box."""
         if len(strokes) != 4:
             return False
@@ -276,7 +279,8 @@ class GestureDetector:
         # Check if strokes connect to form closed shape
         return True  # Placeholder
 
-    def _is_question_mark(self, stroke: Stroke) -> bool:
+    @staticmethod
+    def _is_question_mark(stroke: Stroke) -> bool:
         """Check if stroke is a question mark."""
         # Simplified - would need shape analysis
         points = stroke.points
@@ -286,8 +290,9 @@ class GestureDetector:
         # Check for characteristic curve and dot
         return False  # Placeholder
 
+    @staticmethod
     def _combine_bounds(
-        self, bounds_list: List[Tuple[float, float, float, float]]
+        bounds_list: List[Tuple[float, float, float, float]]
     ) -> Tuple[float, float, float, float]:
         """Combine multiple bounds into one."""
         if not bounds_list:
@@ -376,7 +381,8 @@ class CommandParser:
 
         return commands
 
-    def parse_gestures(self, gestures: List[Gesture]) -> List[InkCommand]:
+    @staticmethod
+    def parse_gestures(gestures: List[Gesture]) -> List[InkCommand]:
         """Parse commands from gestures."""
         commands = []
 
