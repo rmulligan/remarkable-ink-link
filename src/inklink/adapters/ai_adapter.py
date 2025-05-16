@@ -25,6 +25,7 @@ class AIAdapter(Adapter):
         api_base: Optional[str] = None,
         system_prompt: Optional[str] = None,
         provider: str = "openai",
+        validation_provider: Optional[str] = None,
     ):
         """
         Initialize AIAdapter.
@@ -35,8 +36,12 @@ class AIAdapter(Adapter):
             api_base: Base URL for API requests
             system_prompt: Default system prompt
             provider: AI provider ('openai', 'anthropic', etc.)
+            validation_provider: Optional secondary provider for validation
         """
         self.provider = provider.lower()
+        self.validation_provider = (
+            validation_provider.lower() if validation_provider else None
+        )
 
         # Set up API key, falling back to environment variables
         self.api_key = api_key or os.environ.get(f"{self.provider.upper()}_API_KEY")
@@ -48,6 +53,15 @@ class AIAdapter(Adapter):
                     f"No API key found for {self.provider}, AI features may not work"
                 )
 
+        # Set up validation API key if using validation provider
+        self.validation_api_key = None
+        if self.validation_provider:
+            self.validation_api_key = os.environ.get(
+                f"{self.validation_provider.upper()}_API_KEY"
+            )
+            if not self.validation_api_key and self.validation_provider == "github":
+                self.validation_api_key = os.environ.get("GITHUB_TOKEN")
+
         # Set up model, API base, and system prompt
         self.model = model or os.environ.get(f"{self.provider.upper()}_MODEL")
         if not self.model:
@@ -56,6 +70,8 @@ class AIAdapter(Adapter):
                 self.model = "gpt-3.5-turbo"
             elif self.provider == "anthropic":
                 self.model = "claude-3-sonnet-20240229"
+            elif self.provider == "github":
+                self.model = "openai/gpt-4.1"
 
         # API base URL
         self.api_base = api_base or os.environ.get(f"{self.provider.upper()}_API_BASE")
@@ -64,6 +80,8 @@ class AIAdapter(Adapter):
                 self.api_base = "https://api.openai.com/v1"
             elif self.provider == "anthropic":
                 self.api_base = "https://api.anthropic.com/v1"
+            elif self.provider == "github":
+                self.api_base = "https://models.github.ai/inference"
 
         # System prompt
         self.system_prompt = system_prompt or os.environ.get(
@@ -119,23 +137,48 @@ class AIAdapter(Adapter):
             Tuple of (success: bool, completion_or_error: str)
         """
         try:
-            if self.provider == "openai":
-                return self._generate_openai_completion(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    messages=messages,
+            # Generate primary completion
+            success, result = self._generate_completion_from_provider(
+                self.provider,
+                self.api_key,
+                self.api_base,
+                self.model,
+                prompt,
+                system_prompt,
+                max_tokens,
+                temperature,
+                messages,
+            )
+
+            if not success:
+                return False, result
+
+            # If validation provider is set, run secondary validation
+            if self.validation_provider:
+                logger.info(f"Validating response with {self.validation_provider}")
+                validation_prompt = self._create_validation_prompt(prompt, result)
+
+                validation_success, validation_result = (
+                    self._generate_completion_from_provider(
+                        self.validation_provider,
+                        self.validation_api_key,
+                        self._get_validation_api_base(),
+                        self._get_validation_model(),
+                        validation_prompt,
+                        None,
+                        max_tokens=500,
+                        temperature=0.3,
+                    )
                 )
-            elif self.provider == "anthropic":
-                return self._generate_anthropic_completion(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                )
-            else:
-                return False, f"Unsupported AI provider: {self.provider}"
+
+                if validation_success:
+                    # Return ensemble result
+                    return True, self._combine_responses(result, validation_result)
+                logger.warning(f"Validation failed: {validation_result}")
+                # Still return original result if validation fails
+                return True, result
+
+            return success, result
 
         except Exception as e:
             logger.error(f"Error generating completion: {e}")
@@ -261,6 +304,99 @@ class AIAdapter(Adapter):
         except Exception as e:
             logger.error(format_error("ai", "Failed to get Anthropic response", e))
             return False, str(e)
+
+    def _generate_completion_from_provider(
+        self,
+        provider: str,
+        api_key: str,
+        api_base: str,
+        model: str,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        max_tokens: int = 1000,
+        temperature: float = 0.7,
+        messages: Optional[List[Dict[str, str]]] = None,
+    ) -> Tuple[bool, str]:
+        """Generate completion from a specific provider."""
+        if provider in ("openai", "github"):
+            # GitHub uses OpenAI-compatible API
+            url = f"{api_base}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+
+            if not messages:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+            data = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+
+            def call_api():
+                response = requests.post(url, headers=headers, json=data, timeout=30)
+                response.raise_for_status()
+                result = response.json()
+                return result["choices"][0]["message"]["content"].strip()
+
+            try:
+                completion = retry_operation(
+                    call_api, operation_name=f"{provider}.completion"
+                )
+                return True, completion
+            except Exception as e:
+                return False, str(e)
+
+        elif provider == "anthropic":
+            return self._generate_anthropic_completion(
+                prompt, system_prompt, max_tokens, temperature
+            )
+        else:
+            return False, f"Unsupported provider: {provider}"
+
+    def _get_validation_api_base(self) -> str:
+        """Get API base URL for validation provider."""
+        if self.validation_provider == "github":
+            return "https://models.github.ai/inference"
+        return self.api_base
+
+    def _get_validation_model(self) -> str:
+        """Get model name for validation provider."""
+        if self.validation_provider == "github":
+            return "openai/gpt-4.1"
+        return self.model
+
+    @staticmethod
+    def _create_validation_prompt(original_prompt: str, response: str) -> str:
+        """Create a prompt for validating the primary model's response."""
+        return f"""Please review this AI response and provide your analysis:
+
+Original question: {original_prompt}
+
+Response to review: {response}
+
+Please evaluate:
+1. Accuracy and correctness
+2. Completeness of the answer
+3. Any potential errors or improvements
+4. Additional insights or perspectives
+
+Provide a brief analysis and any corrections or enhancements needed."""
+
+    @staticmethod
+    def _combine_responses(primary_response: str, validation_response: str) -> str:
+        """Combine primary and validation responses into an ensemble result."""
+        return f"""{primary_response}
+
+---
+Validation Check (GitHub Copilot):
+{validation_response}"""
 
     def generate_structured_completion(
         self,
