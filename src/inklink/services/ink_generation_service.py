@@ -137,7 +137,8 @@ class InkGenerationService:
         )
         return line
 
-    def create_rm_file_with_text(self, text: str, output_path: str) -> bool:
+    @staticmethod
+    def create_rm_file_with_text(text: str, output_path: str) -> bool:
         """
         Create a .rm file with editable text strokes.
 

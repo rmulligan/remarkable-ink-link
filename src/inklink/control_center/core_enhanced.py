@@ -443,15 +443,18 @@ class EnhancedInkControlCenter:
         return await self.remarkable_service.create_notebook(notebook_data)
 
     # Event handlers
-    async def _handle_zone_update(self, event: StateEvent):
+    @staticmethod
+    async def _handle_zone_update(event: StateEvent):
         """Handle zone update events."""
         logger.info(f"Zone {event.zone_id} updated")
 
-    async def _handle_selection_change(self, event: StateEvent):
+    @staticmethod
+    async def _handle_selection_change(event: StateEvent):
         """Handle selection change events."""
         logger.info(f"Selection changed: {event.data}")
 
-    async def _handle_error(self, event: StateEvent):
+    @staticmethod
+    async def _handle_error(event: StateEvent):
         """Handle error events."""
         logger.error(f"Error occurred: {event.error}")
 
@@ -496,12 +499,14 @@ class EnhancedSyncService:
         # Implementation would send to backend
         logger.info(f"Completed task: {task_id}")
 
-    async def get_all_tasks(self) -> List[Dict[str, Any]]:
+    @staticmethod
+    async def get_all_tasks() -> List[Dict[str, Any]]:
         """Get all tasks from the backend."""
         # Implementation would fetch from backend
         return []
 
-    async def get_roadmap(self) -> Dict[str, Any]:
+    @staticmethod
+    async def get_roadmap() -> Dict[str, Any]:
         """Get roadmap data from the backend."""
         # Implementation would fetch from backend
         return {}

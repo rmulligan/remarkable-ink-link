@@ -10,11 +10,6 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.inklink.control_center.core import InkControlCenter  # noqa: E402
-from src.inklink.control_center.core_enhanced import (  # noqa: E402
-    EnhancedInkControlCenter,
-)
-
 
 def backup_original_file(file_path: Path):
     """Create a backup of the original file."""

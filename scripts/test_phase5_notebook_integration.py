@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Test script for Phase 5: Notebook Integration with syntax highlighting."""
 
 import sys
@@ -12,7 +11,6 @@ from inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
 )
 
-# from inklink.services.document_service import DocumentService  # noqa: E402
 
 
 def test_syntax_highlighted_document():
@@ -44,7 +42,6 @@ def test_syntax_highlighted_document():
     print("  - Line numbers: Yes")
     print("  - Metadata: Yes")
     print()
-    return
 
 
 def test_mixed_content_response():

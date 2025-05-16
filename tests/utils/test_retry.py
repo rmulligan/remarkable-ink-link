@@ -1,7 +1,4 @@
 """Tests for the retry decorator."""
-
-import asyncio
-import time
 from unittest.mock import Mock, patch
 
 import pytest
@@ -12,13 +9,12 @@ from inklink.utils.retry import RetryError, retry
 class TestRetryError(Exception):
     """Test exception for retry tests."""
 
-    pass
-
 
 class TestRetryDecorator:
     """Test cases for the retry decorator."""
 
-    def test_sync_success_first_attempt(self):
+    @staticmethod
+    def test_sync_success_first_attempt():
         """Test sync function that succeeds on first attempt."""
         call_count = 0
 
@@ -32,7 +28,8 @@ class TestRetryDecorator:
         assert result == "success"
         assert call_count == 1
 
-    def test_sync_success_after_retries(self):
+    @staticmethod
+    def test_sync_success_after_retries():
         """Test sync function that succeeds after retries."""
         call_count = 0
 
@@ -48,7 +45,8 @@ class TestRetryDecorator:
         assert result == "success"
         assert call_count == 3
 
-    def test_sync_max_attempts_exceeded(self):
+    @staticmethod
+    def test_sync_max_attempts_exceeded():
         """Test sync function that exceeds max attempts."""
         call_count = 0
 
@@ -97,7 +95,8 @@ class TestRetryDecorator:
         assert result == "success"
         assert call_count == 3
 
-    def test_exponential_backoff(self):
+    @staticmethod
+    def test_exponential_backoff():
         """Test exponential backoff calculation."""
         delays = []
 
@@ -112,7 +111,7 @@ class TestRetryDecorator:
             raise TestRetryError("Always fails")
 
         with patch("time.sleep") as mock_sleep:
-            mock_sleep.side_effect = lambda d: delays.append(d)
+            mock_sleep.side_effect = delays.append
             with pytest.raises(RetryError):
                 test_func()
 
@@ -122,7 +121,8 @@ class TestRetryDecorator:
         assert delays[1] == 2.0
         assert delays[2] == 4.0
 
-    def test_max_delay_cap(self):
+    @staticmethod
+    def test_max_delay_cap():
         """Test that delay is capped at max_delay."""
         delays = []
 
@@ -138,7 +138,7 @@ class TestRetryDecorator:
             raise TestRetryError("Always fails")
 
         with patch("time.sleep") as mock_sleep:
-            mock_sleep.side_effect = lambda d: delays.append(d)
+            mock_sleep.side_effect = delays.append
             with pytest.raises(RetryError):
                 test_func()
 
@@ -149,7 +149,8 @@ class TestRetryDecorator:
         assert delays[2] == 3.0  # Capped
         assert delays[3] == 3.0  # Capped
 
-    def test_jitter(self):
+    @staticmethod
+    def test_jitter():
         """Test that jitter adds randomness to delays."""
         delays = []
 
@@ -160,7 +161,7 @@ class TestRetryDecorator:
             raise TestRetryError("Always fails")
 
         with patch("time.sleep") as mock_sleep:
-            mock_sleep.side_effect = lambda d: delays.append(d)
+            mock_sleep.side_effect = delays.append
             with pytest.raises(RetryError):
                 test_func()
 
@@ -169,7 +170,8 @@ class TestRetryDecorator:
         assert 0.5 <= delays[0] <= 1.5  # Jittered around 1s
         assert 1.0 <= delays[1] <= 3.0  # Jittered around 2s
 
-    def test_exception_filtering(self):
+    @staticmethod
+    def test_exception_filtering():
         """Test that only specified exceptions trigger retries."""
         call_count = 0
 
@@ -186,7 +188,8 @@ class TestRetryDecorator:
 
         assert call_count == 1  # Should not retry on ValueError
 
-    def test_on_retry_callback(self):
+    @staticmethod
+    def test_on_retry_callback():
         """Test on_retry callback is called correctly."""
         retry_calls = []
 
@@ -209,7 +212,8 @@ class TestRetryDecorator:
         assert retry_calls[0] == ("TestRetryError", 1)
         assert retry_calls[1] == ("TestRetryError", 2)
 
-    def test_custom_logger(self):
+    @staticmethod
+    def test_custom_logger():
         """Test using a custom logger."""
         mock_logger = Mock()
 
@@ -229,7 +233,8 @@ class TestRetryDecorator:
         assert mock_logger.warning.call_count == 1
         assert mock_logger.error.call_count == 1
 
-    def test_preserves_function_metadata(self):
+    @staticmethod
+    def test_preserves_function_metadata():
         """Test that decorator preserves function metadata."""
 
         @retry()
