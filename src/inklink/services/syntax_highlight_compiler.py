@@ -6,40 +6,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.inklink.services.syntax_tokens import Token, TokenType
+from src.inklink.services.syntax_scanner import ScannerFactory
+
 logger = logging.getLogger(__name__)
-
-
-class TokenType(Enum):
-    """Token types for syntax highlighting"""
-
-    KEYWORD = "keyword"
-    IDENTIFIER = "identifier"
-    STRING = "string"
-    NUMBER = "number"
-    COMMENT = "comment"
-    OPERATOR = "operator"
-    PUNCTUATION = "punctuation"
-    WHITESPACE = "whitespace"
-    ANNOTATION = "annotation"
-    FUNCTION = "function"
-    CLASS = "class"
-    TYPE = "type"
-    BUILTIN = "builtin"
-    ERROR = "error"
-    UNKNOWN = "unknown"
-
-
-@dataclass
-class Token:
-    """Represents a syntax token"""
-
-    type: TokenType
-    value: str
-    start: int
-    end: int
-    line: int
-    column: int
-    metadata: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -390,11 +360,21 @@ class SyntaxHighlightCompiler:
             logger.error("No language set for tokenization")
             return []
 
+        # Use the enhanced scanner if available
+        scanner = ScannerFactory.create_scanner(self.current_language.name)
+        if scanner:
+            logger.info(f"Using enhanced scanner for {self.current_language.name}")
+            return scanner.scan(code)
+
+        # Fallback to simple tokenizer
+        logger.info(f"Using simple tokenizer for {self.current_language.name}")
+        return self._simple_tokenize(code)
+
+    def _simple_tokenize(self, code: str) -> List[Token]:
+        """Simple tokenizer fallback for languages without a scanner"""
         tokens = []
         position = 0
 
-        # Simple tokenizer - this is a basic implementation
-        # In Phase 3, we'll implement a proper scanner
         lines = code.split("\n")
 
         for line_num, line in enumerate(lines, 1):
