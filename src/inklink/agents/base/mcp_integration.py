@@ -3,11 +3,12 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Coroutine, Dict, List, Optional
 
-from mcp.server import Server as MCPServer
+from inklink.mcp.server import JSONRPCMessage as MCP_JSONRPCMessage, Server as MCPServer
+from inklink.mcp.types import MCPMessage
 
-from .agent import LocalAgent
+from .agent import AgentConfig, LocalAgent
 
 
 @dataclass
@@ -16,7 +17,7 @@ class MCPCapability:
 
     name: str
     description: str
-    handler: Callable[[Dict[str, Any]], asyncio.Future[Dict[str, Any]]]
+    handler: Callable[[Dict[str, Any]], Coroutine[Any, Any, Dict[str, Any]]]
     input_schema: Optional[Dict[str, Any]] = None
     output_schema: Optional[Dict[str, Any]] = None
 
@@ -44,14 +45,10 @@ class MCPAgentMixin:
         self._mcp_logger.info("Initializing MCP server")
 
         # Create MCP server configuration
-        server_config = {
-            "name": f"agent_{self.config.name}",
-            "version": self.config.version,
-            "capabilities": list(self._mcp_capabilities.keys()),
-        }
+        # Note: Configuration is now handled internally by the server
 
         # Initialize the MCP server
-        self._mcp_server = MCPServer(server_config)
+        self._mcp_server = MCPServer(f"agent_{self.config.name}")
 
         # Register capability handlers
         for name, capability in self._mcp_capabilities.items():
@@ -73,14 +70,11 @@ class MCPAgentMixin:
     def _create_mcp_handler(self, capability: MCPCapability) -> Callable:
         """Create an MCP message handler for a capability."""
 
-        async def handler(message: MCPMessage) -> Dict[str, Any]:
+        async def handler(data: Dict[str, Any]) -> Dict[str, Any]:
             try:
-
-                # Call the capability handler
-                result = await capability.handler(message.data)
-
+                # Call the capability handler with the data
+                result = await capability.handler(data)
                 return result
-
             except Exception as e:
                 self._mcp_logger.error(
                     f"Error handling MCP message for {capability.name}: {e}"
@@ -96,14 +90,15 @@ class MCPAgentMixin:
         if not self._mcp_server:
             raise RuntimeError("MCP server not initialized")
 
-        message = MCPMessage(
-            source=f"agent_{self.config.name}",
-            target=target,
-            capability=capability,
-            data=data,
+        # Create a JSON-RPC message for MCP communication
+        jsonrpc_message = MCP_JSONRPCMessage(
+            method=f"{target}.{capability}",
+            params=data,
+            id=f"{self.config.name}_{target}_{capability}_{id(data)}",
         )
 
-        return await self._mcp_server.send_message(message)
+        response = await self._mcp_server.send_message(jsonrpc_message)
+        return response.result or {"error": response.error}
 
     def get_mcp_capabilities(self) -> List[str]:
         """Get list of MCP capabilities."""

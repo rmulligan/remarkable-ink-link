@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .agent import AgentState, LocalAgent
 
@@ -25,7 +25,7 @@ class HealthCheck:
     status: HealthStatus
     message: str
     timestamp: datetime
-    details: Dict[str, any] = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -184,7 +184,7 @@ class MonitoringService:
                 metrics.average_response_time * (metrics.request_count - 1) + duration
             ) / metrics.request_count
 
-    def get_agent_status_summary(self, agent_name: str) -> Dict[str, any]:
+    def get_agent_status_summary(self, agent_name: str) -> Dict[str, Any]:
         """Get a status summary for an agent."""
         metrics = self.metrics.get(agent_name)
         if not metrics:

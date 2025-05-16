@@ -7,6 +7,7 @@ from typing import Callable, List, Optional
 
 from inklink.utils.retry import retry
 
+from .agent import AgentState
 from .registry import AgentRegistry
 
 
@@ -97,7 +98,7 @@ class AgentLifecycle:
             state = agent.get_state()
 
             # Restart agents that have errored
-            if state == "error":
+            if state == AgentState.ERROR:
                 self.logger.warning(
                     f"Agent '{agent.config.name}' in error state, attempting restart"
                 )

@@ -162,11 +162,12 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
         """Check for new commitments in spoken data."""
         try:
             # Get recent spoken context about commitments
+            # Note: The topic query should be parsed by the target agent
             response = await self.send_mcp_message(
                 target="agent_limitless_insight",
                 capability="find_spoken_context",
                 data={
-                    "topic": "commit OR promise OR will do OR deadline",
+                    "topic": "commitments promises deadlines",
                     "time_period": "last_24_hours",
                 },
             )

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Coroutine, Dict, List, Optional
 
-from mcp.server import Server as MCPServer
+from inklink.mcp.server import Server as MCPServer
 
 
 class AgentState(Enum):
