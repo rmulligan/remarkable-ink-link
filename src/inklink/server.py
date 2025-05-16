@@ -8,7 +8,7 @@ Receives URLs via HTTP POST, processes them, and uploads to Remarkable.
 import logging
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Dict, Optional, TypeVar
+from typing import Optional, TypeVar
 
 from inklink.config import CONFIG, setup_logging
 from inklink.di.container import Container

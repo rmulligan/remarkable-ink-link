@@ -1,12 +1,11 @@
 """Entry point for InkLink application."""
 
-import datetime
 import json
 import logging
 import os
 import subprocess
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import click
 
@@ -90,7 +89,7 @@ def roundtrip(input_file, output):
     success, result = service.process_handwritten_query(input_file)
 
     if success:
-        click.echo(f"Round-trip processing successful!")
+        click.echo("Round-trip processing successful!")
         click.echo(f"Recognized text: {result['recognized_text']}")
         click.echo(f"Response uploaded to reMarkable: {result['upload_message']}")
 
@@ -139,7 +138,7 @@ def create_entity_index(entity_types, min_references, no_upload):
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating entity index notebook...")
+    click.echo("Creating entity index notebook...")
 
     success, result = index_service.create_entity_index(
         entity_types=entity_type_list,
@@ -148,7 +147,7 @@ def create_entity_index(entity_types, min_references, no_upload):
     )
 
     if success:
-        click.echo(f"Entity index created successfully!")
+        click.echo("Entity index created successfully!")
         click.echo(f"Entity count: {result.get('entity_count', 0)}")
         click.echo(f"Entity types: {', '.join(result.get('entity_types', []))}")
         click.echo(f"EPUB saved to: {result.get('path')}")
@@ -188,7 +187,7 @@ def create_topic_index(top_n, min_connections, no_upload):
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating topic index notebook...")
+    click.echo("Creating topic index notebook...")
 
     success, result = index_service.create_topic_index(
         top_n_topics=top_n,
@@ -197,7 +196,7 @@ def create_topic_index(top_n, min_connections, no_upload):
     )
 
     if success:
-        click.echo(f"Topic index created successfully!")
+        click.echo("Topic index created successfully!")
         click.echo(f"Topic count: {result.get('topic_count', 0)}")
         click.echo(f"EPUB saved to: {result.get('path')}")
 
