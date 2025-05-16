@@ -51,6 +51,7 @@ jobs:
           poetry install --no-interaction --no-ansi
       - name: Run tests with coverage
         # invoke pytest via Poetry to ensure the virtualenv and dev‑dependencies are used
+        # Coverage will be generated automatically based on pyproject.toml configuration
         run: poetry run pytest --maxfail=1 --disable-warnings -q
       - name: Report test coverage to DeepSource
         uses: deepsourcelabs/test-coverage-action@v1.0.0

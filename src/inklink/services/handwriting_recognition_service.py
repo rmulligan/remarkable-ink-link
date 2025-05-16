@@ -6,6 +6,8 @@ import re
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
+import requests
+
 from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.config import CONFIG
 from inklink.services.interfaces import IHandwritingRecognitionService
@@ -70,15 +72,6 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
         if not self.adapter.ping():
             # Default to Text if classification is not available
             return "Text"
-
-        # prompt = """  # Currently unused
-        # Analyze this handwritten content. Tell me if this content is primarily:
-        # 1. Text (general notes, paragraphs, lists)
-        # 2. Math (equations, mathematical notation, numeric calculations)
-        # 3. Diagram (drawings, charts, graphs, sketches)
-        #
-        # Respond with ONLY ONE of these words: "Text", "Math", or "Diagram".
-        # """
 
         result = self.adapter.recognize_handwriting(
             image_path, "classification", "en_US"
@@ -206,8 +199,20 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 "raw_result": result,
             }
 
+        except (ValueError, KeyError, TypeError) as e:
+            error_msg = format_error("recognition", "Data processing error", e)
+            logger.error(error_msg)
+            return {"success": False, "error": str(e)}
+        except requests.exceptions.RequestException as e:
+            error_msg = format_error(
+                "recognition", "Network error during recognition", e
+            )
+            logger.error(error_msg)
+            return {"success": False, "error": str(e)}
         except Exception as e:
-            error_msg = format_error("recognition", "Handwriting recognition failed", e)
+            error_msg = format_error(
+                "recognition", "Unexpected error during recognition", e
+            )
             logger.error(error_msg)
             return {"success": False, "error": str(e)}
 
@@ -239,8 +244,16 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             logger.info(f"Export successful: {format_type}")
             return {"success": True, "content": result}
 
+        except ValueError as e:
+            error_msg = format_error("export", "Validation error", e)
+            logger.error(error_msg)
+            return {"success": False, "error": str(e)}
+        except KeyError as e:
+            error_msg = format_error("export", "Missing required data", e)
+            logger.error(error_msg)
+            return {"success": False, "error": str(e)}
         except Exception as e:
-            error_msg = format_error("export", "Content export failed", e)
+            error_msg = format_error("export", "Unexpected export error", e)
             logger.error(error_msg)
             return {"success": False, "error": str(e)}
 
