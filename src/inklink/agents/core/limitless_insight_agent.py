@@ -322,8 +322,11 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
                     analysis_time = datetime.fromisoformat(data["timestamp"])
                     if analysis_time < start_time:
                         continue
-                except Exception:
-                    pass
+                except ValueError:
+                    # Skip entries with invalid timestamps
+                    self.logger.debug(
+                        f"Invalid timestamp format: {data.get('timestamp')}"
+                    )
 
             if "analysis" in data and "action_items" in data["analysis"]:
                 items = data["analysis"]["action_items"]
@@ -361,8 +364,11 @@ class LimitlessContextualInsightAgent(MCPEnabledAgent):
                     analysis_time = datetime.fromisoformat(data["timestamp"])
                     if analysis_time < start_time:
                         continue
-                except Exception:
-                    pass
+                except ValueError:
+                    # Skip entries with invalid timestamps
+                    self.logger.debug(
+                        f"Invalid timestamp format: {data.get('timestamp')}"
+                    )
 
             if topic.lower() in str(data).lower():
                 contexts.append(

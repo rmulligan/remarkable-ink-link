@@ -117,9 +117,9 @@ Experiment with different editing tools!
 """
             ink_service.create_rm_file_with_text(text2, page2_path)
 
-            # TODO: Implement multi-page notebook creation
-            # This would require creating a proper .rmdoc structure
-            # with content and metadata files
+            # Future: multi-page notebook creation would require
+            # creating a proper .rmdoc structure with content and
+            # metadata files
 
             logger.info("Multi-page demo creation not yet implemented")
             return False

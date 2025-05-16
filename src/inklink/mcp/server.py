@@ -94,6 +94,7 @@ class Server:
 
     async def send_message(self, message: JSONRPCMessage) -> JSONRPCMessage:
         """Send a message to the MCP server (placeholder for actual implementation)."""
-        # TODO: Implement actual message sending over MCP protocol
+        # Placeholder for actual MCP protocol implementation
+        # Currently returns a mock response for testing
         self.logger.debug(f"Sending message: {message}")
         return JSONRPCMessage(id=message.id, result={"status": "message_sent"})

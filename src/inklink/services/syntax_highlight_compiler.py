@@ -396,7 +396,10 @@ class SyntaxHighlightCompiler:
         return self._simple_tokenize(code)
 
     def _simple_tokenize(self, code: str) -> List[Token]:
-        """Simple tokenizer fallback for languages without a scanner"""
+        """Simple tokenizer fallback for languages without a scanner.
+
+        Note: This method has high complexity due to handling multiple
+        token types. Consider refactoring into smaller methods."""
         tokens = []
         position = 0
 
