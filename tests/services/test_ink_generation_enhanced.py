@@ -11,7 +11,7 @@ from inklink.services.ink_generation_service import InkGenerationService
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.skipif("not pytest.config.getoption('--integration', default=False)")
+@pytest.mark.integration
 class TestEnhancedInkGeneration:
     """Test enhanced ink generation with comprehensive character set."""
 
