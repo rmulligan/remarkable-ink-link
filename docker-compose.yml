@@ -28,3 +28,34 @@ services:
       - .:/app
       - ${HOME}/.config/rmapi:/root/.config/rmapi
       - /tmp/remarkable_output:/tmp/remarkable_output
+
+  # FastAPI backend for syntax highlighting
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "inklink.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MYSCRIPT_APP_KEY=${MYSCRIPT_APP_KEY}
+      - MYSCRIPT_HMAC_KEY=${MYSCRIPT_HMAC_KEY}
+      - RMAPI_PATH=/usr/local/bin/rmapi
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ${HOME}/.config/rmapi:/root/.config/rmapi
+      - ./themes:/app/themes
+
+  # Nuxt frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_PUBLIC_API_BASE=http://api:8000
+    depends_on:
+      - api
