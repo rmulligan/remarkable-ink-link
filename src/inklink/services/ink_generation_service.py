@@ -8,6 +8,8 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
+from inklink.services.character_strokes import CharacterStrokes
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -36,6 +38,7 @@ class InkGenerationService:
         """Initialize the ink generation service."""
         self.pen_type = si.Pen.BALLPOINT_1
         self.color = si.PenColor.BLACK
+        self.character_strokes = CharacterStrokes()
 
     def text_to_strokes(self, text: str, x: int = None, y: int = None) -> List[si.Line]:
         """
@@ -76,15 +79,7 @@ class InkGenerationService:
 
     def _create_character_strokes(self, char: str, x: int, y: int) -> List[si.Line]:
         """
-        Create strokes for a single character.
-
-        This is a simplified implementation that creates basic strokes.
-        In a real implementation, you'd want proper character templates.
-
-        TODO: In future phases, integrate a more sophisticated character rendering
-        library or develop comprehensive stroke patterns to improve the quality
-        and readability of generated editable ink. Current implementation is
-        intended for initial testing and proof of concept.
+        Create strokes for a single character using the comprehensive character mapping.
 
         Args:
             char: Character to render
@@ -96,77 +91,14 @@ class InkGenerationService:
         """
         lines = []
 
-        # Simple stroke patterns for some common characters
-        if char.lower() == "h":
-            # Vertical stroke
-            line1 = self._create_line([(x, y), (x, y + self.CHAR_HEIGHT)], 0.5)
-            # Horizontal stroke
-            line2 = self._create_line(
-                [
-                    (x, y + self.CHAR_HEIGHT / 2),
-                    (x + self.CHAR_WIDTH * 0.8, y + self.CHAR_HEIGHT / 2),
-                ],
-                0.5,
-            )
-            # Second vertical
-            line3 = self._create_line(
-                [
-                    (x + self.CHAR_WIDTH * 0.8, y + self.CHAR_HEIGHT / 2),
-                    (x + self.CHAR_WIDTH * 0.8, y + self.CHAR_HEIGHT),
-                ],
-                0.5,
-            )
-            lines.extend([line1, line2, line3])
+        # Get stroke patterns from the character mapping
+        strokes = self.character_strokes.get_strokes(char, x, y)
 
-        elif char.lower() == "e":
-            # Arc and horizontal line
-            points = []
-            # Create arc points
-            for i in range(10):
-                angle = math.pi * (0.5 + 1.5 * i / 9)
-                px = x + self.CHAR_WIDTH / 2 + self.CHAR_WIDTH / 2 * math.cos(angle)
-                py = y + self.CHAR_HEIGHT / 2 + self.CHAR_HEIGHT / 2 * math.sin(angle)
-                points.append((px, py))
-            line1 = self._create_line(points, 0.5)
-
-            # Horizontal line
-            line2 = self._create_line(
-                [
-                    (x, y + self.CHAR_HEIGHT / 2),
-                    (x + self.CHAR_WIDTH * 0.8, y + self.CHAR_HEIGHT / 2),
-                ],
-                0.5,
-            )
-            lines.extend([line1, line2])
-
-        elif char.lower() == "l":
-            # Simple vertical line
-            line = self._create_line(
-                [
-                    (x + self.CHAR_WIDTH / 2, y),
-                    (x + self.CHAR_WIDTH / 2, y + self.CHAR_HEIGHT),
-                ],
-                0.5,
-            )
-            lines.append(line)
-
-        elif char.lower() == "o":
-            # Circle
-            points = []
-            for i in range(20):
-                angle = 2 * math.pi * i / 19
-                px = x + self.CHAR_WIDTH / 2 + self.CHAR_WIDTH / 3 * math.cos(angle)
-                py = y + self.CHAR_HEIGHT / 2 + self.CHAR_HEIGHT / 3 * math.sin(angle)
-                points.append((px, py))
-            line = self._create_line(points, 0.5)
-            lines.append(line)
-
-        else:
-            # Default: simple dot for unknown characters
-            line = self._create_line(
-                [(x + self.CHAR_WIDTH / 2, y + self.CHAR_HEIGHT / 2)], 0.8
-            )
-            lines.append(line)
+        # Convert each stroke pattern to a Line object
+        for stroke_points in strokes:
+            if stroke_points:  # Only create line if there are points
+                line = self._create_line(stroke_points, 0.5)
+                lines.append(line)
 
         return lines
 
@@ -186,12 +118,20 @@ class InkGenerationService:
         # Create Point objects
         line_points = []
         for i, (x, y) in enumerate(points):
+            # Calculate direction between consecutive points
+            direction = 0
+            if i < len(points) - 1:
+                dx = points[i + 1][0] - x
+                dy = points[i + 1][1] - y
+                if dx != 0 or dy != 0:
+                    direction = math.atan2(dy, dx)
+
             # Point constructor: x, y, speed, direction, width, pressure
             point = si.Point(
                 x=x,
                 y=y,
                 speed=0,  # Speed unknown for generated strokes
-                direction=0,  # Direction unknown
+                direction=direction,
                 width=1.0,  # Standard width
                 pressure=pressure,
             )
@@ -299,64 +239,47 @@ class InkGenerationService:
                 write_blocks,
             )
 
-            # Load existing file
+            # Read existing file
             with open(rm_file_path, "rb") as f:
-                scene_tree = read_tree(f)
+                blocks = list(read_tree(f))
 
-            # Find the lowest Y coordinate to append after existing content
+            # Find the highest y-coordinate in existing strokes
+            max_y = 0
+            for block in blocks:
+                if hasattr(block, "line") and hasattr(block.line, "points"):
+                    for point in block.line.points:
+                        if point.y > max_y:
+                            max_y = point.y
+
+            # Calculate y offset
             if y_offset is None:
-                max_y = 0
-                for item_id, item in scene_tree.items.items():
-                    if isinstance(item, si.Line):
-                        for point in item.points:
-                            max_y = max(max_y, point.y)
-                y_offset = (
-                    max_y + self.LINE_SPACING * 2 if max_y > 0 else self.MARGIN_TOP
-                )
+                y_offset = max_y + self.LINE_SPACING
 
-            # Find root ID and max item ID from existing tree
+            # Convert text to strokes at the new position
+            new_strokes = self.text_to_strokes(text, y=y_offset)
+
+            # Find the root node and get the highest existing line ID
             root_id = None
-            max_item_id = 0
-            for item_id, item in scene_tree.items.items():
-                if scene_tree.parent_map.get(item_id) is None:
-                    root_id = item_id
-                if hasattr(item_id, "left_id"):
-                    max_item_id = max(max_item_id, item_id.left_id)
+            max_line_id = 0
+            for block in blocks:
+                if isinstance(block, TreeNodeBlock) and block.parent_id is None:
+                    root_id = block.node_id
+                elif isinstance(block, SceneLineItemBlock):
+                    if block.item_id.value > max_line_id:
+                        max_line_id = block.item_id.value
 
             if root_id is None:
-                # Create root if it doesn't exist
-                root_id = rmscene.CrdtId(0, 1)
+                raise ValueError("Could not find root node in existing file")
 
-            # Create new strokes with updated IDs
-            strokes = self.text_to_strokes(text, y=y_offset)
-
-            # Prepare blocks for the complete file
-            blocks = []
-
-            # 1. Main block
-            blocks.append(MainBlockInfo())
-
-            # 2. Scene info (preserve original dimensions)
-            scene_info = SceneInfo(
-                file_type="reMarkable .lines file, version=6",
-                x_max=1404.0,
-                y_max=1872.0,
-            )
-            blocks.append(scene_info)
-
-            # 3. Convert existing tree to blocks
-            for block in scene_tree.to_blocks():
-                blocks.append(block)
-
-            # 4. Add new stroke blocks
-            for i, stroke in enumerate(strokes):
-                line_id = rmscene.CrdtId(max_item_id + i + 1, 1)
+            # Add new line blocks
+            for i, stroke in enumerate(new_strokes):
+                line_id = rmscene.CrdtId(max_line_id + i + 1, 1)
                 line_block = SceneLineItemBlock(
                     parent_id=root_id, item_id=line_id, line=stroke
                 )
                 blocks.append(line_block)
 
-            # Write the complete file
+            # Write updated blocks to the file
             with open(rm_file_path, "wb") as f:
                 write_blocks(f, blocks)
 
@@ -366,39 +289,3 @@ class InkGenerationService:
         except Exception as e:
             logger.error(f"Failed to append to .rm file: {e}")
             return False
-
-    def create_handwriting_style_strokes(
-        self, text: str, style: str = "cursive"
-    ) -> List[si.Line]:
-        """
-        Create more natural handwriting-style strokes.
-
-        This is a placeholder for more sophisticated handwriting generation
-        that could use:
-        - Bezier curves for smoother strokes
-        - Variable pen pressure
-        - Connected cursive writing
-        - Different handwriting styles
-
-        Args:
-            text: Text to convert
-            style: Handwriting style ("cursive", "print", etc.)
-
-        Returns:
-            List of Line objects with handwriting-style strokes
-        """
-        # For now, just use the basic text_to_strokes
-        # This could be expanded with more sophisticated algorithms
-        return self.text_to_strokes(text)
-
-
-# Singleton instance
-_ink_service = None
-
-
-def get_ink_generation_service() -> InkGenerationService:
-    """Get the singleton ink generation service instance."""
-    global _ink_service
-    if _ink_service is None:
-        _ink_service = InkGenerationService()
-    return _ink_service
