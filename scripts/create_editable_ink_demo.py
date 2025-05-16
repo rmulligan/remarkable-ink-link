@@ -12,7 +12,9 @@ sys.path.insert(0, project_root)
 
 from inklink.adapters.rmapi_adapter import RmapiAdapter  # noqa: E402
 from inklink.config import CONFIG  # noqa: E402
-from inklink.services.ink_generation_service import get_ink_generation_service  # noqa: E402
+from inklink.services.ink_generation_service import (  # noqa: E402
+    get_ink_generation_service,
+)
 from inklink.services.remarkable_service import RemarkableService  # noqa: E402
 
 # Setup logging

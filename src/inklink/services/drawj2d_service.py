@@ -10,8 +10,8 @@ import logging
 import os
 import subprocess
 import tempfile
-from typing import Optional, Tuple, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 from inklink.config import CONFIG
 

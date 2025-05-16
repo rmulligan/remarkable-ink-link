@@ -1,8 +1,9 @@
 """Test ink generation service for creating editable strokes."""
 
 import os
-import pytest
 import tempfile
+
+import pytest
 
 try:
     import rmscene

@@ -1,10 +1,10 @@
 """Syntax highlighting compiler service for converting code to HCL format"""
 
-import re
-from typing import Dict, List, Tuple, Optional, Any
-from enum import Enum
-from dataclasses import dataclass
 import logging
+import re
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

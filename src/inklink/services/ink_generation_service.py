@@ -8,8 +8,8 @@ import logging
 import math
 import os
 import tempfile
-from typing import Any, Dict, List, Optional, Tuple
 import uuid
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ try:
     import rmscene
     import rmscene.scene_items as si
     import rmscene.scene_tree as st
-    from rmscene.scene_stream import read_tree, TaggedBlockWriter
+    from rmscene.scene_stream import TaggedBlockWriter, read_tree
 
     RMSCENE_AVAILABLE = True
 except ImportError:
@@ -186,12 +186,12 @@ class InkGenerationService:
         for i, (x, y) in enumerate(points):
             # Point constructor: x, y, speed, direction, width, pressure
             point = si.Point(
-                x=x, 
-                y=y, 
+                x=x,
+                y=y,
                 speed=0,  # Speed unknown for generated strokes
                 direction=0,  # Direction unknown
                 width=1.0,  # Standard width
-                pressure=pressure
+                pressure=pressure,
             )
             line_points.append(point)
 
@@ -201,7 +201,7 @@ class InkGenerationService:
             tool=self.pen_type,
             points=line_points,
             thickness_scale=1.0,  # Standard thickness
-            starting_length=0.0  # Start at 0
+            starting_length=0.0,  # Start at 0
         )
         return line
 
@@ -241,7 +241,7 @@ class InkGenerationService:
             with open(output_path, "wb") as f:
                 # Write reMarkable header
                 f.write(rmscene.HEADER_V6)
-                
+
                 # For now, just write minimal data
                 # In a real implementation, we'd write proper blocks using TaggedBlockWriter
                 # This is a placeholder that at least creates a valid file header

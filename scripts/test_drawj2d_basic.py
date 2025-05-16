@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Test basic drawj2d functionality for Phase 1."""
 
+import logging
 import os
 import sys
-import logging
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

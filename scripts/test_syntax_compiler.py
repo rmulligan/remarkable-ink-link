@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Test script for Phase 2: Syntax Highlight Compiler"""
 
-import sys
-from pathlib import Path
 import logging
+import sys
 import tempfile
+from pathlib import Path
 
 # Add the parent directory to the path to import inklink
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.inklink.services.drawj2d_service import Drawj2dService  # noqa: E402
 from src.inklink.services.syntax_highlight_compiler import (  # noqa: E402
     SyntaxHighlightCompiler,
     Theme,
     TokenType,
 )
-from src.inklink.services.drawj2d_service import Drawj2dService  # noqa: E402
 
 # Configure logging
 logging.basicConfig(

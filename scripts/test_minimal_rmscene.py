@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Minimal test of rmscene functionality."""
 
-import rmscene
-from rmscene.scene_stream import simple_text_document
+import os
 import tempfile
 import uuid
-import os
+
+import rmscene
+from rmscene import scene_stream
+from rmscene.scene_stream import simple_text_document
 
 print("Testing simple_text_document function...")
 
@@ -28,19 +30,19 @@ for item_id, item in tree.items.items():
 print("\nTrying to save...")
 
 # Check what methods the tree has
-print("Tree methods:", [m for m in dir(tree) if not m.startswith('_')])
+print("Tree methods:", [m for m in dir(tree) if not m.startswith("_")])
 
 # Look for conversion methods
-if hasattr(tree, 'to_blocks'):
+if hasattr(tree, "to_blocks"):
     print("Tree has to_blocks method")
     blocks = list(tree.to_blocks())
     print(f"Got {len(blocks)} blocks")
 else:
     print("Tree doesn't have to_blocks method")
-    
+
 # Check the scene_stream module for saving functions
-from rmscene import scene_stream
+
 print("\nFunctions in scene_stream:")
 for name in dir(scene_stream):
-    if 'write' in name.lower() or 'save' in name.lower() or 'block' in name.lower():
+    if "write" in name.lower() or "save" in name.lower() or "block" in name.lower():
         print(f"  {name}")
