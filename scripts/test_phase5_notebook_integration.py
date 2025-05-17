@@ -103,7 +103,7 @@ Both implementations have O(log n) time complexity.
     # Create mock services to avoid initialization issues
     class MockRemarkableAdapter:
         def __init__(self):
-            pass
+            raise NotImplementedError()
 
     class MockRemarkableService:
         def __init__(self, adapter=None):
