@@ -889,11 +889,7 @@ class ProtonCalendarAdapter:
         Returns:
             List of entities with name, type, and context
         """
-        entities = []
-
-        # Create Event entity
-        entities.append(
-            {
+        entities = [{
                 "name": event.summary,
                 "entityType": "Event",
                 "start": event.start.isoformat(),
@@ -902,8 +898,7 @@ class ProtonCalendarAdapter:
                 "all_day": event.all_day,
                 "calendar_id": event.calendar_id,
                 "context": f"Calendar event on {event.start.strftime('%Y-%m-%d')}",
-            }
-        )
+            }]
 
         # Extract location as a Place entity if present
         if event.location:
