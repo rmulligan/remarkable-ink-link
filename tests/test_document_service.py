@@ -96,12 +96,11 @@ def test_create_rmdoc_multi_page(document_service, monkeypatch):
             with open(output_path, "wb") as f:
                 f.write(b"Mock RM content")
             return output_path
-        else:
-            # Create a dummy output file
-            output_path = os.path.join(document_service.temp_dir, "output.rm")
-            with open(output_path, "wb") as f:
-                f.write(b"Mock RM content")
-            return output_path
+        # Create a dummy output file
+        output_path = os.path.join(document_service.temp_dir, "output.rm")
+        with open(output_path, "wb") as f:
+            f.write(b"Mock RM content")
+        return output_path
 
     monkeypatch.setattr(document_service.hcl_renderer, "render", mock_render)
 

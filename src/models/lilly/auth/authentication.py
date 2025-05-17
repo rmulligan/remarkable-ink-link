@@ -139,8 +139,7 @@ class ProtonMailAuthentication(AuthenticationBase):
 
         if self.save_credentials(credentials):
             return credentials
-        else:
-            raise AuthenticationError("Failed to save Proton Mail credentials")
+        raise AuthenticationError("Failed to save Proton Mail credentials")
 
 
 class ProtonCalendarAuthentication(AuthenticationBase):
@@ -183,8 +182,7 @@ class ProtonCalendarAuthentication(AuthenticationBase):
 
         if self.save_credentials(credentials):
             return credentials
-        else:
-            raise AuthenticationError("Failed to save Proton Calendar credentials")
+        raise AuthenticationError("Failed to save Proton Calendar credentials")
 
 
 class OAuthCallbackHandler(http.server.SimpleHTTPRequestHandler):
@@ -325,8 +323,7 @@ class GoogleDriveAuthentication(AuthenticationBase):
 
         if self.save_credentials(creds_dict):
             return creds_dict
-        else:
-            raise AuthenticationError("Failed to save Google Drive credentials")
+        raise AuthenticationError("Failed to save Google Drive credentials")
 
 
 class AuthenticationProvider:
@@ -356,12 +353,11 @@ class AuthenticationProvider:
         """
         if service_type == SERVICE_PROTON_MAIL:
             return ProtonMailAuthentication(self.credential_manager)
-        elif service_type == SERVICE_PROTON_CALENDAR:
+        if service_type == SERVICE_PROTON_CALENDAR:
             return ProtonCalendarAuthentication(self.credential_manager)
-        elif service_type == SERVICE_GOOGLE_DRIVE:
+        if service_type == SERVICE_GOOGLE_DRIVE:
             return GoogleDriveAuthentication(self.credential_manager)
-        else:
-            raise ValueError(f"Unknown service type: {service_type}")
+        raise ValueError(f"Unknown service type: {service_type}")
 
     def list_authenticated_services(self) -> list:
         """

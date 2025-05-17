@@ -142,9 +142,8 @@ def test_mock_conversion():
                     print("⚠️ Configuration missing some expected settings")
 
                 return True
-            else:
-                print("\n⚠️ iink_data missing expected top-level structure")
-                return False
+            print("\n⚠️ iink_data missing expected top-level structure")
+            return False
 
         else:
             print("\n❌ Failed to convert mock strokes to iink format")

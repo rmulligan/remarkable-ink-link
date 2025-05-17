@@ -236,9 +236,8 @@ def main():
         logger.info("Successfully processed local notebook with Claude Penpal service")
         logger.info(f"Check the response in {NOTEBOOK_DIR}/responses/")
         return 0
-    else:
-        logger.error("Failed to process local notebook")
-        return 1
+    logger.error("Failed to process local notebook")
+    return 1
 
 
 if __name__ == "__main__":

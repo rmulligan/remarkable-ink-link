@@ -317,9 +317,8 @@ class RmapiAdapter:
             if process.returncode == 0:
                 logger.info("Authentication successful using named pipe")
                 return True, "Authentication successful"
-            else:
-                logger.error(f"Authentication failed: {process.stderr}")
-                return False, process.stderr
+            logger.error(f"Authentication failed: {process.stderr}")
+            return False, process.stderr
 
         finally:
             # Remove the pipe
@@ -348,9 +347,8 @@ class RmapiAdapter:
 
             if process.returncode == 0:
                 return True, process.stdout, process.stderr
-            else:
-                logger.error(f"rmapi command failed: {process.stderr}")
-                return False, process.stdout, process.stderr
+            logger.error(f"rmapi command failed: {process.stderr}")
+            return False, process.stdout, process.stderr
 
         except Exception as e:
             logger.error(f"Error running rmapi command: {str(e)}")
@@ -392,9 +390,8 @@ class RmapiAdapter:
                     f"Document uploaded to reMarkable but renaming failed: {stderr}",
                 )
             return True, f"Document '{title}' uploaded successfully"
-        else:
-            # No ID found, but upload seems successful
-            return True, "Document uploaded to reMarkable"
+        # No ID found, but upload seems successful
+        return True, "Document uploaded to reMarkable"
 
     def download_file(
         self, doc_id_or_name: str, output_path: str, export_format: str = "pdf"

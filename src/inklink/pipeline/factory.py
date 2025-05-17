@@ -123,5 +123,4 @@ class PipelineFactory:
         # Check if URL is a PDF
         if self.services.get("pdf_service").is_pdf_url(url):
             return self.create_pdf_pipeline()
-        else:
-            return self.create_web_pipeline()
+        return self.create_web_pipeline()

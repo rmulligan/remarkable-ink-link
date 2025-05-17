@@ -210,10 +210,7 @@ class HandwritingWebAdapter(Adapter):
                             f"Extracted {len(strokes)} strokes using current rmscene API"
                         )
                         return strokes
-                    else:
-                        logger.warning(
-                            "No strokes found in file using current rmscene API"
-                        )
+                    logger.warning("No strokes found in file using current rmscene API")
 
                 except Exception as scene_tree_error:
                     logger.error(
@@ -422,16 +419,15 @@ class HandwritingWebAdapter(Adapter):
                     result["id"] = f"web-recognition-{int(time.time())}"
 
                 return result
-            else:
-                error_message = f"Recognition failed: HTTP {response.status_code}"
-                try:
-                    error_details = response.json()
-                    error_message = f"{error_message} - {json.dumps(error_details)}"
-                except Exception:
-                    error_message = f"{error_message} - {response.text}"
+            error_message = f"Recognition failed: HTTP {response.status_code}"
+            try:
+                error_details = response.json()
+                error_message = f"{error_message} - {json.dumps(error_details)}"
+            except Exception:
+                error_message = f"{error_message} - {response.text}"
 
-                logger.error(error_message)
-                return {"error": error_message}
+            logger.error(error_message)
+            return {"error": error_message}
 
         except Exception as e:
             logger.error(f"Failed to recognize handwriting: {e}")
@@ -468,11 +464,10 @@ class HandwritingWebAdapter(Adapter):
             if format_type.lower() == "text":
                 if "result" in content:
                     return {"content": content["result"], "format": "text"}
-                elif "candidates" in content and len(content["candidates"]) > 0:
+                if "candidates" in content and len(content["candidates"]) > 0:
                     return {"content": content["candidates"][0], "format": "text"}
-                else:
-                    # Try to extract text from JIIX or other formats
-                    return {"content": json.dumps(content), "format": "json"}
+                # Try to extract text from JIIX or other formats
+                return {"content": json.dumps(content), "format": "json"}
             elif format_type.lower() in ["latex", "mathml"] and "result" in content:
                 # For math content, extract the specific format
                 math_formats = content.get("result", {})

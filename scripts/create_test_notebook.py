@@ -137,9 +137,8 @@ def create_test_notebook():
                 "Test with: python test_claude_penpal.py --rmapi-path=/home/ryan/bin/rmapi"
             )
             return True
-        else:
-            logger.error(f"Failed to upload test notebook: {message}")
-            return False
+        logger.error(f"Failed to upload test notebook: {message}")
+        return False
 
 
 if __name__ == "__main__":

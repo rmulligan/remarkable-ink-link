@@ -34,10 +34,9 @@ def test_ping():
     if response.status_code == 200:
         print(f"✅ API connection successful (status: {response.status_code})")
         return True
-    else:
-        print(f"❌ API connection failed (status: {response.status_code})")
-        print(f"Response: {response.text}")
-        return False
+    print(f"❌ API connection failed (status: {response.status_code})")
+    print(f"Response: {response.text}")
+    return False
 
 
 def test_get_life_logs(limit=3):

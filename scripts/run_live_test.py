@@ -330,9 +330,8 @@ def tag_test_notebook(notebook_name, rmapi_adapter):
             if success:
                 logger.info(f"Successfully tagged notebook: {notebook_name}")
                 return True
-            else:
-                logger.error(f"Failed to upload modified notebook: {message}")
-                return False
+            logger.error(f"Failed to upload modified notebook: {message}")
+            return False
 
     except Exception as e:
         logger.error(f"Error tagging notebook: {e}")

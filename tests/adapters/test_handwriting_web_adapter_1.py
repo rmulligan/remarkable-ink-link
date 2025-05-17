@@ -281,9 +281,8 @@ class WebAdapterTester:
             else:
                 logger.info(f"Raw result: {json.dumps(result, indent=2)}")
             return True, result
-        else:
-            logger.error(f"❌ Recognition failed: {result['error']}")
-            return False, result
+        logger.error(f"❌ Recognition failed: {result['error']}")
+        return False, result
 
     def test_file_processing(self):
         """Test processing a test .rm file."""
@@ -311,9 +310,8 @@ class WebAdapterTester:
                 else:
                     logger.info(f"Raw result: {json.dumps(result, indent=2)[:200]}...")
                 return True, result
-            else:
-                logger.error(f"❌ File processing failed: {result['error']}")
-                return False, result
+            logger.error(f"❌ File processing failed: {result['error']}")
+            return False, result
 
         finally:
             # Clean up test file
@@ -346,9 +344,8 @@ class WebAdapterTester:
             else:
                 logger.info(f"Raw result: {json.dumps(result, indent=2)[:200]}...")
             return True, result
-        else:
-            logger.error(f"❌ Standard adapter integration failed: {result['error']}")
-            return False, result
+        logger.error(f"❌ Standard adapter integration failed: {result['error']}")
+        return False, result
 
     def test_service_integration(self):
         """Test integration with the handwriting recognition service."""
@@ -377,11 +374,10 @@ class WebAdapterTester:
                 logger.info(f"Raw result: {json.dumps(raw_result, indent=2)[:200]}...")
 
             return True, result
-        else:
-            logger.error(
-                f"❌ Service integration failed: {result.get('error', 'Unknown error')}"
-            )
-            return False, result
+        logger.error(
+            f"❌ Service integration failed: {result.get('error', 'Unknown error')}"
+        )
+        return False, result
 
     def run_tests(self):
         """Run all tests and report results."""
