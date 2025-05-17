@@ -7,10 +7,8 @@ using a configurable set of content converters and renderers.
 import logging
 import os
 import threading
-import time
 from typing import Any, Dict, List, Optional
 
-from inklink.config import CONFIG
 from inklink.services.converters.html_converter import HTMLConverter
 from inklink.services.converters.ink_converter import InkConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter
@@ -18,11 +16,7 @@ from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.converters.syntax_highlighted_ink_converter import (
     SyntaxHighlightedInkConverter,
 )
-from inklink.services.interfaces import (
-    IContentConverter,
-    IDocumentRenderer,
-    IDocumentService,
-)
+from inklink.services.interfaces import IContentConverter, IDocumentService
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_drawj2d_available
 
@@ -215,18 +209,15 @@ class DocumentService(IDocumentService):
                     self._update_index_notebook(content)
 
                     return result
-                else:
-                    logger.error("Conversion failed using primary converter")
-                    # If primary converter fails, try legacy method
-                    if self.use_drawj2d:
-                        logger.info("Falling back to legacy conversion method...")
-                        return self.create_rmdoc_legacy(url, qr_path, content)
-                    else:
-                        logger.error("No available conversion method.")
-                        return None
-            else:
-                logger.error("No suitable converter found for structured content")
+                logger.error("Conversion failed using primary converter")
+                # If primary converter fails, try legacy method
+                if self.use_drawj2d:
+                    logger.info("Falling back to legacy conversion method...")
+                    return self.create_rmdoc_legacy(url, qr_path, content)
+                logger.error("No available conversion method.")
                 return None
+            logger.error("No suitable converter found for structured content")
+            return None
 
         except Exception as e:
             logger.error(f"Error creating document: {str(e)}")
@@ -271,12 +262,10 @@ class DocumentService(IDocumentService):
                         f"Successfully converted HTML to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error("HTML conversion failed")
-                    return None
-            else:
-                logger.error("No HTML converter found")
+                logger.error("HTML conversion failed")
                 return None
+            logger.error("No HTML converter found")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
@@ -315,12 +304,10 @@ class DocumentService(IDocumentService):
                         f"Successfully converted PDF to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error("PDF conversion failed")
-                    return None
-            else:
-                logger.error("No PDF converter found")
+                logger.error("PDF conversion failed")
                 return None
+            logger.error("No PDF converter found")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")
@@ -365,9 +352,8 @@ class DocumentService(IDocumentService):
             if result:
                 logger.info(f"Legacy conversion successful: {result}")
                 return result
-            else:
-                logger.error("Legacy conversion failed")
-                return None
+            logger.error("Legacy conversion failed")
+            return None
 
         except Exception as e:
             logger.error(f"Error in legacy document creation: {str(e)}")

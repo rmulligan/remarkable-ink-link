@@ -2,6 +2,7 @@
 """Apply refactoring to syntax_highlight_compiler.py"""
 
 import re
+import sys
 
 # Read the original file
 with open("src/inklink/services/syntax_highlight_compiler.py", "r") as f:
@@ -14,7 +15,7 @@ end_pattern = r"\n(\s*)def "
 match_start = re.search(start_pattern, content)
 if not match_start:
     print("Could not find _simple_tokenize method")
-    exit(1)
+    sys.exit(1)
 
 # Find where the method ends (next method or end of class)
 remaining_content = content[match_start.end() :]

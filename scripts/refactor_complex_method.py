@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Refactor complex method in syntax_highlight_compiler.py"""
 
-import re
-
 
 def refactor_simple_tokenize():
     """Generate refactored version of _simple_tokenize method."""

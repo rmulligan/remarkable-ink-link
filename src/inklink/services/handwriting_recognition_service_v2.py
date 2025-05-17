@@ -13,7 +13,6 @@ from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.adapters.ollama_vision_adapter import OllamaVisionAdapter
 from inklink.config import CONFIG
 from inklink.services.interfaces import IHandwritingRecognitionService
-from inklink.utils import format_error
 
 logger = logging.getLogger(__name__)
 
@@ -106,15 +105,14 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
         """
         if self.backend == RecognitionBackend.CLAUDE_VISION:
             return await self._recognize_with_claude(image_data, format)
-        elif self.backend == RecognitionBackend.OLLAMA_VISION:
+        if self.backend == RecognitionBackend.OLLAMA_VISION:
             return await self._recognize_with_ollama(image_data, format)
-        else:  # AUTO
-            # Try Ollama first, fallback to Claude
-            result = await self._recognize_with_ollama(image_data, format)
-            if not result or result.strip() == "":
-                logger.info("Ollama recognition failed, falling back to Claude")
-                result = await self._recognize_with_claude(image_data, format)
-            return result
+        # Try Ollama first, fallback to Claude
+        result = await self._recognize_with_ollama(image_data, format)
+        if not result or result.strip() == "":
+            logger.info("Ollama recognition failed, falling back to Claude")
+            result = await self._recognize_with_claude(image_data, format)
+        return result
 
     async def _recognize_with_claude(
         self, image_data: Any, format: str = "text"
@@ -257,7 +255,8 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
             logger.error(f"Error recognizing from URL {url}: {e}")
             return None
 
-    def preprocess_image(self, image_data: Any) -> Any:
+    @staticmethod
+    def preprocess_image(image_data: Any) -> Any:
         """
         Preprocess image for better recognition accuracy.
 
@@ -271,7 +270,8 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
         # In the future, could add image enhancement, denoising, etc.
         return image_data
 
-    def extract_lines(self, text: str) -> List[str]:
+    @staticmethod
+    def extract_lines(text: str) -> List[str]:
         """
         Extract individual lines from recognized text.
 
@@ -288,7 +288,8 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
         lines = [line.strip() for line in text.split("\n") if line.strip()]
         return lines
 
-    def extract_words(self, text: str) -> List[str]:
+    @staticmethod
+    def extract_words(text: str) -> List[str]:
         """
         Extract individual words from recognized text.
 
@@ -305,7 +306,8 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
         words = re.findall(r"\b\w+\b", text)
         return words
 
-    def detect_language(self, text: str) -> str:
+    @staticmethod
+    def detect_language(text: str) -> str:
         """
         Detect the language of recognized text.
 

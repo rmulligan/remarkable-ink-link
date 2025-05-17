@@ -24,7 +24,7 @@ async def test_vision_handwriting():
         test_image = sys.argv[1]
 
     if not os.path.exists(test_image):
-        print(f"Please provide a valid image path as argument")
+        print("Please provide a valid image path as argument")
         print(f"Usage: {sys.argv[0]} <image_path>")
         return
 
