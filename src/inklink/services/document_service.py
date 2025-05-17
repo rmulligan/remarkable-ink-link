@@ -64,13 +64,22 @@ class DocumentService(IDocumentService):
 
     def _initialize_converters(self) -> List[IContentConverter]:
         """Initialize the content converters."""
-        return [
+        converters = [
             MarkdownConverter(self.temp_dir),
             HTMLConverter(self.temp_dir),
             PDFConverter(self.temp_dir),
             InkConverter(self.temp_dir),
-            SyntaxHighlightedInkConverter(self.temp_dir),
         ]
+
+        # Only add syntax highlighted converter if drawj2d is available
+        try:
+            converters.append(SyntaxHighlightedInkConverter(self.temp_dir))
+        except RuntimeError:
+            logger.warning(
+                "Syntax highlighting converter not available - drawj2d missing"
+            )
+
+        return converters
 
     def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
         """Get the appropriate converter for the content type."""

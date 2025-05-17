@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,7 +10,12 @@ from inklink.services.document_service import DocumentService
 @pytest.fixture
 def document_service(tmp_path):
     # Set up the document service with a temporary directory
-    service = DocumentService(str(tmp_path))
+    # Mock drawj2d availability to avoid CI failures
+    with patch(
+        "inklink.services.drawj2d_service.Drawj2dService._verify_drawj2d",
+        return_value=True,
+    ):
+        service = DocumentService(str(tmp_path))
     return service
 
 

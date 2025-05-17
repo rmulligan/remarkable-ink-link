@@ -14,6 +14,8 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "requires_api_keys: mark test as requiring API keys"
     )
+    config.addinivalue_line("markers", "asyncio: mark test as async")
+    config.addinivalue_line("markers", "skip: skip the test")
 
 
 def pytest_collection_modifyitems(config, items):
