@@ -4,12 +4,9 @@ Phase 5 Notebook Integration Test Suite
 Test the complete notebook generation pipeline with syntax highlighting
 This version fixes dependency injection issues.
 """
-
-import json
-import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -132,7 +129,7 @@ Both implementations have O(log n) time complexity.
         # Create mock services to avoid initialization issues
         class MockRemarkableAdapter:
             def __init__(self):
-                pass
+                raise NotImplementedError()
 
         class MockRemarkableService:
             def __init__(self, adapter=None):

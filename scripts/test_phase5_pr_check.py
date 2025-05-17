@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test to verify PR checks can pass - simple tests that work
-"""
-
-import json
+"""Test to verify PR checks can pass - simple tests that work"""
 import sys
 from pathlib import Path
 

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple Phase 5 Test - Testing what actually exists
-"""
-
-import json
+"""Simple Phase 5 Test - Testing what actually exists"""
 import sys
 from pathlib import Path
 

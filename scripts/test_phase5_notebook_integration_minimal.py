@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
-"""
-Minimal Phase 5 Test - Focus on what we can test without full initialization
-"""
+"""Minimal Phase 5 Test - Focus on what we can test without full initialization"""
 
 import sys
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
-    AugmentedNotebookServiceV2,
-)
 from src.inklink.services.syntax_highlight_compiler_v2 import (  # noqa: E402
     SyntaxHighlightCompilerV2,
 )
