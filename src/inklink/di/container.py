@@ -133,7 +133,7 @@ class Container:
         provider.register(IGoogleDocsService, GoogleDocsService)
 
         # Register services that don't have interfaces yet
-        provider.register_factory(AIService, lambda: AIService())
+        provider.register_factory(AIService, AIService)
 
         # Register EPUB generator service
         provider.register_factory(

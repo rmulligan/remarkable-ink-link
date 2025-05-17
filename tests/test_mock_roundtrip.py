@@ -157,7 +157,7 @@ def test_share_controller_with_mocks():
 
     # Create a mock pipeline that always succeeds
     mock_pipeline = MagicMock()
-    mock_pipeline.process.side_effect = lambda ctx: _mock_pipeline_process(ctx)
+    mock_pipeline.process.side_effect = _mock_pipeline_process
 
     # Register our mock pipeline creator
     PipelineFactory.create_pipeline_for_url = MagicMock(return_value=mock_pipeline)
