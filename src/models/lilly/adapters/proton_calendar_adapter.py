@@ -9,6 +9,7 @@ through the CalDAV protocol via Proton Bridge.
 import datetime
 import logging
 import os
+import sys
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1045,7 +1046,7 @@ if __name__ == "__main__":
                 print(
                     "Error: --calendar and --event-uid are required for get-event action"
                 )
-                exit(1)
+                sys.exit(1)
 
             status, event = adapter.get_event_by_uid(args.calendar, args.event_uid)
             if status:
@@ -1068,7 +1069,7 @@ if __name__ == "__main__":
         elif args.action == "search":
             if not args.query:
                 print("Error: --query is required for search action")
-                exit(1)
+                sys.exit(1)
 
             status, events = adapter.search_events(
                 args.query, calendar_id=args.calendar
@@ -1102,7 +1103,7 @@ if __name__ == "__main__":
                 print(
                     "Error: --calendar, --summary, --start, and --end are required for create-event action"
                 )
-                exit(1)
+                sys.exit(1)
 
             # Parse dates
             start = datetime.datetime.fromisoformat(args.start)

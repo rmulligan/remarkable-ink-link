@@ -11,6 +11,7 @@ import json
 import logging
 import mimetypes
 import os
+import sys
 import tempfile
 from dataclasses import dataclass
 from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
@@ -1349,7 +1350,7 @@ if __name__ == "__main__":
                     status, folder_id = adapter.get_folder_id(args.folder)
                     if not status:
                         print(f"Error: {folder_id}")
-                        exit(1)
+                        sys.exit(1)
                 else:
                     folder_id = args.folder
 
@@ -1375,7 +1376,7 @@ if __name__ == "__main__":
         elif args.action == "search":
             if not args.query:
                 print("Error: --query is required for search action")
-                exit(1)
+                sys.exit(1)
 
             status, files = adapter.search_files(args.query)
             if status:
@@ -1397,7 +1398,7 @@ if __name__ == "__main__":
         elif args.action == "get":
             if not args.file:
                 print("Error: --file is required for get action")
-                exit(1)
+                sys.exit(1)
 
             status, file = adapter.get_file_by_id(args.file)
             if status:
@@ -1417,7 +1418,7 @@ if __name__ == "__main__":
         elif args.action == "download":
             if not args.file:
                 print("Error: --file is required for download action")
-                exit(1)
+                sys.exit(1)
 
             status, result = adapter.download_file(args.file, args.dest)
             if status:
@@ -1428,7 +1429,7 @@ if __name__ == "__main__":
         elif args.action == "upload":
             if not args.file:
                 print("Error: --file is required for upload action")
-                exit(1)
+                sys.exit(1)
 
             if args.folder:
                 # If folder is a path
@@ -1438,7 +1439,7 @@ if __name__ == "__main__":
                     )
                     if not status:
                         print(f"Error: {folder_id}")
-                        exit(1)
+                        sys.exit(1)
                 else:
                     folder_id = args.folder
 
@@ -1456,7 +1457,7 @@ if __name__ == "__main__":
         elif args.action == "mkdir":
             if not args.folder:
                 print("Error: --folder is required for mkdir action")
-                exit(1)
+                sys.exit(1)
 
             # If folder is a path
             if "/" in args.folder:

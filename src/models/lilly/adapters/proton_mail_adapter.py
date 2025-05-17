@@ -18,6 +18,7 @@ from email.header import decode_header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import parsedate_to_datetime
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
@@ -1026,7 +1027,7 @@ if __name__ == "__main__":
         elif args.action == "search":
             if not args.query:
                 print("Error: --query is required for search action")
-                exit(1)
+                sys.exit(1)
 
             status, emails = adapter.search_by_keyword(
                 args.query, args.folder, args.limit
@@ -1045,7 +1046,7 @@ if __name__ == "__main__":
         elif args.action == "read":
             if not args.uid:
                 print("Error: --uid is required for read action")
-                exit(1)
+                sys.exit(1)
 
             status, email = adapter.fetch_email(args.uid, args.folder)
             if status:
@@ -1060,7 +1061,7 @@ if __name__ == "__main__":
         elif args.action == "send":
             if not args.to or not args.subject or not args.body:
                 print("Error: --to, --subject, and --body are required for send action")
-                exit(1)
+                sys.exit(1)
 
             status, message = adapter.send_email(args.to, args.subject, args.body)
             print(message)
