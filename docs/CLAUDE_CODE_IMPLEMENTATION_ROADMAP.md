@@ -36,32 +36,35 @@ This roadmap outlines the step-by-step approach to integrate Claude Code capabil
 ## Phase 2: Agent Integration (Week 2-3)
 
 ### 2.1 Cloud Coder Agent
-- [ ] Create `agents/core/cloud_coder_agent.py`
-- [ ] Implement agent following existing patterns
-- [ ] Add capabilities:
+- [x] Create `agents/core/cloud_coder_agent.py`
+- [x] Implement agent following existing patterns
+- [x] Add capabilities:
   - Code generation from handwritten pseudocode
   - Code review and debugging assistance
   - Technical documentation generation
   - Best practices research
-- [ ] Integrate with MCP for inter-agent communication
+- [x] Integrate with MCP for inter-agent communication
 
 ### 2.2 Task Routing System
-- [ ] Enhance `ServiceManager` for intelligent routing
-- [ ] Create router logic:
+- [x] Enhance `ServiceManager` for intelligent routing
+- [x] Create router logic:
   - Privacy-sensitive → local models
   - Code generation → Claude Code
   - Simple queries → local models  
   - Complex analysis → Claude Code
-- [ ] Add user preferences for cloud/local decisions
-- [ ] Implement automatic fallback mechanisms
+- [x] Add user preferences for cloud/local decisions
+- [x] Implement automatic fallback mechanisms
 
 ### 2.3 MCP Integration
-- [ ] Update `mcp/server.py` for Claude Code tools
-- [ ] Create MCP tools:
+- [x] Update `mcp/server.py` for Claude Code tools
+- [x] Create MCP tools:
   - `claude_code_generate`
   - `claude_code_review`
+  - `claude_code_debug`
+  - `claude_code_best_practices`
   - `claude_code_summarize`
-- [ ] Add to MCP registry in `mcp/registry.py`
+  - `claude_code_manage_session`
+- [x] Add to MCP registry in `mcp/registry.py`
 - [ ] Test inter-agent communication with Claude
 
 ## Phase 3: Workflow Implementation (Week 3-4)

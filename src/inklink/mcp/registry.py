@@ -119,8 +119,25 @@ def register_all_tools():
     # Register knowledge graph tools
     registry.register_from_module("inklink.mcp.knowledge_graph_tools_integration")
 
-    # Other tool modules can be registered here
-    # registry.register_from_module("inklink.mcp.other_tools")
+    # Register Claude Code tools
+    try:
+        from inklink.mcp.claude_code_tools import register_claude_code_tools
+
+        register_claude_code_tools(registry)
+    except ImportError as e:
+        logger.warning(f"Could not import Claude Code tools: {e}")
+
+    # Register augmented notebook tools
+    try:
+        registry.register_from_module("inklink.mcp.augmented_notebook_tools")
+    except ImportError as e:
+        logger.warning(f"Could not import augmented notebook tools: {e}")
+
+    # Register knowledge index tools
+    try:
+        registry.register_from_module("inklink.mcp.knowledge_index_tools")
+    except ImportError as e:
+        logger.warning(f"Could not import knowledge index tools: {e}")
 
 
 def get_registry() -> MCPRegistry:

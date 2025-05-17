@@ -110,6 +110,13 @@ CONFIG = {
         "AI_ROUTING_CLOUD_ENABLED", "true"
     ).lower()
     == "true",
+    "AI_PREFER_CLOUD": os.environ.get("AI_PREFER_CLOUD", "true").lower() == "true",
+    "AI_FALLBACK_ENABLED": os.environ.get("AI_FALLBACK_ENABLED", "true").lower()
+    == "true",
+    "AI_COMPLEXITY_THRESHOLD": float(os.environ.get("AI_COMPLEXITY_THRESHOLD", 0.7)),
+    "AI_AUTO_CLASSIFY": os.environ.get("AI_AUTO_CLASSIFY", "true").lower() == "true",
+    "AI_MAX_RETRIES": int(os.environ.get("AI_MAX_RETRIES", 3)),
+    "AI_TIMEOUT_SECONDS": int(os.environ.get("AI_TIMEOUT_SECONDS", 120)),
 }
 
 # Ensure required directories exist
