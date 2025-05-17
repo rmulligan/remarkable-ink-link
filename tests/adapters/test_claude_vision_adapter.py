@@ -168,7 +168,6 @@ def test_process_image(claude_vision_adapter, mock_subprocess):
     # Arrange
     image_path = "/tmp/test_image.png"
 
-
     claude_vision_adapter.process_image(image_path)
 
     # Assert
