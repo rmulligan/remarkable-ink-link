@@ -3,6 +3,8 @@
 This package provides adapters for external services and tools.
 """
 
+from inklink.adapters.claude_code_adapter import ClaudeCodeAdapter
+from inklink.adapters.claude_vision_adapter import ClaudeVisionAdapter
 from inklink.adapters.handwriting_adapter import HandwritingAdapter
 from inklink.adapters.handwriting_web_adapter import HandwritingWebAdapter
 from inklink.adapters.http_adapter import HTTPAdapter
@@ -13,4 +15,6 @@ __all__ = [
     "HandwritingAdapter",
     "HandwritingWebAdapter",
     "HTTPAdapter",
+    "ClaudeVisionAdapter",
+    "ClaudeCodeAdapter",
 ]
