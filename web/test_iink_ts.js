@@ -121,12 +121,12 @@ async function runTest() {
     console.log('\n=== RECOGNITION RESULTS ===\n');
     
     // Display the results
-    if (result && result['text/plain']) {
+    if (result?.['text/plain']) {
       console.log(`Recognized text: ${result['text/plain']}`);
     }
     
     // Save the JIIX result to a file for inspection
-    if (result && result['application/vnd.myscript.jiix']) {
+    if (result?.['application/vnd.myscript.jiix']) {
       fs.writeFileSync('recognition_result.jiix', JSON.stringify(result['application/vnd.myscript.jiix'], null, 2));
       console.log('JIIX result saved to recognition_result.jiix');
       
@@ -147,7 +147,7 @@ async function runTest() {
     console.error('Error during recognition:', error);
     
     // Try to provide more detailed information about the error
-    if (error.response && error.response.data) {
+    if (error.response?.data) {
       console.error('API Error details:', JSON.stringify(error.response.data, null, 2));
     }
     
