@@ -7,17 +7,15 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import aiohttp
 import pytest
-from anyio import create_task_group
 
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
-from inklink.agents.base.agent import AgentConfig, LocalAgent
+from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.monitoring import (
     HealthCheck,
     HealthStatus,
     MonitoredAgent,
     MonitoringService,
-    RestartPolicy,
-)
+    )
 from inklink.agents.exceptions import (
     AgentCommunicationError,
     AgentError,

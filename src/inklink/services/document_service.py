@@ -18,7 +18,6 @@ from inklink.services.converters.syntax_highlighted_ink_converter import (
 )
 from inklink.services.interfaces import (
     IContentConverter,
-    IDocumentRenderer,
     IDocumentService,
 )
 from inklink.services.renderers.hcl_renderer import HCLRenderer
