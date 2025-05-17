@@ -11,19 +11,20 @@ import os
 import sys
 from pathlib import Path
 
+from inklink.adapters.claude_code_adapter import ClaudeCodeAdapter
+from inklink.agents.base.agent import AgentConfig
+from inklink.agents.core.cloud_coder_agent import CloudCoderAgent
+from inklink.config import CONFIG
+from inklink.providers.claude_code_provider import ClaudeCodeProvider
+from inklink.services.document_service import DocumentService
+from inklink.services.llm_interface import UnifiedLLMInterface
+from inklink.services.llm_service_manager import LLMServiceManager
+from inklink.services.remarkable_service import RemarkableService
+
 # Add the parent directory to the path so we can import inklink
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import after path manipulation to satisfy flake8
-from inklink.adapters.claude_code_adapter import ClaudeCodeAdapter
-from inklink.providers.claude_code_provider import ClaudeCodeProvider
-from inklink.services.llm_interface import UnifiedLLMInterface
-from inklink.services.llm_service_manager import LLMServiceManager
-from inklink.services.remarkable_service import RemarkableService
-from inklink.services.document_service import DocumentService
-from inklink.agents.core.cloud_coder_agent import CloudCoderAgent
-from inklink.agents.base.agent import AgentConfig
-from inklink.config import CONFIG
 
 
 async def main():

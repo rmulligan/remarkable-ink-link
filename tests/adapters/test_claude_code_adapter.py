@@ -2,8 +2,9 @@
 """Tests for Claude Code adapter."""
 
 import os
+from unittest.mock import MagicMock, call, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, call
 
 from inklink.adapters.claude_code_adapter import ClaudeCodeAdapter
 

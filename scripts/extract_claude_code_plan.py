@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Script to extract text from the Claude Code integration plan PDF."""
 
-import sys
 import os
+import sys
+
+from src.inklink.adapters.pdf_adapter import PDFAdapter
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import after path manipulation to satisfy flake8
-from src.inklink.adapters.pdf_adapter import PDFAdapter
 
 # Initialize PDF adapter with temp directory
 pdf_adapter = PDFAdapter("/tmp/inklink/pdf_extract")
