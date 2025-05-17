@@ -59,7 +59,8 @@ class OllamaAdapter:
                     # Stream the response to track progress
                     async for line in response.content:
                         if line:
-                            progress = json.loads(line)
+                            # Decode bytes to string before JSON parsing
+                            progress = json.loads(line.decode("utf-8"))
                             self.logger.info(f"Pull progress: {progress}")
                     return True
                 self.logger.error(f"Failed to pull model: {response.status}")
@@ -92,23 +93,23 @@ class OllamaAdapter:
                 "model": model,
                 "messages": messages,
                 "temperature": temperature,
-                "max_tokens": max_tokens,
+                "options": {"num_predict": max_tokens},
                 "stream": False,
             }
 
+            # Make the request
             async with self.session.post(
                 f"{self.base_url}/api/chat", json=data
             ) as response:
                 if response.status == 200:
                     result = await response.json()
-                    return result["message"]["content"]
-                error = await response.text()
-                self.logger.error(f"Query failed: {error}")
-                raise Exception(f"Query failed: {error}")
+                    return result.get("message", {}).get("content", "")
+                self.logger.error(f"Query failed: {response.status}")
+                return ""
 
         except Exception as e:
             self.logger.error(f"Error querying model: {e}")
-            raise
+            return ""
 
     async def stream_query(
         self,
@@ -118,11 +119,11 @@ class OllamaAdapter:
         temperature: float = 0.7,
         max_tokens: int = 1000,
     ):
-        """Stream responses from a model."""
+        """Stream query results."""
         await self._ensure_session()
 
         try:
-            # Prepare the request
+            # Prepare the request similar to query
             messages = []
 
             if context:
@@ -134,7 +135,7 @@ class OllamaAdapter:
                 "model": model,
                 "messages": messages,
                 "temperature": temperature,
-                "max_tokens": max_tokens,
+                "options": {"num_predict": max_tokens},
                 "stream": True,
             }
 
@@ -144,76 +145,72 @@ class OllamaAdapter:
                 if response.status == 200:
                     async for line in response.content:
                         if line:
+                            # Decode bytes to string before JSON parsing
                             chunk = json.loads(line.decode("utf-8"))
-                            if "message" in chunk:
-                                yield chunk["message"]["content"]
+                            if chunk.get("done", False):
+                                return
+                            yield chunk.get("message", {}).get("content", "")
                 else:
-                    error = await response.text()
-                    self.logger.error(f"Stream query failed: {error}")
-                    raise Exception(f"Stream query failed: {error}")
+                    self.logger.error(f"Stream query failed: {response.status}")
 
         except Exception as e:
-            self.logger.error(f"Error in stream query: {e}")
-            raise
+            self.logger.error(f"Error streaming query: {e}")
 
-    async def create_model(self, name: str, modelfile: str) -> bool:
-        """Create a custom model from a Modelfile."""
+    async def create_model(
+        self, name: str, modelfile: str, path: Optional[str] = None
+    ) -> bool:
+        """Create a new model."""
         await self._ensure_session()
 
         try:
             data = {"name": name, "modelfile": modelfile}
+            if path:
+                data["path"] = path
 
             async with self.session.post(
                 f"{self.base_url}/api/create", json=data
             ) as response:
                 if response.status == 200:
+                    # Stream the response
                     async for line in response.content:
                         if line:
-                            progress = json.loads(line)
-                            self.logger.info(f"Create progress: {progress}")
+                            # Decode bytes to string before JSON parsing
+                            status = json.loads(line.decode("utf-8"))
+                            self.logger.info(f"Create model status: {status}")
                     return True
-                error = await response.text()
-                self.logger.error(f"Failed to create model: {error}")
+                self.logger.error(f"Failed to create model: {response.status}")
                 return False
 
         except Exception as e:
             self.logger.error(f"Error creating model: {e}")
             return False
 
-    async def delete_model(self, model_name: str) -> bool:
+    async def delete_model(self, name: str) -> bool:
         """Delete a model."""
         await self._ensure_session()
 
         try:
-            data = {"name": model_name}
-
+            data = {"name": name}
             async with self.session.delete(
                 f"{self.base_url}/api/delete", json=data
             ) as response:
-                if response.status == 200:
-                    self.logger.info(f"Deleted model: {model_name}")
-                    return True
-                error = await response.text()
-                self.logger.error(f"Failed to delete model: {error}")
-                return False
+                return response.status == 200
 
         except Exception as e:
             self.logger.error(f"Error deleting model: {e}")
             return False
 
-    async def model_info(self, model_name: str) -> Optional[Dict[str, Any]]:
-        """Get information about a specific model."""
+    async def model_info(self, name: str) -> Optional[Dict[str, Any]]:
+        """Get model information."""
         await self._ensure_session()
 
         try:
-            data = {"name": model_name}
-
+            data = {"name": name}
             async with self.session.post(
                 f"{self.base_url}/api/show", json=data
             ) as response:
                 if response.status == 200:
                     return await response.json()
-                self.logger.error(f"Failed to get model info: {response.status}")
                 return None
 
         except Exception as e:
@@ -221,11 +218,11 @@ class OllamaAdapter:
             return None
 
     async def health_check(self) -> bool:
-        """Check if Ollama service is healthy."""
+        """Check if Ollama is running."""
         await self._ensure_session()
 
         try:
-            async with self.session.get(f"{self.base_url}/") as response:
+            async with self.session.get(f"{self.base_url}/api/tags") as response:
                 return response.status == 200
         except Exception:
             return False

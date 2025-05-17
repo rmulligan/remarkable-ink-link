@@ -223,7 +223,7 @@ class StateManagementDemo:
         print(f"Tasks: {len(snapshot.tasks)}")
 
         # Save state
-        await self.state.save_state()
+        await self.state._save_state()
         print(f"\nState saved to {self.state_file}")
 
         # Create new state instance (simulating recovery)

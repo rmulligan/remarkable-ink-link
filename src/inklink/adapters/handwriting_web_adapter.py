@@ -139,7 +139,8 @@ class HandwritingWebAdapter(Adapter):
         # Return the base64 encoded digest
         return base64.b64encode(h.digest()).decode("utf-8")
 
-    def extract_strokes_from_rm_file(self, rm_file_path: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def extract_strokes_from_rm_file(rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
 
@@ -225,7 +226,8 @@ class HandwritingWebAdapter(Adapter):
             logger.error(f"Failed to extract strokes from .rm file: {e}")
             return []
 
-    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    @staticmethod
+    def convert_to_iink_format(strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Convert reMarkable strokes to MyScript Web API compatible format.
 
@@ -432,9 +434,8 @@ class HandwritingWebAdapter(Adapter):
             logger.error(f"Failed to recognize handwriting: {e}")
             return {"error": str(e)}
 
-    def export_content(
-        self, content_id: str, format_type: str = "text"
-    ) -> Dict[str, Any]:
+    @staticmethod
+    def export_content(content_id: str, format_type: str = "text") -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
 
@@ -476,9 +477,8 @@ class HandwritingWebAdapter(Adapter):
                         "format": format_type,
                     }
                 return {"content": json.dumps(math_formats), "format": "json"}
-            else:
-                # For other formats, return the full result in JSON
-                return {"content": json.dumps(content), "format": "json"}
+            # For other formats, return the full result in JSON
+            return {"content": json.dumps(content), "format": "json"}
 
         except Exception as e:
             logger.error(f"Failed to export content: {e}")

@@ -1,4 +1,5 @@
 import httpx
+import pytest
 
 # Monkey-patch httpx.Client.__init__ to accept 'app' keyword argument.
 # This patch is necessary to ensure compatibility with starlette's TestClient,
@@ -18,3 +19,10 @@ def _patched_httpx_client_init(self, *args, **kwargs):
 
 
 httpx.Client.__init__ = _patched_httpx_client_init
+
+
+# Configure anyio to only use asyncio backend
+@pytest.fixture(scope="session")
+def anyio_backend():
+    """Force asyncio backend for all anyio tests."""
+    return "asyncio"

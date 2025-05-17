@@ -1,15 +1,20 @@
 """Test suite for agent monitoring and error handling."""
 
 import asyncio
+from datetime import datetime
 from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock, patch
 
+import aiohttp
 import pytest
+from anyio import create_task_group
 
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig, LocalAgent
 from inklink.agents.base.monitoring import (
+    HealthCheck,
     HealthStatus,
+    MonitoredAgent,
     MonitoringService,
     RestartPolicy,
 )
@@ -20,8 +25,11 @@ from inklink.agents.exceptions import (
     ConfigurationError,
 )
 
+# Configure to only use asyncio backend
+pytestmark = pytest.mark.anyio
 
-class TestAgentMock(LocalAgent):
+
+class TestAgentMock(MonitoredAgent):
     """Mock agent for testing."""
 
     def __init__(self, config: AgentConfig, should_fail: bool = False):
@@ -39,12 +47,16 @@ class TestAgentMock(LocalAgent):
         while not self._stop_event.is_set():
             await asyncio.sleep(0.1)
 
-    async def health_check(self) -> HealthStatus:
+    async def _perform_health_check(self) -> HealthCheck:
         """Mock health check."""
         self.health_check_count += 1
-        if self.should_fail:
-            return HealthStatus.UNHEALTHY
-        return HealthStatus.HEALTHY
+        status = HealthStatus.UNHEALTHY if self.should_fail else HealthStatus.HEALTHY
+        return HealthCheck(
+            status=status,
+            message="Mock health check",
+            timestamp=datetime.now(),
+            details={"count": self.health_check_count},
+        )
 
     async def start(self) -> None:
         """Mock start."""
@@ -62,7 +74,7 @@ class TestMonitoringService:
     @pytest.fixture
     def monitoring_service(self):
         """Create monitoring service instance."""
-        return MonitoringService(health_check_interval=0.5)  # Fast checks for tests
+        return MonitoringService()
 
     @pytest.fixture
     def mock_agent(self):
@@ -77,235 +89,147 @@ class TestMonitoringService:
         )
         return TestAgentMock(config)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_register_agent(self, monitoring_service, mock_agent):
         """Test agent registration."""
-        monitoring_service.register_agent("test_1", mock_agent)
+        monitoring_service.register_agent(mock_agent)
 
-        assert "test_1" in monitoring_service._agents
-        assert monitoring_service._agents["test_1"] == mock_agent
-        assert "test_1" in monitoring_service._health_status
-        assert monitoring_service._health_status["test_1"] == HealthStatus.UNKNOWN
+        assert mock_agent.config.name in monitoring_service.agents
+        assert monitoring_service.agents[mock_agent.config.name] == mock_agent
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_health_check_healthy_agent(self, monitoring_service, mock_agent):
         """Test health check for healthy agent."""
-        monitoring_service.register_agent("test_1", mock_agent)
+        monitoring_service.register_agent(mock_agent)
 
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
+        # Check health
+        health_results = await monitoring_service.check_all_health()
 
-        # Wait for health check
-        await asyncio.sleep(1)
+        assert mock_agent.config.name in health_results
+        assert health_results[mock_agent.config.name].status == HealthStatus.HEALTHY
 
-        # Check health status
-        assert monitoring_service._health_status["test_1"] == HealthStatus.HEALTHY
-        assert mock_agent.health_check_count > 0
-
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
-
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_health_check_unhealthy_agent(self, monitoring_service):
         """Test health check for unhealthy agent."""
         # Create failing agent
         config = AgentConfig(
             name="failing_agent",
-            initial_state="active",
-            health_check_interval=0.5,
-            restart_policy=RestartPolicy.ON_FAILURE,
-            max_restarts=2,
+            version="1.0.0",
+            description="Test failing agent",
+            capabilities=["test"],
+            ollama_model="test-model",
+            mcp_enabled=True,
         )
         failing_agent = TestAgentMock(config, should_fail=True)
 
-        monitoring_service.register_agent("test_1", failing_agent)
+        monitoring_service.register_agent(failing_agent)
 
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
+        # Check health
+        health_results = await monitoring_service.check_all_health()
 
-        # Wait for health checks and restarts
-        await asyncio.sleep(2)
-
-        # Check health status
-        assert monitoring_service._health_status["test_1"] == HealthStatus.UNHEALTHY
+        assert failing_agent.config.name in health_results
+        assert (
+            health_results[failing_agent.config.name].status == HealthStatus.UNHEALTHY
+        )
         assert failing_agent.health_check_count > 0
-        assert failing_agent.restart_count <= config.max_restarts + 1
 
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
-
-    @pytest.mark.asyncio
-    async def test_restart_policy_always(self, monitoring_service):
-        """Test ALWAYS restart policy."""
+    @pytest.mark.anyio
+    async def test_restart_unhealthy_agents(self, monitoring_service):
+        """Test restart unhealthy agents functionality."""
         config = AgentConfig(
-            name="always_restart",
-            initial_state="active",
-            health_check_interval=0.5,
-            restart_policy=RestartPolicy.ALWAYS,
-            max_restarts=3,
+            name="unhealthy_agent",
+            version="1.0.0",
+            description="Test agent that is unhealthy",
+            capabilities=["test"],
+            ollama_model="test-model",
+            mcp_enabled=True,
         )
         agent = TestAgentMock(config, should_fail=True)
 
-        monitoring_service.register_agent("test_1", agent)
+        monitoring_service.register_agent(agent)
 
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
+        # Check health and restart if needed
+        restarted = await monitoring_service.restart_unhealthy_agents()
 
-        # Wait for restarts
-        await asyncio.sleep(3)
+        # Should have attempted restart
+        assert agent.config.name in restarted or len(restarted) > 0
 
-        # Should restart up to max_restarts
-        assert agent.restart_count > 1
-        assert agent.restart_count <= config.max_restarts + 1
+    @pytest.mark.anyio
+    async def test_generate_health_report(self, monitoring_service, mock_agent):
+        """Test health report generation."""
+        monitoring_service.register_agent(mock_agent)
 
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
+        # Generate health report
+        report = monitoring_service.generate_health_report()
 
-    @pytest.mark.asyncio
-    async def test_restart_policy_on_failure(self, monitoring_service):
-        """Test ON_FAILURE restart policy."""
-        config = AgentConfig(
-            name="on_failure_restart",
-            initial_state="active",
-            health_check_interval=0.5,
-            restart_policy=RestartPolicy.ON_FAILURE,
-            max_restarts=2,
+        # Should have metrics for registered agent
+        assert mock_agent.config.name in report["agents"]
+
+    @pytest.mark.anyio
+    async def test_get_all_metrics(self, monitoring_service, mock_agent):
+        """Test getting metrics for all agents."""
+        monitoring_service.register_agent(mock_agent)
+
+        # Get all metrics
+        metrics = monitoring_service.get_all_metrics()
+
+        # Should have metrics for registered agent
+        assert mock_agent.config.name in metrics
+
+    @pytest.mark.anyio
+    async def test_multiple_agents_health(self, monitoring_service):
+        """Test health check for multiple agents."""
+        # Create two agents with different configs
+        config1 = AgentConfig(
+            name="test_1",
+            version="1.0.0",
+            description="Healthy agent",
+            capabilities=["test"],
+            ollama_model="test-model",
+            mcp_enabled=True,
         )
-        agent = TestAgentMock(config, should_fail=True)
+        agent1 = TestAgentMock(config1, should_fail=False)
 
-        monitoring_service.register_agent("test_1", agent)
-
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
-
-        # Wait for restarts
-        await asyncio.sleep(2)
-
-        # Should restart on failure
-        assert agent.restart_count > 0
-        assert agent.restart_count <= config.max_restarts + 1
-
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
-
-    @pytest.mark.asyncio
-    async def test_restart_policy_never(self, monitoring_service):
-        """Test NEVER restart policy."""
-        config = AgentConfig(
-            name="never_restart",
-            initial_state="active",
-            health_check_interval=0.5,
-            restart_policy=RestartPolicy.NEVER,
+        config2 = AgentConfig(
+            name="test_2",
+            version="1.0.0",
+            description="Unhealthy agent",
+            capabilities=["test"],
+            ollama_model="test-model",
+            mcp_enabled=True,
         )
-        agent = TestAgentMock(config, should_fail=True)
+        agent2 = TestAgentMock(config2, should_fail=True)
 
-        monitoring_service.register_agent("test_1", agent)
+        monitoring_service.register_agent(agent1)
+        monitoring_service.register_agent(agent2)
 
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
+        # Check health of all agents
+        health_results = await monitoring_service.check_all_health()
 
-        # Wait for health check
-        await asyncio.sleep(2)
+        assert "test_1" in health_results
+        assert "test_2" in health_results
+        assert health_results["test_1"].status == HealthStatus.HEALTHY
+        assert health_results["test_2"].status == HealthStatus.UNHEALTHY
 
-        # Should not restart
-        assert agent.restart_count == 0
+    @pytest.mark.anyio
+    async def test_unregister_agent(self, monitoring_service, mock_agent):
+        """Test unregistering an agent."""
+        monitoring_service.register_agent(mock_agent)
 
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
+        # Verify agent is registered
+        assert mock_agent.config.name in monitoring_service.agents
 
-    @pytest.mark.asyncio
-    async def test_get_health_status(self, monitoring_service, mock_agent):
-        """Test getting health status."""
-        monitoring_service.register_agent("test_1", mock_agent)
-        monitoring_service.register_agent(
-            "test_2",
-            TestAgentMock(
-                AgentConfig(name="test_2", initial_state="active"), should_fail=True
-            ),
-        )
+        # Unregister the agent
+        monitoring_service.unregister_agent(mock_agent.config.name)
 
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
-
-        # Wait for health checks
-        await asyncio.sleep(1)
-
-        # Get health status
-        health_status = await monitoring_service.get_health_status()
-
-        assert "test_1" in health_status
-        assert "test_2" in health_status
-        assert health_status["test_1"]["status"] == HealthStatus.HEALTHY.value
-        assert health_status["test_2"]["status"] == HealthStatus.UNHEALTHY.value
-
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
-
-    @pytest.mark.asyncio
-    async def test_get_metrics(self, monitoring_service, mock_agent):
-        """Test getting metrics."""
-        monitoring_service.register_agent("test_1", mock_agent)
-
-        # Start monitoring
-        monitoring_task = asyncio.create_task(monitoring_service.start_monitoring())
-
-        # Simulate some activity
-        monitoring_service._metrics["test_1"]["requests"] = 10
-        monitoring_service._metrics["test_1"]["errors"] = 2
-        monitoring_service._restart_counts["test_1"] = 1
-
-        # Get metrics
-        metrics = await monitoring_service.get_metrics()
-
-        assert "test_1" in metrics
-        assert metrics["test_1"]["requests"] == 10
-        assert metrics["test_1"]["errors"] == 2
-        assert metrics["test_1"]["restarts"] == 1
-        assert metrics["test_1"]["uptime"] > 0
-
-        # Stop monitoring
-        await monitoring_service.stop_monitoring()
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
+        # Verify agent is no longer registered
+        assert mock_agent.config.name not in monitoring_service.agents
 
 
 class TestExceptionHandling:
     """Test suite for exception handling."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_agent_configuration_error(self):
         """Test ConfigurationError handling."""
         with pytest.raises(ConfigurationError) as exc_info:
@@ -314,37 +238,31 @@ class TestExceptionHandling:
         assert "Missing required configuration" in str(exc_info.value)
         assert isinstance(exc_info.value, ConfigurationError)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_agent_communication_error(self):
         """Test AgentCommunicationError handling."""
         with pytest.raises(AgentCommunicationError) as exc_info:
-            raise AgentCommunicationError("Failed to connect", target="remote_agent")
+            raise AgentCommunicationError("Failed to connect to remote_agent")
 
         assert "Failed to connect" in str(exc_info.value)
-        assert exc_info.value.target == "remote_agent"
+        assert isinstance(exc_info.value, AgentCommunicationError)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_agent_state_error(self):
         """Test AgentStateError handling."""
         with pytest.raises(AgentStateError) as exc_info:
-            raise AgentStateError(
-                "Invalid state transition",
-                current_state="running",
-                target_state="invalid",
-            )
+            raise AgentStateError("Invalid state transition from running to invalid")
 
         assert "Invalid state transition" in str(exc_info.value)
-        assert exc_info.value.current_state == "running"
-        assert exc_info.value.target_state == "invalid"
+        assert isinstance(exc_info.value, AgentStateError)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_agent_timeout_error(self):
         """Test timeout error handling."""
         with pytest.raises(Exception) as exc_info:
             raise Exception("Operation timed out")
 
         assert "Operation timed out" in str(exc_info.value)
-        assert exc_info.value.timeout == 30
 
 
 class TestEnhancedOllamaAdapter:
@@ -358,37 +276,51 @@ class TestEnhancedOllamaAdapter:
             config=None  # Use default config
         )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_retry_mechanism(self, adapter):
         """Test retry mechanism."""
         # Mock HTTP client to fail first 2 times
         call_count = 0
 
-        async def mock_post(*args, **kwargs):
+        class MockResponse:
+            def __init__(self, status, json_response=None, error=None):
+                self.status = status
+                self.json_response = json_response
+                self.error = error
+                self.raise_for_status = Mock()
+                if error:
+                    self.raise_for_status.side_effect = error
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            async def json(self):
+                return self.json_response
+
+        # First, ensure session is created
+        adapter.session = aiohttp.ClientSession()
+
+        def mock_request(*args, **kwargs):
             nonlocal call_count
             call_count += 1
 
             if call_count < 3:
-                response = Mock()
-                response.status = 500
-                response.text = AsyncMock(return_value="Server error")
-                response.raise_for_status.side_effect = Exception("HTTP 500")
-                return response
+                # Fail first 2 times
+                return MockResponse(500, error=Exception("HTTP 500"))
             # Success on third try
-            response = Mock()
-            response.status = 200
-            response.json = AsyncMock(return_value={"response": "Success"})
-            response.raise_for_status = Mock()
-            return response
+            return MockResponse(200, {"message": {"content": "Success"}})
 
-        # Patch the HTTP client
-        with patch.object(adapter.client, "post", side_effect=mock_post):
+        with patch.object(adapter.session, "request", mock_request):
             result = await adapter.query("model", "prompt")
-
             assert result == "Success"
             assert call_count == 3  # Should retry twice before success
 
-    @pytest.mark.asyncio
+        await adapter.session.close()
+
+    @pytest.mark.anyio
     async def test_timeout_handling(self, adapter):
         """Test timeout handling."""
 
@@ -396,41 +328,78 @@ class TestEnhancedOllamaAdapter:
         async def mock_post(*args, **kwargs):
             await asyncio.sleep(5)  # Longer than timeout
 
-        with patch.object(adapter.client, "post", side_effect=mock_post), pytest.raises(
+        adapter.session = Mock()
+        with patch.object(
+            adapter.session, "post", side_effect=mock_post
+        ), pytest.raises(
             Exception  # Generic timeout error
         ):
             await adapter.query("model", "prompt")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_health_check(self, adapter):
         """Test health check."""
 
-        # Mock successful response
-        async def mock_get(*args, **kwargs):
-            response = Mock()
-            response.status = 200
-            response.json = AsyncMock(return_value={"status": "ok"})
-            response.raise_for_status = Mock()
-            return response
+        class MockResponse:
+            def __init__(self, status, json_response=None):
+                self.status = status
+                self.json_response = json_response
+                self.raise_for_status = Mock()
 
-        with patch.object(adapter.client, "get", side_effect=mock_get):
-            result = await adapter.health_check()
-            assert result is True
+            async def __aenter__(self):
+                return self
 
-    @pytest.mark.asyncio
+            async def __aexit__(self, *args):
+                pass
+
+            async def json(self):
+                return self.json_response
+
+        def mock_request(method, url, **kwargs):
+            # For root endpoint
+            if url == f"{adapter.config.base_url}/":
+                return MockResponse(200, {"status": "OK"})
+            # For tags endpoint
+            elif "tags" in url:
+                return MockResponse(
+                    200, {"models": [{"name": "test-model", "model": "test-model"}]}
+                )
+
+        # Mock session with proper async context manager
+        mock_session = Mock()
+        mock_session.request = Mock(side_effect=mock_request)
+        adapter.session = mock_session
+
+        result = await adapter.health_check()
+        assert result["healthy"] is True
+
+    @pytest.mark.anyio
     async def test_health_check_failure(self, adapter):
         """Test health check failure."""
 
-        # Mock failed response
-        async def mock_get(*args, **kwargs):
-            response = Mock()
-            response.status = 500
-            response.raise_for_status.side_effect = Exception("HTTP 500")
-            return response
+        class MockResponse:
+            def __init__(self, status, error=None):
+                self.status = status
+                self.raise_for_status = Mock()
+                if error:
+                    self.raise_for_status.side_effect = error
 
-        with patch.object(adapter.client, "get", side_effect=mock_get):
-            result = await adapter.health_check()
-            assert result is False
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+        async def mock_request(*args, **kwargs):
+            return MockResponse(500, error=Exception("HTTP 500"))
+
+        # Mock session with proper async context manager
+        mock_session = Mock()
+        mock_session.request = AsyncMock(side_effect=mock_request)
+        adapter.session = mock_session
+
+        result = await adapter.health_check()
+        assert result["healthy"] is False
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Test script for Phase 5: Notebook Integration with syntax highlighting."""
 
 import sys
@@ -16,23 +17,23 @@ def test_syntax_highlighted_document():
     """Test creating a syntax-highlighted document."""
     print("=== Test 1: Syntax Highlighted Document ===")
 
-    # Sample Python code (commented out since it's not used yet)
-    # code = '''
-    # def fibonacci(n):
-    #     """Calculate the nth Fibonacci number."""
-    #     if n <= 1:
-    #         return n
-    #
-    #     a, b = 0, 1
-    #     for _ in range(2, n + 1):
-    #         a, b = b, a + b
-    #
-    #     return b
-    #
-    # # Test the function
-    # for i in range(10):
-    #     print(f"F({i}) = {fibonacci(i)}")
-    # '''
+    # Sample Python code
+    code = '''
+def fibonacci(n):
+    """Calculate the nth Fibonacci number."""
+    if n <= 1:
+        return n
+
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+
+    return b
+
+# Test the function
+for i in range(10):
+    print(f"F({i}) = {fibonacci(i)}")
+'''
 
     # Skip this test for now due to drawj2d dependency
     print("⚠️ Skipping actual document creation (drawj2d dependency)")
@@ -40,6 +41,7 @@ def test_syntax_highlighted_document():
     print("  - Language: Python")
     print("  - Line numbers: Yes")
     print("  - Metadata: Yes")
+    print(f"  - Code length: {len(code)} characters")
     print()
 
 
@@ -100,23 +102,8 @@ Both implementations have O(log n) time complexity.
     class MockDocService:
         pass
 
-    # Create mock services to avoid initialization issues
-    class MockRemarkableAdapter:
-        def __init__(self):
-            raise NotImplementedError()
-
-    class MockRemarkableService:
-        def __init__(self, adapter=None):
-            self.adapter = adapter or MockRemarkableAdapter()
-
     mock_doc_service = MockDocService()
-    mock_remarkable_service = MockRemarkableService()
-
-    service = AugmentedNotebookServiceV2(
-        document_service=mock_doc_service,
-        remarkable_service=mock_remarkable_service,
-        knowledge_graph_service=None,
-    )
+    service = AugmentedNotebookServiceV2(document_service=mock_doc_service)
 
     # Extract code blocks
     code_blocks = service._extract_code_blocks(response)
