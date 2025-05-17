@@ -212,7 +212,7 @@ def download_and_analyze():
 
                     logger.info(f"Content file structure: {content_file}")
                     for key, value in content_data.items():
-                        if isinstance(value, dict) or isinstance(value, list):
+                        if isinstance(value, (dict, list)):
                             logger.info(
                                 f"  {key}: {type(value).__name__} of length {len(value)}"
                             )
