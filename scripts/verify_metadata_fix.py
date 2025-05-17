@@ -435,9 +435,8 @@ def upload_and_test(rmapi_adapter, zip_path, approach, notebook_name):
         if success:
             logger.info(f"✅ SUCCESS: {approach} approach upload succeeded: {message}")
             return True
-        else:
-            logger.error(f"❌ FAILURE: {approach} approach upload failed: {message}")
-            return False
+        logger.error(f"❌ FAILURE: {approach} approach upload failed: {message}")
+        return False
 
     except Exception as e:
         logger.error(f"Error uploading {approach} test notebook: {e}")
@@ -503,22 +502,21 @@ def verify_metadata_fix(args, rmapi_path):
                 "This confirms that the metadata fix resolves the HTTP 400 errors!"
             )
             return True
-        elif fixed_success and original_success:
+        if fixed_success and original_success:
             logger.info("⚠️ INCONCLUSIVE: Both approaches work")
             logger.info(
                 "The original approach may be working due to changes in the reMarkable API or other factors"
             )
             return True
-        elif not fixed_success and not original_success:
+        if not fixed_success and not original_success:
             logger.error("❌ VERIFICATION FAILED: Both approaches fail")
             logger.error("There might be other issues with the upload process")
             return False
-        else:  # not fixed_success and original_success
-            logger.error(
-                "❌ VERIFICATION FAILED: Original approach works but fixed approach fails"
-            )
-            logger.error("The fix might have introduced new issues")
-            return False
+        logger.error(
+            "❌ VERIFICATION FAILED: Original approach works but fixed approach fails"
+        )
+        logger.error("The fix might have introduced new issues")
+        return False
 
     finally:
         # Clean up
@@ -541,9 +539,8 @@ def main():
     if result:
         logger.info("✅ Metadata fix verification PASSED")
         return 0
-    else:
-        logger.error("❌ Metadata fix verification FAILED")
-        return 1
+    logger.error("❌ Metadata fix verification FAILED")
+    return 1
 
 
 if __name__ == "__main__":

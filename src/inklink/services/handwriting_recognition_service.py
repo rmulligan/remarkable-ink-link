@@ -81,10 +81,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             text = result.get("result", "").strip().lower()
             if "math" in text:
                 return "Math"
-            elif "diagram" in text:
+            if "diagram" in text:
                 return "Diagram"
-            else:
-                return "Text"
+            return "Text"
         else:
             # Default to Text on failure
             return "Text"
@@ -512,7 +511,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             logger.error(f"Error converting strokes to iink format: {e}")
             return {"type": "Raw Content", "strokes": [], "error": str(e)}
 
-    def _split_multi_page_result(self, result: str, page_count: int) -> List[str]:
+    @staticmethod
+    @staticmethod
+    def _split_multi_page_result(result: str, page_count: int) -> List[str]:
         """
         Split a multi-page result into individual pages.
 
@@ -576,10 +577,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
                 current_pos = end_pos
 
             return sections
-        else:
-            # Not enough page markers, divide evenly
-            avg_length = len(result) // page_count
-            return [
-                result[i * avg_length : (i + 1) * avg_length].strip()
-                for i in range(page_count)
-            ]
+        # Not enough page markers, divide evenly
+        avg_length = len(result) // page_count
+        return [
+            result[i * avg_length : (i + 1) * avg_length].strip()
+            for i in range(page_count)
+        ]

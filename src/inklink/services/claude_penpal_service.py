@@ -475,11 +475,8 @@ class ClaudePenpalService:
             if metadata:
                 logger.info(f"Retrieved metadata for notebook {notebook_name}")
                 return metadata
-            else:
-                logger.warning(
-                    f"Could not retrieve metadata for notebook {notebook_name}"
-                )
-                return {}
+            logger.warning(f"Could not retrieve metadata for notebook {notebook_name}")
+            return {}
         except Exception as e:
             logger.error(f"Error retrieving notebook metadata: {e}")
             return {}
@@ -639,7 +636,6 @@ class ClaudePenpalService:
             except Exception as e:
                 logger.warning(f"Failed to sort pages: {e}")
                 # If sorting fails, keep original order
-                pass
 
             # If we found pages with the Lilly tag, log them
             lilly_pages = [p for p in pages_data if self.query_tag in p["tags"]]
@@ -676,9 +672,8 @@ class ClaudePenpalService:
 
             if result.get("success", False):
                 return result.get("text", "")
-            else:
-                logger.warning(f"Failed to recognize text in {page_path}")
-                return ""
+            logger.warning(f"Failed to recognize text in {page_path}")
+            return ""
 
         except Exception as e:
             logger.error(f"Error extracting text from page: {e}")

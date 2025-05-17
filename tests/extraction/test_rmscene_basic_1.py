@@ -64,23 +64,27 @@ try:
     print("\nCreating a simple scene tree...")
     scene_tree = st.SceneTree()
 
-    # Create and add a group
-    group = si.Group()
-    group_id = scene_tree.add_item(group)
-    print(f"Added group with ID: {group_id}")
+    # Get the existing root group
+    root_group = scene_tree.root
+    group_id = root_group.node_id
+    print(f"Got root group with ID: {group_id}")
 
     # Create and add a line
-    line = si.Line()
-    line.pen = si.Pen.FINELINER
-    line.color = si.PenColor.BLACK
-
-    # Create and add points
+    # Create points with all required parameters
     points = [
-        si.Point(x=100, y=100, pressure=0.5, t=0),
-        si.Point(x=200, y=200, pressure=0.6, t=100),
-        si.Point(x=300, y=100, pressure=0.5, t=200),
+        si.Point(x=100, y=100, speed=50, direction=0, width=50, pressure=128),
+        si.Point(x=200, y=200, speed=50, direction=0, width=50, pressure=153),
+        si.Point(x=300, y=100, speed=50, direction=0, width=50, pressure=128),
     ]
-    line.points = points
+
+    # Create line with all required parameters
+    line = si.Line(
+        color=si.PenColor.BLACK,
+        tool=si.Pen.FINELINER,
+        points=points,
+        thickness_scale=1.0,
+        starting_length=0.0,
+    )
 
     # Add the line to the scene tree
     line_id = scene_tree.add_item(line, parent_id=group_id)

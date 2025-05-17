@@ -331,8 +331,7 @@ class CassidyAdapter(RmapiAdapter):
                     return False, f"Failed to upload updated notebook: {message}"
 
                 return True, f"Successfully added tag '{self.tag}' to notebook"
-            else:
-                return True, f"Tag '{self.tag}' already exists on notebook"
+            return True, f"Tag '{self.tag}' already exists on notebook"
 
         except Exception as e:
             return False, f"Error adding tag to notebook: {str(e)}"
@@ -407,8 +406,7 @@ class CassidyAdapter(RmapiAdapter):
                     return False, f"Failed to upload updated notebook: {message}"
 
                 return True, f"Successfully removed tag '{self.tag}' from notebook"
-            else:
-                return True, f"Tag '{self.tag}' does not exist on notebook"
+            return True, f"Tag '{self.tag}' does not exist on notebook"
 
         except Exception as e:
             return False, f"Error removing tag from notebook: {str(e)}"
@@ -606,7 +604,6 @@ class CassidyAdapter(RmapiAdapter):
                     # This may not preserve all SVG features
                     try:
                         # PIL Image already imported at module level
-                        import io
 
                         return (
                             False,
@@ -973,9 +970,8 @@ class CassidyAdapter(RmapiAdapter):
                 if result.returncode == 0:
                     logger.info(f"Successfully created text .rm file at {output_path}")
                     return True, output_path
-                else:
-                    logger.error(f"Failed to create .rm file: {result.stderr}")
-                    return False, f"Failed to create .rm file: {result.stderr}"
+                logger.error(f"Failed to create .rm file: {result.stderr}")
+                return False, f"Failed to create .rm file: {result.stderr}"
 
             # Method 2: If drawj2d isn't available, use a predefined template .rm file as fallback
             # This is a simple fallback that creates a blank .rm file

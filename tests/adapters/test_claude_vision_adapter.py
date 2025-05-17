@@ -845,8 +845,7 @@ def test_parallel_processing_with_retries(
         if image_path == image_paths[1]:
             if call_count == 2:  # Second call to this image
                 return False, "Temporary failure"
-            else:
-                return True, "--- PAGE 2 ---\nPage 2 content\n"
+            return True, "--- PAGE 2 ---\nPage 2 content\n"
 
     # Setup the test environment
     with patch.object(
@@ -953,9 +952,9 @@ def test_mixed_content_types_batch(
         # Return different results based on content type
         if expected_content_type == "text":
             return True, f"Text content from page {index + 1}"
-        elif expected_content_type == "math":
+        if expected_content_type == "math":
             return True, f"Math equations from page {index + 1}"
-        elif expected_content_type == "diagram":
+        if expected_content_type == "diagram":
             return True, f"Diagram description from page {index + 1}"
 
     # Setup the test with controlled content types

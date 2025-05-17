@@ -290,9 +290,8 @@ def create_and_upload_minimal_notebook():
                     shutil.rmtree(temp_extract)
 
             return False
-        else:
-            logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
-            return True
+        logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
+        return True
 
 
 if __name__ == "__main__":

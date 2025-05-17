@@ -193,9 +193,8 @@ Please tell me about the metadata structure required for reMarkable notebooks.
                                     logger.error(f"Error parsing JSON: {e}")
 
             return False
-        else:
-            logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
-            return True
+        logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
+        return True
     finally:
         # Clean up the temporary directory
         if os.path.exists(temp_dir):

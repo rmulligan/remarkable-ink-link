@@ -21,6 +21,7 @@ class MarkdownConverter(BaseConverter):
         """Check if this converter can handle the given content type."""
         return content_type in ["structured", "markdown"]
 
+    @staticmethod
     def convert(
         self, content: Dict[str, Any], output_path: Optional[str] = None
     ) -> Optional[str]:
@@ -83,9 +84,8 @@ class MarkdownConverter(BaseConverter):
                         f"Successfully converted to reMarkable format: {result}"
                     )
                     return result
-                else:
-                    logger.error(f"Markdown conversion failed: {result}")
-                    return None
+                logger.error(f"Markdown conversion failed: {result}")
+                return None
             else:
                 logger.error("drawj2d not available for Markdown conversion")
                 return None

@@ -156,16 +156,15 @@ class CLIAIAdapter(Adapter):
                 return self._generate_claude_completion(
                     prompt, system_prompt, max_tokens, temperature
                 )
-            elif self.cli_type == "copilot":
+            if self.cli_type == "copilot":
                 return self._generate_copilot_completion(
                     prompt, system_prompt, max_tokens, temperature
                 )
-            elif self.cli_type == "codex":
+            if self.cli_type == "codex":
                 return self._generate_codex_completion(
                     prompt, system_prompt, max_tokens, temperature
                 )
-            else:
-                return False, f"Unsupported CLI type: {self.cli_type}"
+            return False, f"Unsupported CLI type: {self.cli_type}"
 
         except Exception as e:
             logger.error(f"Error generating completion: {e}")

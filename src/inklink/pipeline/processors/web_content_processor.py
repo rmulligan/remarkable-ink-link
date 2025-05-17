@@ -46,8 +46,7 @@ class WebContentProcessor(Processor):
             # Check if URL is a PDF
             if self.pdf_service.is_pdf_url(url):
                 return self._process_pdf(context)
-            else:
-                return self._process_webpage(context)
+            return self._process_webpage(context)
 
         except Exception as e:
             logger.error(f"Error processing web content: {str(e)}")

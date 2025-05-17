@@ -121,9 +121,8 @@ def extract_strokes_using_adapter():
             ):
                 print("\n✅ Successfully converted strokes to iink format")
                 return True
-            else:
-                print("\n❌ Failed to convert strokes to iink format")
-                return False
+            print("\n❌ Failed to convert strokes to iink format")
+            return False
         else:
             print(f"❌ No strokes extracted from file")
             return False

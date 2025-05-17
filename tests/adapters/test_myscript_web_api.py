@@ -175,14 +175,13 @@ class MyScriptWebApiTest:
                     f"✅ Recognition successful: {json.dumps(result, indent=2)}"
                 )
                 return True, result
-            else:
-                logger.error(
-                    f"❌ Recognition failed: {response.status_code} - {response.text}"
-                )
-                return False, {
-                    "error": f"HTTP error {response.status_code}",
-                    "details": response.text,
-                }
+            logger.error(
+                f"❌ Recognition failed: {response.status_code} - {response.text}"
+            )
+            return False, {
+                "error": f"HTTP error {response.status_code}",
+                "details": response.text,
+            }
 
         except Exception as e:
             logger.error(f"❌ Error during API call: {e}")

@@ -287,9 +287,8 @@ def main():
     if success:
         logger.info(f"Successfully processed notebook: {NOTEBOOK_NAME}")
         return 0
-    else:
-        logger.error(f"Failed to process notebook: {NOTEBOOK_NAME}")
-        return 1
+    logger.error(f"Failed to process notebook: {NOTEBOOK_NAME}")
+    return 1
 
 
 if __name__ == "__main__":

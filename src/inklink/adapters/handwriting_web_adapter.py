@@ -17,6 +17,7 @@ from urllib.parse import urljoin
 import requests
 
 from inklink.adapters.adapter import Adapter
+from inklink.utils.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,12 @@ class HandwritingWebAdapter(Adapter):
         self.hmac_key = hmac_key
         self.initialized = bool(application_key and hmac_key)
 
+    @retry(
+        max_attempts=2,
+        base_delay=1.0,
+        exceptions=(requests.exceptions.RequestException, requests.exceptions.Timeout),
+        logger=logger,
+    )
     def ping(self) -> bool:
         """
         Check if the handwriting recognition service is available.
@@ -145,7 +152,6 @@ class HandwritingWebAdapter(Adapter):
         try:
             # Import rmscene for parsing .rm files
             try:
-                import rmscene
                 from rmscene.scene_items import Line
                 from rmscene.scene_stream import read_tree
             except ImportError:
@@ -203,10 +209,7 @@ class HandwritingWebAdapter(Adapter):
                             f"Extracted {len(strokes)} strokes using current rmscene API"
                         )
                         return strokes
-                    else:
-                        logger.warning(
-                            "No strokes found in file using current rmscene API"
-                        )
+                    logger.warning("No strokes found in file using current rmscene API")
 
                 except Exception as scene_tree_error:
                     logger.error(
@@ -311,6 +314,12 @@ class HandwritingWebAdapter(Adapter):
                 "conversionState": "DIGITAL_EDIT",
             }
 
+    @retry(
+        max_attempts=3,
+        base_delay=2.0,
+        exceptions=(requests.exceptions.RequestException, requests.exceptions.Timeout),
+        logger=logger,
+    )
     def recognize_handwriting(
         self,
         iink_data: Dict[str, Any],
@@ -409,16 +418,15 @@ class HandwritingWebAdapter(Adapter):
                     result["id"] = f"web-recognition-{int(time.time())}"
 
                 return result
-            else:
-                error_message = f"Recognition failed: HTTP {response.status_code}"
-                try:
-                    error_details = response.json()
-                    error_message = f"{error_message} - {json.dumps(error_details)}"
-                except Exception:
-                    error_message = f"{error_message} - {response.text}"
+            error_message = f"Recognition failed: HTTP {response.status_code}"
+            try:
+                error_details = response.json()
+                error_message = f"{error_message} - {json.dumps(error_details)}"
+            except Exception:
+                error_message = f"{error_message} - {response.text}"
 
-                logger.error(error_message)
-                return {"error": error_message}
+            logger.error(error_message)
+            return {"error": error_message}
 
         except Exception as e:
             logger.error(f"Failed to recognize handwriting: {e}")
@@ -455,11 +463,10 @@ class HandwritingWebAdapter(Adapter):
             if format_type.lower() == "text":
                 if "result" in content:
                     return {"content": content["result"], "format": "text"}
-                elif "candidates" in content and len(content["candidates"]) > 0:
+                if "candidates" in content and len(content["candidates"]) > 0:
                     return {"content": content["candidates"][0], "format": "text"}
-                else:
-                    # Try to extract text from JIIX or other formats
-                    return {"content": json.dumps(content), "format": "json"}
+                # Try to extract text from JIIX or other formats
+                return {"content": json.dumps(content), "format": "json"}
             elif format_type.lower() in ["latex", "mathml"] and "result" in content:
                 # For math content, extract the specific format
                 math_formats = content.get("result", {})

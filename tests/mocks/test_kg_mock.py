@@ -16,6 +16,7 @@ class MockKnowledgeGraphService(IKnowledgeGraphService):
         self.entities = {}
         self.relationships = []
 
+    @staticmethod
     def extract_entities(self, content: str) -> List[Dict[str, Any]]:
         """Mock entity extraction."""
         logger.info(f"Extracting entities from content ({len(content)} chars)")
@@ -24,6 +25,7 @@ class MockKnowledgeGraphService(IKnowledgeGraphService):
             {"id": "entity2", "name": "Entity 2", "type": "Person"},
         ]
 
+    @staticmethod
     def extract_relationships(self, content: str) -> List[Dict[str, Any]]:
         """Mock relationship extraction."""
         logger.info(f"Extracting relationships from content ({len(content)} chars)")
@@ -92,6 +94,7 @@ class MockKnowledgeGraphService(IKnowledgeGraphService):
 
         return result
 
+    @staticmethod
     def get_topics(
         self, limit: int = 20, min_connections: int = 2
     ) -> List[Dict[str, Any]]:
@@ -108,6 +111,7 @@ class MockKnowledgeGraphService(IKnowledgeGraphService):
             }
         ]
 
+    @staticmethod
     def get_notebooks(self) -> List[Dict[str, Any]]:
         """Get notebooks from the knowledge graph."""
         return [

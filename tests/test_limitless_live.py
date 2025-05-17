@@ -309,7 +309,6 @@ class TestLimitlessLiveIntegration:
         except Exception as e:
             logger.exception(f"Error checking cached log ID: {e}")
             # Skip this assertion for now
-            pass
         logger.info("Successfully retrieved log from cache")
 
         # 6. Start scheduler

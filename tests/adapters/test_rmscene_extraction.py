@@ -226,9 +226,8 @@ def test_rmscene_extraction():
             ):
                 print("\n✅ Successfully converted strokes to iink format")
                 return True
-            else:
-                print("\n❌ Failed to convert strokes to iink format")
-                return False
+            print("\n❌ Failed to convert strokes to iink format")
+            return False
 
         else:
             print("❌ No strokes extracted from test file")

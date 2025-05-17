@@ -250,9 +250,8 @@ def main():
     if success:
         logger.info(f"Successfully uploaded notebook with fixed metadata")
         return 0
-    else:
-        logger.error("Failed to upload notebook")
-        return 1
+    logger.error("Failed to upload notebook")
+    return 1
 
 
 if __name__ == "__main__":

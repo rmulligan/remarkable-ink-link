@@ -59,29 +59,29 @@ class Router:
         if method == "GET":
             if route == "/auth":
                 return AuthController(handler)
-            elif route == "/auth/remarkable":
+            if route == "/auth/remarkable":
                 return AuthController(handler)
-            elif route == "/auth/myscript":
+            if route == "/auth/myscript":
                 return AuthController(handler)
-            elif route.startswith("/download/"):
+            if route.startswith("/download/"):
                 return DownloadController(handler, self.services)
-            elif route.startswith("/response"):
+            if route.startswith("/response"):
                 return ResponseController(handler, self.services)
 
         # Route POST requests
         elif method == "POST":
             if route == "/auth":
                 return AuthController(handler)
-            elif route == "/share":
+            if route == "/share":
                 return ShareController(handler, self.services)
-            elif route == "/ingest":
+            if route == "/ingest":
                 return IngestController(handler, self.services)
-            elif route == "/upload":
+            if route == "/upload":
                 return UploadController(handler, self.services)
-            elif route == "/process":
+            if route == "/process":
                 return ProcessController(handler, self.services)
             # Knowledge Graph routes
-            elif route.startswith("/kg/"):
+            if route.startswith("/kg/"):
                 knowledge_graph_service = self.services.get("knowledge_graph_service")
                 kg_integration_service = self.services.get(
                     "knowledge_graph_integration_service"

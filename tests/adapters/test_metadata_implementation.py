@@ -253,9 +253,8 @@ def upload_and_test(rmapi_path, modified_zip_path, notebook_name):
         if success:
             logger.info(f"✅ SUCCESS: Upload succeeded: {message}")
             return True
-        else:
-            logger.error(f"❌ FAILURE: Upload failed: {message}")
-            return False
+        logger.error(f"❌ FAILURE: Upload failed: {message}")
+        return False
 
     except Exception as e:
         logger.error(f"Error uploading test notebook: {e}")

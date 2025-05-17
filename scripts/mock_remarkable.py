@@ -38,6 +38,7 @@ class MockRmapiAdapter:
         """Mock ping method."""
         return True
 
+    @staticmethod
     def upload(self, *args, **kwargs):
         """Mock upload method."""
         return True, "Mock upload successful"

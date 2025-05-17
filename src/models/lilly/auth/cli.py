@@ -67,7 +67,6 @@ def logout(service):
 @auth.group("proton")
 def proton():
     """Proton service authentication commands."""
-    pass
 
 
 @proton.command("mail")

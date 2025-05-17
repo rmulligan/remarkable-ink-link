@@ -91,22 +91,21 @@ class LimitlessController(BaseController):
         # Route request to appropriate handler
         if endpoint == "sync":
             return self.handle_sync(method, query, body)
-        elif endpoint == "status":
+        if endpoint == "status":
             return self.handle_status(method)
-        elif endpoint == "logs":
+        if endpoint == "logs":
             # Check if this is a request for a specific log
             if len(parts) > 3:
                 log_id = parts[3]
                 return self.handle_get_log(method, log_id)
             return self.handle_logs(method, query)
-        elif endpoint == "scheduler":
+        if endpoint == "scheduler":
             return self.handle_scheduler(method, query, body)
-        elif endpoint == "cache":
+        if endpoint == "cache":
             return self.handle_cache(method)
-        else:
-            return self.json_response(
-                {"error": f"Unknown endpoint: {endpoint}"}, status=404
-            )
+        return self.json_response(
+            {"error": f"Unknown endpoint: {endpoint}"}, status=404
+        )
 
     def handle_sync(
         self, method: str, query: Dict[str, str], body: Dict
@@ -224,7 +223,7 @@ class LimitlessController(BaseController):
             status = self.limitless_scheduler.get_status()
             return self.json_response(status)
 
-        elif method == "POST":
+        if method == "POST":
             # Extract action from query or body
             action = query.get("action") or (body and body.get("action"))
             if not action:
@@ -238,15 +237,14 @@ class LimitlessController(BaseController):
                 return self.json_response(
                     {"success": result, "message": "Scheduler started"}
                 )
-            elif action == "stop":
+            if action == "stop":
                 result = self.limitless_scheduler.stop()
                 return self.json_response(
                     {"success": result, "message": "Scheduler stopped"}
                 )
-            else:
-                return self.json_response(
-                    {"error": f"Unknown action: {action}"}, status=400
-                )
+            return self.json_response(
+                {"error": f"Unknown action: {action}"}, status=400
+            )
         else:
             return self.json_response({"error": "Method not allowed"}, status=405)
 
@@ -264,5 +262,4 @@ class LimitlessController(BaseController):
             # Clear cache
             success, message = self.limitless_service.clear_cache()
             return self.json_response({"success": success, "message": message})
-        else:
-            return self.json_response({"error": "Method not allowed"}, status=405)
+        return self.json_response({"error": "Method not allowed"}, status=405)

@@ -93,9 +93,8 @@ def test_extraction_with_sample_file():
                     )
 
                 return True
-            else:
-                print("\n❌ Failed to convert strokes to iink format")
-                return False
+            print("\n❌ Failed to convert strokes to iink format")
+            return False
         else:
             print(f"❌ No strokes extracted from sample file")
             return False

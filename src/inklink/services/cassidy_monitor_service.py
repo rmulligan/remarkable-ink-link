@@ -390,8 +390,9 @@ class CassidyMonitor:
                 # Change back to original directory
                 os.chdir(current_dir)
 
+    @staticmethod
     def _check_document_for_page_tags(
-        self, doc_name: str, tag: str, content_data: Dict[str, Any]
+        doc_name: str, tag: str, content_data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
         Check if a document has pages with the specified tag.

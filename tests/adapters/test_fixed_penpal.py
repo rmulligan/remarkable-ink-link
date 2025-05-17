@@ -126,11 +126,10 @@ def main():
             for method, *args in service.method_calls:
                 logger.info(f"  - {method}: {args}")
             return True
-        else:
-            logger.warning(
-                "No service methods were called, notebook might not have tagged pages"
-            )
-            return False
+        logger.warning(
+            "No service methods were called, notebook might not have tagged pages"
+        )
+        return False
 
     finally:
         # Clean up

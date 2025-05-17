@@ -578,17 +578,16 @@ class GoogleDriveAdapter:
 
                 logger.info(f"Downloaded file {file.name} to {destination_path}")
                 return True, destination_path
-            else:
-                # Return file-like object
-                fh = io.BytesIO()
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while not done:
-                    status, done = downloader.next_chunk()
+            # Return file-like object
+            fh = io.BytesIO()
+            downloader = MediaIoBaseDownload(fh, request)
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
 
-                fh.seek(0)
-                logger.info(f"Downloaded file {file.name} to memory")
-                return True, fh
+            fh.seek(0)
+            logger.info(f"Downloaded file {file.name} to memory")
+            return True, fh
 
         except Exception as e:
             logger.error(f"Error downloading file {file_id}: {str(e)}")
