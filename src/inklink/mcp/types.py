@@ -41,7 +41,9 @@ class MCPResponse:
 
     def to_jsonrpc(self) -> JSONRPCMessage:
         """Convert to JSON-RPC message."""
-        return JSONRPCMessage(result=self.result, error=self.error, id=self.id)
+        return JSONRPCMessage(
+            jsonrpc="2.0", result=self.result, error=self.error, id=self.id
+        )
 
 
 @dataclass

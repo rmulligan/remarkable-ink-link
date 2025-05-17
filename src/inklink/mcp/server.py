@@ -95,4 +95,6 @@ class Server:
         # Placeholder for actual MCP protocol implementation
         # Currently returns a mock response for testing
         self.logger.debug(f"Sending message: {message}")
-        return JSONRPCMessage(id=message.id, result={"status": "message_sent"})
+        return JSONRPCMessage(
+            jsonrpc="2.0", id=message.id, result={"status": "message_sent"}
+        )
