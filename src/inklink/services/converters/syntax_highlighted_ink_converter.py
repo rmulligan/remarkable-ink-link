@@ -34,7 +34,8 @@ class SyntaxHighlightedInkConverter(BaseConverter):
         """
         super().__init__(temp_dir)
         self.compiler = SyntaxHighlightCompilerV2()
-        self.drawj2d_service = Drawj2dService(temp_dir)
+        # Pass None to use default drawj2d path from config
+        self.drawj2d_service = Drawj2dService()
 
     @staticmethod
     def can_convert(content_type: str) -> bool:
