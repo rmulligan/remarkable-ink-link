@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Tag an existing reMarkable notebook with HasLilly and Lilly tags.
-"""
+"""Tag an existing reMarkable notebook with HasLilly and Lilly tags."""
 
 import json
 import logging

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple test for Limitless API with the new API key
-"""
+"""Simple test for Limitless API with the new API key"""
 
 import json
 import os

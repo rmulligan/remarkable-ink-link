@@ -27,9 +27,7 @@ from src.inklink.adapters.handwriting_web_adapter import (  # noqa: E402
 
 
 def test_extraction_with_sample_file():
-    """
-    Test the extraction with an existing sample .rm file.
-    """
+    """Test the extraction with an existing sample .rm file."""
     print("\n" + "=" * 80)
     print("HANDWRITING WEB ADAPTER EXTRACTION TEST")
     print("=" * 80)

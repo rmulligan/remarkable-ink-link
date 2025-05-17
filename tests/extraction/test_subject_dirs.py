@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for subject-based directory structure.
-"""
+"""Test script for subject-based directory structure."""
 
 import json
 import logging

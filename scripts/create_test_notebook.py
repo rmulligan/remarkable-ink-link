@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Create a test notebook with Lilly tag on a page and upload it to reMarkable.
-"""
+"""Create a test notebook with Lilly tag on a page and upload it to reMarkable."""
 
 import json
 import logging

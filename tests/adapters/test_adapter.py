@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Simple test script for Limitless adapter.
-"""
+"""Simple test script for Limitless adapter."""
 import os
 import sys
 

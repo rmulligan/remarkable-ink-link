@@ -21,9 +21,7 @@ CATEGORIES = {
 
 
 def determine_category(file_path: str) -> str:
-    """
-    Determine the category of a test file based on its content.
-    """
+    """Determine the category of a test file based on its content."""
     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
         content = f.read()
 
@@ -45,9 +43,7 @@ def determine_category(file_path: str) -> str:
 
 
 def find_test_files(directory: str) -> List[str]:
-    """
-    Find all test_*.py files in the given directory.
-    """
+    """Find all test_*.py files in the given directory."""
     return [
         os.path.join(directory, f)
         for f in os.listdir(directory)
@@ -58,9 +54,7 @@ def find_test_files(directory: str) -> List[str]:
 
 
 def create_init_files(test_dirs: List[str]) -> None:
-    """
-    Create __init__.py files in test directories if they don't exist.
-    """
+    """Create __init__.py files in test directories if they don't exist."""
     for test_dir in test_dirs:
         init_file = os.path.join(test_dir, "__init__.py")
         if not os.path.exists(init_file):
@@ -117,9 +111,7 @@ def organize_test_files(root_dir: str) -> Dict[str, List[str]]:
 
 
 def main():
-    """
-    Main function to organize test files.
-    """
+    """Main function to organize test files."""
     script_dir = Path(__file__).parent.parent
     root_dir = str(script_dir)
 

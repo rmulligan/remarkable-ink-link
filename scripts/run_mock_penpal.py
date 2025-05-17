@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Mock Penpal script to process local notebooks without rmapi.
-"""
+"""Mock Penpal script to process local notebooks without rmapi."""
 
 import json
 import logging
