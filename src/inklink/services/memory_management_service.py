@@ -441,8 +441,7 @@ class MemoryManagementService:
                             section: self.notebook_cache[notebook_id][section]
                         }
                     return False, {"error": f"Section {section} not found in notebook"}
-                else:
-                    return True, self.notebook_cache[notebook_id]
+                return True, self.notebook_cache[notebook_id]
 
             # Load notebook from storage
             success, notebook_content = self._load_chunked_notebook(notebook_id)
@@ -462,8 +461,7 @@ class MemoryManagementService:
                 if section in notebook_content:
                     return True, {section: notebook_content[section]}
                 return False, {"error": f"Section {section} not found in notebook"}
-            else:
-                return True, notebook_content
+            return True, notebook_content
         except Exception as e:
             logger.error(f"Error retrieving notebook: {e}")
             return False, {"error": str(e)}
