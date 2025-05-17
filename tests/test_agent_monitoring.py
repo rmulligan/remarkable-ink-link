@@ -26,7 +26,7 @@ from inklink.agents.exceptions import (
 )
 
 # Configure to only use asyncio backend
-pytestmark = [pytest.mark.anyio, pytest.mark.asyncio_backend("asyncio")]
+pytestmark = pytest.mark.anyio
 
 
 class TestAgentMock(MonitoredAgent):
