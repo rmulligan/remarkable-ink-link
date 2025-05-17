@@ -632,9 +632,6 @@ class CassidyMonitor:
 
                     # Convert the page to PNG
                     rm_file_name = os.path.basename(rm_path)
-                    # output_path = os.path.join(  # Currently unused
-                    #     page_dir, f"{os.path.splitext(rm_file_name)[0]}.png"
-                    # )
                     success, result = self.adapter.convert_rm_to_png(
                         extracted_rm_path, page_dir
                     )
