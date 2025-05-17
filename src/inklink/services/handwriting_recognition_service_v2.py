@@ -328,8 +328,8 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
             # Simple test to see if Claude is available
             await self.claude_adapter.analyze_image("/dev/null", "test", test_mode=True)
             info["available_backends"].append("claude_vision")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Claude Vision not available: {e}")
 
         # Check Ollama availability
         try:
@@ -345,7 +345,7 @@ class HandwritingRecognitionServiceV2(IHandwritingRecognitionService):
             if vision_models:
                 info["available_backends"].append("ollama_vision")
                 info["ollama_vision_models"] = [m.get("name") for m in vision_models]
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Ollama Vision not available: {e}")
 
         return info
