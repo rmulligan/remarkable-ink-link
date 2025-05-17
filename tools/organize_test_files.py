@@ -79,12 +79,12 @@ def organize_test_files(root_dir: str) -> Dict[str, List[str]]:
         print("No test files found in the root directory.")
         return {}
 
-    results = {category: [] for category in CATEGORIES.keys()}
+    results = {category: [] for category in CATEGORIES}
     base_test_dir = os.path.join(root_dir, "tests")
 
     # Create test directories if they don't exist
     test_dirs = [
-        os.path.join(base_test_dir, category) for category in CATEGORIES.keys()
+        os.path.join(base_test_dir, category) for category in CATEGORIES
     ]
     for test_dir in test_dirs:
         os.makedirs(test_dir, exist_ok=True)
