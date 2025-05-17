@@ -93,6 +93,23 @@ CONFIG = {
     ),  # 5 minutes for large models
     # Handwriting recognition backend: "claude_vision", "ollama_vision", or "auto"
     "HANDWRITING_BACKEND": os.environ.get("HANDWRITING_BACKEND", "auto"),
+    # Claude Code settings
+    "CLAUDE_CODE_COMMAND": os.environ.get("CLAUDE_CODE_COMMAND", "claude"),
+    "CLAUDE_CODE_MODEL": os.environ.get("CLAUDE_CODE_MODEL", ""),
+    "CLAUDE_CODE_TIMEOUT": int(os.environ.get("CLAUDE_CODE_TIMEOUT", 120)),
+    "CLAUDE_CODE_MAX_TOKENS": int(os.environ.get("CLAUDE_CODE_MAX_TOKENS", 8000)),
+    "CLAUDE_CODE_TEMPERATURE": float(os.environ.get("CLAUDE_CODE_TEMPERATURE", 0.7)),
+    "CLAUDE_CODE_CACHE_DIR": os.environ.get("CLAUDE_CODE_CACHE_DIR", None),
+    "CLAUDE_CODE_CACHE_TTL": int(os.environ.get("CLAUDE_CODE_CACHE_TTL", 3600)),
+    # AI Task routing preferences
+    "AI_ROUTING_CODE_THRESHOLD": float(
+        os.environ.get("AI_ROUTING_CODE_THRESHOLD", 0.8)
+    ),
+    "AI_ROUTING_PRIVACY_MODE": os.environ.get("AI_ROUTING_PRIVACY_MODE", "balanced"),
+    "AI_ROUTING_CLOUD_ENABLED": os.environ.get(
+        "AI_ROUTING_CLOUD_ENABLED", "true"
+    ).lower()
+    == "true",
 }
 
 # Ensure required directories exist

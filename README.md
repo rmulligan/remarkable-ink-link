@@ -22,6 +22,7 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - **🧠 AI-Augmented Notes:** Ask questions directly from handwritten notes. Receive structured, editable responses in `.rm` format.
 - **🌐 Web-to-Ink Sharing:** Send web content to your tablet and convert it to editable *native ink*, not static text or PDFs. Move, resize, clip, and restructure AI-generated or imported text as if you'd written it by hand.
 - **✍️ Claude Vision Handwriting Recognition:** Fast, accurate transcription powered by Claude's vision capabilities, recognizing text directly from handwritten notes without requiring a separate API service.
+- **👨‍💻 Claude Code Integration:** AI-powered coding assistance for handwritten pseudocode to code generation, code review, debugging, and technical summaries.
 - **🏷️ UI-Based Tag Actions:** Tag content through the user interface and trigger workflows like summarization, calendar integration, and more.
 - **📅 Task & Calendar Integration:** Detect tasks in your notes and sync them with your calendar (e.g. Motion, org-agenda).
 - **🗂 Smart Indexing:** Generate and maintain table of contents, index pages, and note links using symbols or QR codes.
@@ -40,6 +41,8 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - Add `#summarize` to a page and get a clean summary beside it, ready to rearrange in ink.
 - Use `#task` to automatically extract actionable items from your notes.
 - Write `#entity` to identify key concepts for your knowledge graph.
+- Sketch pseudocode by hand and use `#code` to generate production-ready code with Claude Code.
+- Write handwritten code snippets and use `#review` for AI-powered code review and debugging.
 - Explore your evolving thoughts in a live visual knowledge graph powered by your handwriting.
 
 ---
@@ -50,9 +53,10 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 - One-click Device Link setup via reMarkable Cloud API
 - Ink rendering via `drawj2d` to preserve native editing experience
 - Handwriting recognition with **Claude Vision** capabilities for direct image-to-text conversion
+- Code generation and review with **Claude Code** for technical workflows
 - AI orchestration using Flowise, LangChain, or OpenAI APIs
 - Modular messaging via MCP (Multi-Connection Protocol)
-- Tag-based AI triggers (`#summarize`, `#task`, `#entity`, etc.)
+- Tag-based AI triggers (`#summarize`, `#task`, `#entity`, `#code`, `#review`, etc.)
 - Background sync engine with customizable frequency and event-based triggers
 - Optional integrations: Emacs/org-roam/org-agenda, Motion, Apple Shortcuts
 
@@ -222,6 +226,48 @@ python -m inklink.main process-notebook path/to/notebook/directory
 
 See [Claude Vision Integration](docs/integrations/claude-vision/usage.md) for detailed setup and usage instructions.
 
+## 🧑‍💻 Claude Code Integration
+
+InkLink brings powerful AI coding assistance directly to your reMarkable tablet through Claude Code integration. Transform handwritten pseudocode into production-ready code, get AI-powered code reviews, and debug issues — all while maintaining a natural handwriting workflow.
+
+### Features
+
+- **Code Generation**: Transform handwritten pseudocode into functioning code with `#code` tags
+- **Code Review**: Get AI-powered feedback on handwritten code snippets with `#review` tags
+- **Debugging**: Identify and fix issues in code with `#debug` tags
+- **Technical Summaries**: Generate documentation from code or technical notes with `#summary` tags
+- **Best Practices**: Learn coding patterns and optimizations with handwritten queries
+- **Privacy-Aware**: Intelligent routing keeps sensitive code in your local environment
+
+### Example Workflows
+
+#### Generate code from pseudocode:
+```bash
+# Write pseudocode in your notebook with #code tag
+# Claude Code will generate production-ready implementation
+python -m inklink.main cloud-coder --input path/to/pseudocode.rm
+```
+
+#### Review existing code:
+```bash
+# Write or paste code in notebook with #review tag
+# Get detailed feedback and suggestions
+python -m inklink.main cloud-coder --review path/to/code.rm
+```
+
+### Configuration
+
+Add Claude Code CLI settings to your environment:
+```bash
+# Add to your .env file
+CLAUDE_CODE_COMMAND=claude  # Path to Claude CLI
+CLAUDE_CODE_MODEL=claude-3-opus-20240229  # Preferred model
+CLAUDE_CODE_TIMEOUT=120  # Timeout in seconds
+CLAUDE_CODE_MAX_TOKENS=8000  # Max response tokens
+```
+
+See [Claude Code Integration Guide](docs/CLAUDE_CODE_INTEGRATION_GUIDE.md) for detailed setup and usage instructions.
+
 ---
 
 ## 🔌 Integrations
@@ -233,6 +279,7 @@ Available integrations:
 - `Knowledge Graph`: A powerful knowledge graph system for entity extraction, relationship mapping, and semantic search across all content types. See documentation in the codebase.
 - `Limitless Integration`: Automatic syncing of Limitless Pendant life logs into the knowledge graph for entity extraction, relationship mapping, and semantic search. See [Limitless Integration](docs/limitless_integration.md).
 - `Claude Vision`: Handwriting recognition powered by Claude's vision capabilities. See [Claude Vision Integration](docs/integrations/claude-vision/usage.md).
+- `Claude Code`: AI-powered coding assistance for code generation, review, and debugging. See [Claude Code Integration Guide](docs/CLAUDE_CODE_INTEGRATION_GUIDE.md).
 
 > Want to build your own? Stay tuned for the `inklink-mcp-template` to roll your own plug-ins.
 
@@ -248,6 +295,7 @@ Available integrations:
 - [x] Handwriting recognition with Claude Vision capabilities
 - [x] Personified AI assistant (Lilly) for processing handwritten content
 - [x] Tag-based action system: `#summarize`, `#task`, `#entity`, etc.
+- [x] Claude Code integration for AI-powered coding assistance
 - [ ] Calendar sync module
 - [x] Visual knowledge graph builder
 - [x] First MCP integration: Limitless Pendant life log sync
