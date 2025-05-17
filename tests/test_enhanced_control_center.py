@@ -34,8 +34,8 @@ class TestEnhancedControlCenter:
             state_file=str(state_file),
         )
 
-        # Allow any async initialization to complete
-        await asyncio.sleep(0)
+        # Initialize the control center
+        await center.initialize()
 
         yield center
 

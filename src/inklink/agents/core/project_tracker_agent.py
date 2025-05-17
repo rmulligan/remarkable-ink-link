@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.agents.exceptions import AgentError
@@ -129,12 +129,8 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
             with open(projects_dir / "commitments.json", "w") as f:
                 json.dump(self._commitments, f, indent=2)
 
-        except (IOError, OSError) as e:
-            self.logger.error(f"Error saving data to file: {e}")
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Error encoding JSON data: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error saving data: {e}")
+            self.logger.error(f"Error saving data: {e}")
 
     async def _agent_logic(self) -> None:
         """Main agent logic - monitor for updates and check status."""
@@ -166,11 +162,12 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
         """Check for new commitments in spoken data."""
         try:
             # Get recent spoken context about commitments
+            # Note: The topic query should be parsed by the target agent
             response = await self.send_mcp_message(
                 target="agent_limitless_insight",
                 capability="find_spoken_context",
                 data={
-                    "topic": "commit OR promise OR will do OR deadline",
+                    "topic": "commitments promises deadlines",
                     "time_period": "last_24_hours",
                 },
             )
@@ -181,13 +178,23 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 # Analyze context for commitments
                 analysis_prompt = """
                 Analyze this spoken text for any commitments, deadlines, or promises made.
-                Extract:
-                1. What was committed to
-                2. Any deadline mentioned
-                3. Related project (if mentioned)
-                4. Priority level
+                Extract information and format as VALID JSON with this exact structure:
 
-                Format as JSON.
+                {
+                    "commitment": "what was committed to",
+                    "deadline": "any deadline mentioned (or null)",
+                    "project": "related project name (or null)",
+                    "priority": "high/medium/low"
+                }
+
+                Examples:
+                Input: "I'll finish the API documentation by next Friday for the InkLink project"
+                Output: {"commitment": "finish the API documentation", "deadline": "next Friday", "project": "InkLink", "priority": "medium"}
+
+                Input: "We need to prioritize the security audit this week"
+                Output: {"commitment": "prioritize the security audit", "deadline": "this week", "project": null, "priority": "high"}
+
+                Now analyze the following text:
                 """
 
                 # Validate configuration
@@ -201,21 +208,41 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 )
 
                 # Parse and add commitments
+                commitment_data = None
                 try:
-                    commitment_data = json.loads(analysis)
-                    if commitment_data.get("commitment"):
-                        await self._add_commitment(
-                            {
-                                "commitment": commitment_data["commitment"],
-                                "source": "spoken",
-                                "timestamp": context["timestamp"],
-                                "project": commitment_data.get("project"),
-                                "deadline": commitment_data.get("deadline"),
-                                "priority": commitment_data.get("priority", "medium"),
-                            }
-                        )
+                    # Try to extract JSON from response
+                    json_start = analysis.find("{")
+                    json_end = analysis.rfind("}") + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = analysis[json_start:json_end]
+                        commitment_data = json.loads(json_str)
                 except json.JSONDecodeError:
-                    self.logger.warning("Failed to parse commitment analysis")
+                    # Fallback: try to parse as plain text
+                    if "commit" in analysis.lower() or "promise" in analysis.lower():
+                        # Extract key information using simple parsing
+                        lines = analysis.strip().split("\n")
+                        commitment_data = {
+                            "commitment": lines[0] if lines else "Unknown commitment",
+                            "deadline": None,
+                            "project": None,
+                            "priority": "medium",
+                        }
+
+                if commitment_data and commitment_data.get("commitment"):
+                    await self._add_commitment(
+                        {
+                            "commitment": commitment_data["commitment"],
+                            "source": "spoken",
+                            "timestamp": context.get("timestamp"),
+                            "project": commitment_data.get("project"),
+                            "deadline": commitment_data.get("deadline"),
+                            "priority": commitment_data.get("priority", "medium"),
+                        }
+                    )
+                else:
+                    self.logger.warning(
+                        f"Failed to parse commitment from analysis: {analysis[:100]}..."
+                    )
 
         except AgentError as e:
             self.logger.error(f"Configuration error: {e}")
@@ -239,15 +266,19 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
 
                 # Analyze project status
                 status_prompt = f"""
-                Based on this information about project '{project_name}', determine:
-                1. Current status (active, on_hold, completed, at_risk)
-                2. Recent progress made
-                3. Any blockers or concerns
-                4. Next steps
-
+                Based on this information about project '{project_name}', determine the project status.
                 Previous status: {project_data.get('status', 'unknown')}
 
-                Format as JSON.
+                Format your response as VALID JSON with this exact structure:
+                {{
+                    "status": "active/on_hold/completed/at_risk",
+                    "progress": "description of recent progress",
+                    "blockers": "any blockers or concerns (or null)",
+                    "next_steps": "recommended next steps"
+                }}
+
+                Example:
+                {{"status": "active", "progress": "API endpoints implemented", "blockers": null, "next_steps": "Begin integration testing"}}
                 """
 
                 status_analysis = await self.ollama_adapter.query(
@@ -257,8 +288,20 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                 )
 
                 # Update project data
+                analysis_data = None
                 try:
-                    analysis_data = json.loads(status_analysis)
+                    # Try to extract JSON from response
+                    json_start = status_analysis.find("{")
+                    json_end = status_analysis.rfind("}") + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = status_analysis[json_start:json_end]
+                        analysis_data = json.loads(json_str)
+                except json.JSONDecodeError:
+                    self.logger.warning(
+                        f"Failed to parse project status JSON: {status_analysis[:100]}..."
+                    )
+
+                if analysis_data:
                     project_data.update(
                         {
                             "status": analysis_data.get(
@@ -270,7 +313,9 @@ class ProactiveProjectTrackerAgent(MCPEnabledAgent):
                             "next_steps": analysis_data.get("next_steps"),
                         }
                     )
-                except json.JSONDecodeError:
+                else:
+                    # Minimal update if parsing failed
+                    project_data["last_update"] = datetime.now().isoformat()
                     self.logger.warning(
                         f"Failed to parse status for project {project_name}"
                     )

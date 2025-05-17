@@ -9,7 +9,6 @@ import os
 import threading
 from typing import Any, Dict, List, Optional
 
-from inklink.config import CONFIG
 from inklink.services.converters.html_converter import HTMLConverter
 from inklink.services.converters.ink_converter import InkConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter

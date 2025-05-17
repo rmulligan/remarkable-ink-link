@@ -8,12 +8,12 @@ from typing import Any, Dict
 from dependency_injector.wiring import Provide, inject
 
 from inklink.adapters.limitless_adapter import LimitlessAdapter
-from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.monitoring import MonitoringService
 from inklink.agents.base.registry import AgentRegistry
-from inklink.agents.di import AgentContainer, init_container
+from inklink.agents.di import AgentContainer
 from inklink.agents.exceptions import ConfigurationError
 
 # Configure logging
@@ -51,20 +51,21 @@ class EnhancedDemo:
         # Create agents using DI factories
         container = AgentContainer()
 
-        # Create Limitless Insight Agent
-        limitless_agent = container.limitless_insight_agent()
+        # Create agents using factory methods
+        # Limitless Insight Agent
+        limitless_agent = container.limitless_insight_agent_factory()
         await self.agent_registry.register_agent("limitless_insight", limitless_agent)
         await limitless_agent.start()
 
-        # Create Daily Briefing Agent
-        briefing_agent = container.daily_briefing_agent(
-            briefing_time=time(6, 0)  # 6 AM
-        )
+        # Daily Briefing Agent
+        daily_config = container.config()["agents"]["daily_briefing"]["config"].copy()
+        daily_config["briefing_time"] = time(6, 0)  # 6 AM
+        briefing_agent = container.daily_briefing_agent_factory(config=daily_config)
         await self.agent_registry.register_agent("daily_briefing", briefing_agent)
         await briefing_agent.start()
 
-        # Create Project Tracker Agent
-        tracker_agent = container.project_tracker_agent()
+        # Project Tracker Agent
+        tracker_agent = container.project_tracker_agent_factory()
         await self.agent_registry.register_agent("project_tracker", tracker_agent)
         await tracker_agent.start()
 
@@ -76,12 +77,13 @@ class EnhancedDemo:
 
         # Test configuration error
         try:
-            # Create agent without model configuration
+            # Create agent with missing required fields
             AgentConfig(
                 name="invalid_agent",
-                initial_state="active",
-                # Missing ollama_model
+                # Missing required fields: description, version, capabilities
             )
+        except TypeError as e:
+            self.logger.error(f"Configuration error caught: {e}")
         except ConfigurationError as e:
             self.logger.error(f"Configuration error caught: {e}")
 

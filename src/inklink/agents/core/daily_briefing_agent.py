@@ -6,7 +6,7 @@ from datetime import datetime, time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
+from inklink.adapters.ollama_adapter import OllamaAdapter
 from inklink.adapters.remarkable_adapter import RemarkableAdapter
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent

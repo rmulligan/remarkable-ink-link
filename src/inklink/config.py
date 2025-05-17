@@ -83,6 +83,16 @@ CONFIG = {
     "LILLY_USE_SUBJECT_DIRS": os.environ.get("LILLY_USE_SUBJECT_DIRS", "true").lower()
     == "true",
     "LILLY_PRE_FILTER_TAG": os.environ.get("LILLY_PRE_FILTER_TAG", "HasLilly"),
+    # Ollama settings
+    "OLLAMA_BASE_URL": os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
+    "OLLAMA_VISION_MODEL": os.environ.get(
+        "OLLAMA_VISION_MODEL", "qwen2.5vl:32b-q4_K_M"
+    ),
+    "OLLAMA_TIMEOUT": int(
+        os.environ.get("OLLAMA_TIMEOUT", 300)
+    ),  # 5 minutes for large models
+    # Handwriting recognition backend: "claude_vision", "ollama_vision", or "auto"
+    "HANDWRITING_BACKEND": os.environ.get("HANDWRITING_BACKEND", "auto"),
 }
 
 # Ensure required directories exist

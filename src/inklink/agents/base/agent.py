@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Coroutine, Dict, List, Optional
 
-from mcp.server import Server as MCPServer
+from inklink.mcp.server import Server as MCPServer
 
 
 class AgentState(Enum):
@@ -97,13 +97,15 @@ class LocalAgent(ABC):
             try:
                 await asyncio.wait_for(self._task, timeout=10.0)
             except asyncio.TimeoutError:
-                self.logger.warning(
-                    f"Agent {self.config.name} did not stop gracefully, cancelling"
-                )
+                self.logger.warning("Agent task did not complete in time, cancelling")
                 self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    pass
 
-        # Cleanup MCP server
-        if self._mcp_server:
+        # Clean up MCP server
+        if self.config.mcp_enabled:
             await self._cleanup_mcp()
 
         self.state = AgentState.STOPPED
@@ -114,29 +116,27 @@ class LocalAgent(ABC):
         try:
             while not self._stop_event.is_set():
                 await self._agent_logic()
-                # Small delay to prevent tight loops
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1)  # Prevent tight loop
         except Exception as e:
             self.state = AgentState.ERROR
             self.logger.error(f"Agent {self.config.name} encountered error: {e}")
             raise
 
     async def _initialize_mcp(self) -> None:
-        """Initialize MCP server for the agent."""
+        """Initialize MCP server - overridden by MCPAgentMixin."""
 
     async def _cleanup_mcp(self) -> None:
-        """Clean up MCP server resources."""
-
-    def get_state(self) -> AgentState:
-        """Get current agent state."""
-        return self.state
+        """Clean up MCP server - overridden by MCPAgentMixin."""
 
     def get_capabilities(self) -> List[str]:
         """Get agent capabilities."""
         return self.config.capabilities
 
-    def __repr__(self) -> str:
-        """String representation of the agent."""
-        return (
-            f"<{self.__class__.__name__} '{self.config.name}' state={self.state.value}>"
-        )
+    def get_status(self) -> Dict[str, Any]:
+        """Get agent status."""
+        return {
+            "name": self.config.name,
+            "state": self.state.value,
+            "capabilities": self.config.capabilities,
+            "version": self.config.version,
+        }

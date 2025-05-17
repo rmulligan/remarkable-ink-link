@@ -396,196 +396,262 @@ class SyntaxHighlightCompiler:
         return self._simple_tokenize(code)
 
     def _simple_tokenize(self, code: str) -> List[Token]:
-        """Simple tokenizer fallback for languages without a scanner"""
+        """Simple tokenizer fallback for languages without a scanner."""
+
         tokens = []
+
         position = 0
 
         lines = code.split("\n")
 
         for line_num, line in enumerate(lines, 1):
-            i = 0
 
-            while i < len(line):
-                # Skip whitespace
-                if line[i].isspace():
-                    i = self._handle_whitespace(line, i, line_num, position, tokens)
-                    continue
-
-                # Check for comments
-                if self._handle_comment(line, i, line_num, position, tokens):
-                    break
-
-                # Check for strings (simple version)
-                if line[i] in ['"', "'"]:
-                    i = self._handle_string(line, i, line_num, position, tokens)
-                    continue
-
-                # Check for numbers
-                if line[i].isdigit():
-                    i = self._handle_number(line, i, line_num, position, tokens)
-                    continue
-
-                # Check for identifiers and keywords
-                if line[i].isalpha() or line[i] == "_":
-                    i = self._handle_identifier(line, i, line_num, position, tokens)
-                    continue
-
-                # Check for operators and punctuation
-                if i < len(line):
-                    i = self._handle_operator_or_punctuation(
-                        line, i, line_num, position, tokens
-                    )
+            tokens.extend(self._tokenize_line(line, line_num, position))
 
             position += len(line) + 1  # +1 for newline
 
         return tokens
 
+    def _tokenize_line(self, line: str, line_num: int, position: int) -> List[Token]:
+        """Tokenize a single line of code."""
+
+        tokens = []
+
+        i = 0
+
+        while i < len(line):
+
+            # Try each tokenizer in order
+
+            for tokenizer in [
+                self._tokenize_whitespace,
+                self._tokenize_comment,
+                self._tokenize_string,
+                self._tokenize_number,
+                self._tokenize_identifier_or_keyword,
+                self._tokenize_operator,
+                self._tokenize_punctuation,
+            ]:
+
+                result = tokenizer(line, i, line_num, position)
+
+                if result:
+
+                    token, new_i = result
+
+                    tokens.append(token)
+
+                    i = new_i
+
+                    break
+
+        return tokens
+
     @staticmethod
-    def _handle_whitespace(
-        line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> int:
-        """Handle whitespace tokens."""
-        i = start
+    def _tokenize_whitespace(
+        line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize whitespace."""
+
+        if not line[i].isspace():
+
+            return None
+
+        start = i
+
         while i < len(line) and line[i].isspace():
-            i += 1
-        tokens.append(
-            Token(
-                type=TokenType.WHITESPACE,
-                value=line[start:i],
-                start=position + start,
-                end=position + i,
-                line=line_num,
-                column=start + 1,
-            )
-        )
-        return i
 
-    def _handle_comment(
-        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> bool:
-        """Handle comment tokens."""
-        if self.current_language.line_comment and line[start:].startswith(
+            i += 1
+
+        token = Token(
+            type=TokenType.WHITESPACE,
+            value=line[start:i],
+            start=position + start,
+            end=position + i,
+            line=line_num,
+            column=start + 1,
+        )
+
+        return token, i
+
+    def _tokenize_comment(
+        self, line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize comments."""
+
+        if not (
             self.current_language.line_comment
+            and line[i:].startswith(self.current_language.line_comment)
         ):
-            tokens.append(
-                Token(
-                    type=TokenType.COMMENT,
-                    value=line[start:],
-                    start=position + start,
-                    end=position + len(line),
-                    line=line_num,
-                    column=start + 1,
-                )
-            )
-            return True
-        return False
+
+            return None
+
+        token = Token(
+            type=TokenType.COMMENT,
+            value=line[i:],
+            start=position + i,
+            end=position + len(line),
+            line=line_num,
+            column=i + 1,
+        )
+
+        return token, len(line)  # Comments consume rest of line
 
     @staticmethod
-    def _handle_string(
-        line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> int:
-        """Handle string tokens."""
-        quote = line[start]
-        i = start + 1
+    def _tokenize_string(
+        line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize string literals."""
+
+        if line[i] not in ['"', "'"]:
+
+            return None
+
+        quote = line[i]
+
+        start = i
+
+        i += 1
+
         while i < len(line) and line[i] != quote:
+
             if line[i] == "\\":
+
                 i += 2
+
             else:
+
                 i += 1
+
         if i < len(line):
+
             i += 1
-        tokens.append(
-            Token(
-                type=TokenType.STRING,
-                value=line[start:i],
-                start=position + start,
-                end=position + i,
-                line=line_num,
-                column=start + 1,
-            )
+
+        token = Token(
+            type=TokenType.STRING,
+            value=line[start:i],
+            start=position + start,
+            end=position + i,
+            line=line_num,
+            column=start + 1,
         )
-        return i
+
+        return token, i
 
     @staticmethod
-    def _handle_number(
-        line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> int:
-        """Handle number tokens."""
-        i = start
-        while i < len(line) and (line[i].isdigit() or line[i] == "."):
-            i += 1
-        tokens.append(
-            Token(
-                type=TokenType.NUMBER,
-                value=line[start:i],
-                start=position + start,
-                end=position + i,
-                line=line_num,
-                column=start + 1,
-            )
-        )
-        return i
+    def _tokenize_number(
+        line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize numeric literals."""
 
-    def _handle_identifier(
-        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> int:
-        """Handle identifier and keyword tokens."""
-        i = start
-        while i < len(line) and (line[i].isalnum() or line[i] == "_"):
+        if not line[i].isdigit():
+
+            return None
+
+        start = i
+
+        while i < len(line) and (line[i].isdigit() or line[i] == "."):
+
             i += 1
+
+        token = Token(
+            type=TokenType.NUMBER,
+            value=line[start:i],
+            start=position + start,
+            end=position + i,
+            line=line_num,
+            column=start + 1,
+        )
+
+        return token, i
+
+    def _tokenize_identifier_or_keyword(
+        self, line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize identifiers and keywords."""
+
+        if not (line[i].isalpha() or line[i] == "_"):
+
+            return None
+
+        start = i
+
+        while i < len(line) and (line[i].isalnum() or line[i] == "_"):
+
+            i += 1
+
         word = line[start:i]
 
-        token_type = TokenType.IDENTIFIER
+        token_type = self._get_identifier_type(word)
+
+        token = Token(
+            type=token_type,
+            value=word,
+            start=position + start,
+            end=position + i,
+            line=line_num,
+            column=start + 1,
+        )
+
+        return token, i
+
+    def _get_identifier_type(self, word: str) -> TokenType:
+        """Determine the type of an identifier."""
+
         if word in self.current_language.keywords:
-            token_type = TokenType.KEYWORD
-        elif word in self.current_language.builtin_functions:
-            token_type = TokenType.BUILTIN
 
-        tokens.append(
-            Token(
-                type=token_type,
-                value=word,
-                start=position + start,
-                end=position + i,
-                line=line_num,
-                column=start + 1,
-            )
-        )
-        return i
+            return TokenType.KEYWORD
 
-    def _handle_operator_or_punctuation(
-        self, line: str, start: int, line_num: int, position: int, tokens: List[Token]
-    ) -> int:
-        """Handle operator and punctuation tokens."""
-        # Multi-character operators
+        if word in self.current_language.builtin_functions:
+
+            return TokenType.BUILTIN
+
+        return TokenType.IDENTIFIER
+
+    def _tokenize_operator(
+        self, line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize operators."""
+
+        # Try multi-character operators first
+
         for op_len in [3, 2, 1]:
-            if start + op_len <= len(line):
-                op = line[start : start + op_len]
-                if op in self.current_language.operators:
-                    tokens.append(
-                        Token(
-                            type=TokenType.OPERATOR,
-                            value=op,
-                            start=position + start,
-                            end=position + start + op_len,
-                            line=line_num,
-                            column=start + 1,
-                        )
-                    )
-                    return start + op_len
 
-        # Single character (punctuation or unknown)
-        tokens.append(
-            Token(
-                type=TokenType.PUNCTUATION,
-                value=line[start],
-                start=position + start,
-                end=position + start + 1,
-                line=line_num,
-                column=start + 1,
-            )
+            if i + op_len <= len(line):
+
+                op = line[i : i + op_len]
+
+                if op in self.current_language.operators:
+
+                    token = Token(
+                        type=TokenType.OPERATOR,
+                        value=op,
+                        start=position + i,
+                        end=position + i + op_len,
+                        line=line_num,
+                        column=i + 1,
+                    )
+
+                    return token, i + op_len
+
+        return None
+
+    @staticmethod
+    def _tokenize_punctuation(
+        line: str, i: int, line_num: int, position: int
+    ) -> Optional[Tuple[Token, int]]:
+        """Tokenize punctuation as fallback."""
+
+        token = Token(
+            type=TokenType.PUNCTUATION,
+            value=line[i],
+            start=position + i,
+            end=position + i + 1,
+            line=line_num,
+            column=i + 1,
         )
-        return start + 1
+
+        return token, i + 1
 
     def generate_hcl_from_tokens(
         self, tokens: List[Token], width: float = 8.5, height: float = 11.0

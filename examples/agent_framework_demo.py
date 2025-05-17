@@ -17,51 +17,6 @@ from inklink.agents.core import (
 )
 
 
-class AgentFactory:
-    """Factory for creating agents with their dependencies."""
-
-    def __init__(
-        self,
-        ollama_adapter: OllamaAdapter,
-        limitless_adapter: LimitlessAdapter,
-        remarkable_adapter: RemarkableAdapter,
-        storage_base: Path,
-    ):
-        """Initialize the factory with shared dependencies."""
-        self.ollama_adapter = ollama_adapter
-        self.limitless_adapter = limitless_adapter
-        self.remarkable_adapter = remarkable_adapter
-        self.storage_base = storage_base
-
-    def create_limitless_agent(
-        self, config: AgentConfig
-    ) -> LimitlessContextualInsightAgent:
-        """Create a Limitless insight agent with its dependencies."""
-        return LimitlessContextualInsightAgent(
-            config,
-            self.limitless_adapter,
-            self.ollama_adapter,
-            self.storage_base / "limitless",
-        )
-
-    def create_daily_briefing_agent(self, config: AgentConfig) -> DailyBriefingAgent:
-        """Create a daily briefing agent with its dependencies."""
-        return DailyBriefingAgent(
-            config,
-            self.ollama_adapter,
-            self.remarkable_adapter,
-            self.storage_base / "briefings",
-        )
-
-    def create_project_tracker_agent(
-        self, config: AgentConfig
-    ) -> ProactiveProjectTrackerAgent:
-        """Create a project tracker agent with its dependencies."""
-        return ProactiveProjectTrackerAgent(
-            config, self.ollama_adapter, self.storage_base / "projects"
-        )
-
-
 async def main():
     """Run the agent framework demo."""
     # Setup logging
@@ -70,25 +25,28 @@ async def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    # Initialize adapters
-    ollama_adapter = OllamaAdapter()
-    limitless_adapter = LimitlessAdapter()  # Would need proper initialization
-    remarkable_adapter = RemarkableAdapter()  # Would need proper initialization
+    # Initialize adapters with proper configuration
+    ollama_adapter = OllamaAdapter(base_url="http://localhost:11434")
+
+    # For demo purposes, using mock configuration
+    limitless_adapter = LimitlessAdapter(
+        api_key="demo_key", base_url="https://api.limitless.ai"
+    )
+    remarkable_adapter = RemarkableAdapter(
+        rmapi_path="rmapi", upload_folder="/"  # assuming rmapi is in PATH
+    )
 
     # Setup storage
     storage_path = Path.home() / ".inklink" / "agent_data"
     storage_path.mkdir(parents=True, exist_ok=True)
 
-    # Create factory
-    factory = AgentFactory(
-        ollama_adapter=ollama_adapter,
-        limitless_adapter=limitless_adapter,
-        remarkable_adapter=remarkable_adapter,
-        storage_base=storage_path,
-    )
-
     # Create agent registry
     registry = AgentRegistry()
+
+    # Register agent classes
+    registry.register_agent_class(LimitlessContextualInsightAgent)
+    registry.register_agent_class(DailyBriefingAgent)
+    registry.register_agent_class(ProactiveProjectTrackerAgent)
 
     # Create agent configurations
     limitless_config = AgentConfig(
@@ -118,22 +76,36 @@ async def main():
         mcp_enabled=True,
     )
 
-    # Create agents using factory
-    limitless_agent = factory.create_limitless_agent(limitless_config)
-    briefing_agent = factory.create_daily_briefing_agent(briefing_config)
-    tracker_agent = factory.create_project_tracker_agent(tracker_config)
+    # Create agents with proper initialization
+    # Note: Agents should be created with all required dependencies
+    limitless_agent = LimitlessContextualInsightAgent(
+        config=limitless_config,
+        limitless_adapter=limitless_adapter,
+        ollama_adapter=ollama_adapter,
+        storage_path=storage_path / "limitless",
+    )
+    registry._agents[limitless_config.name] = limitless_agent
 
-    # Register the properly initialized agents
-    # This avoids the two-phase initialization antipattern by using the factory pattern
-    await registry.register_agent(limitless_agent)
-    await registry.register_agent(briefing_agent)
-    await registry.register_agent(tracker_agent)
+    briefing_agent = DailyBriefingAgent(
+        config=briefing_config,
+        ollama_adapter=ollama_adapter,
+        remarkable_adapter=remarkable_adapter,
+        storage_path=storage_path / "briefings",
+    )
+    registry._agents[briefing_config.name] = briefing_agent
+
+    tracker_agent = ProactiveProjectTrackerAgent(
+        config=tracker_config,
+        ollama_adapter=ollama_adapter,
+        storage_path=storage_path / "projects",
+    )
+    registry._agents[tracker_config.name] = tracker_agent
 
     # Create lifecycle manager
     lifecycle = AgentLifecycle(registry)
 
     print("Starting InkLink Agent Framework...")
-    print(f"Registered agents: {registry.get_registered_classes()}")
+    print(f"Registered agents: {list(registry._agents.keys())}")
 
     # Run the lifecycle manager
     try:

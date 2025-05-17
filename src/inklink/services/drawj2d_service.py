@@ -207,11 +207,8 @@ text {This is drawj2d.}
         # Clean up temp file
         try:
             os.unlink(hcl_path)
-        except FileNotFoundError:
-            # File already deleted, which is fine
-            pass
-        except Exception as e:
-            logger.warning(f"Failed to delete temporary HCL file: {e}")
+        except OSError as e:
+            self.logger.warning(f"Failed to delete temp file {hcl_path}: {e}")
 
         return success, result
 
