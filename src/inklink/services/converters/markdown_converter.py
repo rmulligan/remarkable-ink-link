@@ -169,7 +169,7 @@ class MarkdownConverter(BaseConverter):
                         if not item_content:
                             continue
 
-                        if item_type == "h1" or item_type == "heading":
+                        if item_type in ("h1", "heading"):
                             f.write(f"# {item_content}\n\n")
                         elif item_type == "h2":
                             f.write(f"## {item_content}\n\n")
