@@ -7,7 +7,6 @@ to recognize handwritten text from rendered images of reMarkable notebook pages.
 """
 
 import concurrent.futures
-import json
 import logging
 import os
 import random

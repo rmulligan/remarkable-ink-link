@@ -274,8 +274,6 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
 
             # Verify Neo4j is running by connecting
             logger.info("Verifying Neo4j connection...")
-            import time
-
             max_retries = 5
             for i in range(max_retries):
                 try:

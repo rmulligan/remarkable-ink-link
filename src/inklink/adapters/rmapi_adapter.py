@@ -7,7 +7,6 @@ via the rmapi tool, including authentication handling.
 import json
 import logging
 import os
-import re
 import shutil
 import subprocess
 import tempfile
@@ -125,7 +124,6 @@ class RmapiAdapter:
                     binary_path = os.path.join(temp_dir, binary_name)
 
                 elif asset_name.endswith(".zip"):
-                    import zipfile
 
                     with zipfile.ZipFile(download_path, "r") as zip_ref:
                         zip_ref.extractall(temp_dir)

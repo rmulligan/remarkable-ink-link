@@ -9,7 +9,6 @@ through the Proton Bridge IMAP/SMTP service.
 import datetime
 import email
 import imaplib
-import json
 import logging
 import os
 import re

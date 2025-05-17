@@ -7,13 +7,16 @@ using a configurable set of content converters and renderers.
 import logging
 import os
 import threading
-import time
 from typing import Any, Dict, List, Optional
 
 from inklink.config import CONFIG
 from inklink.services.converters.html_converter import HTMLConverter
+from inklink.services.converters.ink_converter import InkConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter
 from inklink.services.converters.pdf_converter import PDFConverter
+from inklink.services.converters.syntax_highlighted_ink_converter import (
+    SyntaxHighlightedInkConverter,
+)
 from inklink.services.interfaces import (
     IContentConverter,
     IDocumentRenderer,
@@ -61,11 +64,22 @@ class DocumentService(IDocumentService):
 
     def _initialize_converters(self) -> List[IContentConverter]:
         """Initialize the content converters."""
-        return [
+        converters = [
             MarkdownConverter(self.temp_dir),
             HTMLConverter(self.temp_dir),
             PDFConverter(self.temp_dir),
+            InkConverter(self.temp_dir),
         ]
+
+        # Only add syntax highlighted converter if drawj2d is available
+        try:
+            converters.append(SyntaxHighlightedInkConverter(self.temp_dir))
+        except RuntimeError:
+            logger.warning(
+                "Syntax highlighting converter not available - drawj2d missing"
+            )
+
+        return converters
 
     def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
         """Get the appropriate converter for the content type."""
@@ -77,6 +91,89 @@ class DocumentService(IDocumentService):
             ),
             None,
         )
+
+    def create_editable_ink_document(
+        self, text: str, title: Optional[str] = None, append_to: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Create a document with editable ink strokes from text.
+
+        Args:
+            text: Text to convert to editable ink
+            title: Optional title for the document
+            append_to: Optional path to existing .rm file to append to
+
+        Returns:
+            Path to generated .rm file or None if failed
+        """
+        try:
+            content = {"text": text, "title": title, "append_to": append_to}
+
+            converter = self._get_converter_for_type("ink")
+            if converter:
+                result = converter.convert(content, None)
+                if result:
+                    logger.info(f"Created editable ink document: {result}")
+                    return result
+                logger.error("Failed to create editable ink document")
+                return None
+            logger.error("Ink converter not available")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error creating editable ink document: {str(e)}")
+            return None
+
+    def create_syntax_highlighted_document(
+        self,
+        code: str,
+        language: str = "python",
+        title: Optional[str] = None,
+        filename: Optional[str] = None,
+        author: Optional[str] = None,
+        show_line_numbers: bool = True,
+        show_metadata: bool = True,
+    ) -> Optional[str]:
+        """
+        Create a document with syntax-highlighted code.
+
+        Args:
+            code: Source code to highlight
+            language: Programming language
+            title: Optional title for the document
+            filename: Optional source filename
+            author: Optional author name
+            show_line_numbers: Whether to show line numbers
+            show_metadata: Whether to show metadata header
+
+        Returns:
+            Path to generated .rm file or None if failed
+        """
+        try:
+            content = {
+                "code": code,
+                "language": language,
+                "title": title,
+                "filename": filename,
+                "author": author,
+                "show_line_numbers": show_line_numbers,
+                "show_metadata": show_metadata,
+            }
+
+            converter = self._get_converter_for_type("code")
+            if converter:
+                result = converter.convert(content, None)
+                if result:
+                    logger.info(f"Created syntax-highlighted document: {result}")
+                    return result
+                logger.error("Failed to create syntax-highlighted document")
+                return None
+            logger.error("Syntax highlighting converter not available")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error creating syntax-highlighted document: {str(e)}")
+            return None
 
     def create_rmdoc_from_content(
         self, url: str, qr_path: str, content: Dict[str, Any]

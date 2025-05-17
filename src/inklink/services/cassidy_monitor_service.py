@@ -4,13 +4,10 @@ This module provides a service that monitors reMarkable Cloud for notebooks
 tagged with 'Cass' and processes them with Claude Code.
 """
 
-import datetime
 import json
 import logging
 import os
-import re
 import shutil
-import subprocess
 import tempfile
 import threading
 import time
@@ -393,8 +390,9 @@ class CassidyMonitor:
                 # Change back to original directory
                 os.chdir(current_dir)
 
+    @staticmethod
     def _check_document_for_page_tags(
-        self, doc_name: str, tag: str, content_data: Dict[str, Any]
+        doc_name: str, tag: str, content_data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
         Check if a document has pages with the specified tag.

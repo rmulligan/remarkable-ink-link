@@ -7,7 +7,6 @@ used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 
 import http.server
 import logging
-import os
 import socketserver
 import time
 import urllib.parse
@@ -30,8 +29,6 @@ SERVICE_GOOGLE_DRIVE = "google_drive"
 class AuthenticationError(Exception):
     """Exception raised for authentication errors."""
 
-    pass
-
 
 class AuthenticationBase(ABC):
     """Base class for authentication flows."""
@@ -49,7 +46,6 @@ class AuthenticationBase(ABC):
     @abstractmethod
     def _get_service_name(self) -> str:
         """Get the service name for this authentication flow."""
-        pass
 
     @abstractmethod
     def authenticate(self, *args, **kwargs) -> Dict[str, Any]:
@@ -59,7 +55,6 @@ class AuthenticationBase(ABC):
         Returns:
             Dict: Authentication credentials
         """
-        pass
 
     def get_credentials(self) -> Optional[Dict[str, Any]]:
         """

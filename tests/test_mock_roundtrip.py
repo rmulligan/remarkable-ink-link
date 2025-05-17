@@ -116,6 +116,7 @@ class MockRemarkableService(IRemarkableService):
         """Initialize with rmapi path."""
         self.rmapi_path = rmapi_path or "/usr/bin/rmapi"
 
+    @staticmethod
     def upload(self, doc_path, title):
         """Upload document to reMarkable cloud."""
         # Return success
