@@ -118,7 +118,7 @@ class MonitoredAgent(LocalAgent):
                             "request_errors": self._metrics.request_errors,
                         },
                     )
-                elif error_rate > 0.2:
+                if error_rate > 0.2:
                     return HealthCheck(
                         status=HealthStatus.DEGRADED,
                         message="Elevated error rate",
