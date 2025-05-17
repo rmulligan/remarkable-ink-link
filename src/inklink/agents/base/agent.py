@@ -124,11 +124,9 @@ class LocalAgent(ABC):
 
     async def _initialize_mcp(self) -> None:
         """Initialize MCP server - overridden by MCPAgentMixin."""
-        pass
 
     async def _cleanup_mcp(self) -> None:
         """Clean up MCP server - overridden by MCPAgentMixin."""
-        pass
 
     def get_capabilities(self) -> List[str]:
         """Get agent capabilities."""

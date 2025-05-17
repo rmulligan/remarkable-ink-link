@@ -7,7 +7,6 @@ from typing import Callable, List, Optional
 
 from inklink.utils.retry import retry
 
-from .agent import AgentState
 from .registry import AgentRegistry
 
 
