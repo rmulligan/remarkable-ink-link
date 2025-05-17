@@ -141,7 +141,7 @@ def test_create_rmdoc_multi_page(document_service, monkeypatch):
 @pytest.mark.skip(reason="Test needs to be updated for the new architecture")
 def test_create_pdf_hcl_with_images(document_service, tmp_path, monkeypatch):
     """Test creation of PDF HCL embedding raster images."""
-    # TODO: Update this test for the new architecture with dependency injection
+    # This test is skipped pending update for the new architecture with dependency injection
     from PIL import Image
 
     # Create dummy images
