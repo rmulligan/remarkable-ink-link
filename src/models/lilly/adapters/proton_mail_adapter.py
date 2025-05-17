@@ -13,12 +13,12 @@ import logging
 import os
 import re
 import smtplib
+import sys
 from dataclasses import dataclass
 from email.header import decode_header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import parsedate_to_datetime
-import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
