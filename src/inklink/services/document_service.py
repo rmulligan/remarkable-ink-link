@@ -8,6 +8,7 @@ import logging
 import os
 import threading
 from typing import Any, Dict, List, Optional
+
 from inklink.services.converters.html_converter import HTMLConverter
 from inklink.services.converters.ink_converter import InkConverter
 from inklink.services.converters.markdown_converter import MarkdownConverter
@@ -15,10 +16,7 @@ from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.converters.syntax_highlighted_ink_converter import (
     SyntaxHighlightedInkConverter,
 )
-from inklink.services.interfaces import (
-    IContentConverter,
-    IDocumentService,
-)
+from inklink.services.interfaces import IContentConverter, IDocumentService
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_drawj2d_available
 

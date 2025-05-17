@@ -212,9 +212,7 @@ class HandwritingWebAdapter(Adapter):
                             f"Extracted {len(strokes)} strokes using current rmscene API"
                         )
                         return strokes
-                    logger.warning(
-                        "No strokes found in file using current rmscene API"
-                    )
+                    logger.warning("No strokes found in file using current rmscene API")
 
                 except Exception as scene_tree_error:
                     logger.error(
@@ -439,9 +437,7 @@ class HandwritingWebAdapter(Adapter):
             return {"error": str(e)}
 
     @staticmethod
-    def export_content(
-        content_id: str, format_type: str = "text"
-    ) -> Dict[str, Any]:
+    def export_content(content_id: str, format_type: str = "text") -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
 
