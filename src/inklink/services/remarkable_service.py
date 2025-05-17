@@ -32,8 +32,7 @@ class RemarkableService(IRemarkableService):
         """
         if self.adapter.ping():
             return True, "OK"
-        else:
-            return False, "Could not connect to reMarkable Cloud"
+        return False, "Could not connect to reMarkable Cloud"
 
     def upload(self, doc_path: str, title: str) -> Tuple[bool, str]:
         """

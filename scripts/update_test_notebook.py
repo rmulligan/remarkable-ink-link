@@ -144,10 +144,9 @@ def upload_to_remarkable(rmdoc_path):
                 logger.info(f"Renamed document to '{NOTEBOOK_NAME}'")
 
             return True
-        else:
-            logger.error(f"Upload failed with return code {process.returncode}")
-            logger.error(f"Error: {process.stderr}")
-            return False
+        logger.error(f"Upload failed with return code {process.returncode}")
+        logger.error(f"Error: {process.stderr}")
+        return False
     except subprocess.CalledProcessError as e:
         logger.error(f"Upload failed: {e}")
         logger.error(f"Output: {e.output}")
@@ -182,9 +181,8 @@ def main():
             "You can now run the Claude Penpal service to process this notebook"
         )
         return 0
-    else:
-        logger.error(f"Failed to update notebook '{NOTEBOOK_NAME}'")
-        return 1
+    logger.error(f"Failed to update notebook '{NOTEBOOK_NAME}'")
+    return 1
 
 
 if __name__ == "__main__":

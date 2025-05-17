@@ -508,11 +508,9 @@ Validation Check (GitHub Copilot):
             # Create system prompt with document context
             return "Relevant document context:\n" + "\n\n".join(context_snippets)
 
-        elif context:
+        if context:
             # Format context dictionary
             context_str = ", ".join([f"{k}: {v}" for k, v in context.items() if v])
             return f"Document context: {context_str}"
-
-        else:
-            # Use default system prompt
-            return self.system_prompt
+        # Use default system prompt
+        return self.system_prompt

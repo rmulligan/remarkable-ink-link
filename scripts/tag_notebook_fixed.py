@@ -299,12 +299,11 @@ def tag_notebook(notebook_name):
                     return False
 
             return False
-        else:
-            logger.info(f"Successfully tagged notebook: {notebook_name}")
-            logger.info(
-                "You can now run the Claude Penpal service to process this notebook."
-            )
-            return True
+        logger.info(f"Successfully tagged notebook: {notebook_name}")
+        logger.info(
+            "You can now run the Claude Penpal service to process this notebook."
+        )
+        return True
 
 
 if __name__ == "__main__":

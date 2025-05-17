@@ -474,8 +474,7 @@ class ProtonCalendarAdapter:
                 event = self._parse_caldav_event(caldav_event, calendar_id)
                 if event:
                     return True, event
-                else:
-                    return False, f"Failed to parse event {event_uid}"
+                return False, f"Failed to parse event {event_uid}"
             except caldav.error.NotFoundError:
                 return False, f"Event {event_uid} not found in calendar {calendar_id}"
         except Exception as e:

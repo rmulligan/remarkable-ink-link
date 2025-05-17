@@ -6,7 +6,6 @@ consistent error handling, retries, and output processing.
 
 import logging
 import os
-import shlex
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -97,14 +96,13 @@ class CommandAdapter(Adapter):
                 # Success
                 output = result.stdout if capture_output else ""
                 return True, output
-            else:
-                # Error
-                error = (
-                    result.stderr
-                    if capture_output
-                    else f"Command failed with exit code {result.returncode}"
-                )
-                return False, error
+            # Error
+            error = (
+                result.stderr
+                if capture_output
+                else f"Command failed with exit code {result.returncode}"
+            )
+            return False, error
 
         except subprocess.TimeoutExpired:
             return False, f"Command timed out after {timeout} seconds"

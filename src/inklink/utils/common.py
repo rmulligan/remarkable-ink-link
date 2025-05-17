@@ -216,8 +216,7 @@ def convert_markdown_to_rm(markdown_path: str, title: str = None) -> Tuple[bool,
 
         if result.returncode == 0 and os.path.exists(rm_path):
             return True, rm_path
-        else:
-            return False, f"Conversion failed: {result.stderr}"
+        return False, f"Conversion failed: {result.stderr}"
     except Exception as e:
         return False, str(e)
 
@@ -236,7 +235,6 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
         If failed, result is the error message
     """
     try:
-        import tempfile
 
         from inklink.config import CONFIG
 
@@ -273,8 +271,6 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
             html_content = f.read()
 
         # Simple regex to extract text (not ideal but works for basic HTML)
-        import re
-
         text_content = re.sub(r"<[^>]*>", " ", html_content)
         text_content = re.sub(r"\s+", " ", text_content).strip()
 
@@ -306,8 +302,7 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
 
         if result.returncode == 0 and os.path.exists(rm_path):
             return True, rm_path
-        else:
-            return False, f"Conversion failed: {result.stderr}"
+        return False, f"Conversion failed: {result.stderr}"
     except Exception as e:
         return False, str(e)
 

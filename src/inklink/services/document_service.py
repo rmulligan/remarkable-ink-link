@@ -16,7 +16,11 @@ from inklink.services.converters.pdf_converter import PDFConverter
 from inklink.services.converters.syntax_highlighted_ink_converter import (
     SyntaxHighlightedInkConverter,
 )
-from inklink.services.interfaces import IContentConverter, IDocumentService
+from inklink.services.interfaces import (
+    IContentConverter,
+    IDocumentRenderer,
+    IDocumentService,
+)
 from inklink.services.renderers.hcl_renderer import HCLRenderer
 from inklink.utils import ensure_drawj2d_available
 
@@ -59,13 +63,22 @@ class DocumentService(IDocumentService):
 
     def _initialize_converters(self) -> List[IContentConverter]:
         """Initialize the content converters."""
-        return [
+        converters = [
             MarkdownConverter(self.temp_dir),
             HTMLConverter(self.temp_dir),
             PDFConverter(self.temp_dir),
             InkConverter(self.temp_dir),
-            SyntaxHighlightedInkConverter(self.temp_dir),
         ]
+
+        # Only add syntax highlighted converter if drawj2d is available
+        try:
+            converters.append(SyntaxHighlightedInkConverter(self.temp_dir))
+        except RuntimeError:
+            logger.warning(
+                "Syntax highlighting converter not available - drawj2d missing"
+            )
+
+        return converters
 
     def _get_converter_for_type(self, content_type: str) -> Optional[IContentConverter]:
         """Get the appropriate converter for the content type."""
@@ -216,8 +229,9 @@ class DocumentService(IDocumentService):
                     return self.create_rmdoc_legacy(url, qr_path, content)
                 logger.error("No available conversion method.")
                 return None
-            logger.error("No suitable converter found for structured content")
-            return None
+            else:
+                logger.error("No suitable converter found for structured content")
+                return None
 
         except Exception as e:
             logger.error(f"Error creating document: {str(e)}")
@@ -264,8 +278,9 @@ class DocumentService(IDocumentService):
                     return result
                 logger.error("HTML conversion failed")
                 return None
-            logger.error("No HTML converter found")
-            return None
+            else:
+                logger.error("No HTML converter found")
+                return None
 
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
@@ -306,8 +321,9 @@ class DocumentService(IDocumentService):
                     return result
                 logger.error("PDF conversion failed")
                 return None
-            logger.error("No PDF converter found")
-            return None
+            else:
+                logger.error("No PDF converter found")
+                return None
 
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")

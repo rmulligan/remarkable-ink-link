@@ -88,7 +88,7 @@ class MockAIAdapter:
                 True,
                 f"Response about {len(self.generate_structured_completion_calls)} documents",
             )
-        elif context:
+        if context:
             context_keys = ", ".join(context.keys())
             return True, f"Response with context keys: {context_keys}"
 

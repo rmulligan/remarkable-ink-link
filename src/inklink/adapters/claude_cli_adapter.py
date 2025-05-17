@@ -9,7 +9,6 @@ import os
 import re
 import subprocess
 import tempfile
-import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter
@@ -80,9 +79,8 @@ class ClaudeCliAdapter(Adapter):
             if process.returncode == 0:
                 logger.info(f"Claude CLI available: {process.stdout.strip()}")
                 return True
-            else:
-                logger.error(f"Claude CLI check failed: {process.stderr}")
-                return False
+            logger.error(f"Claude CLI check failed: {process.stderr}")
+            return False
         except Exception as e:
             logger.error(f"Claude CLI not available: {e}")
             return False
@@ -239,8 +237,7 @@ class ClaudeCliAdapter(Adapter):
 
                     if success:
                         return True, response, result
-                    else:
-                        return False, f"Error in follow-up: {response}", result
+                    return False, f"Error in follow-up: {response}", result
 
             # Normal response case
             return True, result, conversation_id
@@ -356,11 +353,9 @@ class ClaudeCliAdapter(Adapter):
             # Create system prompt with document context
             return "Relevant document context:\n" + "\n\n".join(context_snippets)
 
-        elif context:
+        if context:
             # Format context dictionary
             context_str = ", ".join([f"{k}: {v}" for k, v in context.items() if v])
             return f"Document context: {context_str}"
-
-        else:
-            # Use default system prompt
-            return self.system_prompt
+        # Use default system prompt
+        return self.system_prompt

@@ -6,7 +6,6 @@ used by Lilly, including Proton Mail, Proton Calendar, and Google Drive.
 """
 
 import getpass
-import os
 from typing import Optional
 
 import click
@@ -68,7 +67,6 @@ def logout(service):
 @auth.group("proton")
 def proton():
     """Proton service authentication commands."""
-    pass
 
 
 @proton.command("mail")

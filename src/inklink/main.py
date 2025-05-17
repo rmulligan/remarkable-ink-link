@@ -1,16 +1,17 @@
 """Entry point for InkLink application."""
 
-import datetime
 import json
 import logging
 import os
 import subprocess
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import click
 
 from inklink.config import CONFIG
+from inklink.di.container import Container
+from inklink.services.knowledge_index_service import KnowledgeIndexService
 
 
 @click.group()
@@ -90,7 +91,7 @@ def roundtrip(input_file, output):
     success, result = service.process_handwritten_query(input_file)
 
     if success:
-        click.echo(f"Round-trip processing successful!")
+        click.echo("Round-trip processing successful!")
         click.echo(f"Recognized text: {result['recognized_text']}")
         click.echo(f"Response uploaded to reMarkable: {result['upload_message']}")
 
@@ -127,8 +128,6 @@ def roundtrip(input_file, output):
 )
 def create_entity_index(entity_types, min_references, no_upload):
     """Create an entity index notebook in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Parse entity types if provided
     entity_type_list = None
@@ -139,7 +138,7 @@ def create_entity_index(entity_types, min_references, no_upload):
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating entity index notebook...")
+    click.echo("Creating entity index notebook...")
 
     success, result = index_service.create_entity_index(
         entity_types=entity_type_list,
@@ -148,7 +147,7 @@ def create_entity_index(entity_types, min_references, no_upload):
     )
 
     if success:
-        click.echo(f"Entity index created successfully!")
+        click.echo("Entity index created successfully!")
         click.echo(f"Entity count: {result.get('entity_count', 0)}")
         click.echo(f"Entity types: {', '.join(result.get('entity_types', []))}")
         click.echo(f"EPUB saved to: {result.get('path')}")
@@ -181,14 +180,12 @@ def create_entity_index(entity_types, min_references, no_upload):
 )
 def create_topic_index(top_n, min_connections, no_upload):
     """Create a topic index notebook in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating topic index notebook...")
+    click.echo("Creating topic index notebook...")
 
     success, result = index_service.create_topic_index(
         top_n_topics=top_n,
@@ -197,7 +194,7 @@ def create_topic_index(top_n, min_connections, no_upload):
     )
 
     if success:
-        click.echo(f"Topic index created successfully!")
+        click.echo("Topic index created successfully!")
         click.echo(f"Topic count: {result.get('topic_count', 0)}")
         click.echo(f"EPUB saved to: {result.get('path')}")
 
@@ -217,21 +214,19 @@ def create_topic_index(top_n, min_connections, no_upload):
 )
 def create_notebook_index(no_upload):
     """Create a notebook index in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating notebook index...")
+    click.echo("Creating notebook index...")
 
     success, result = index_service.create_notebook_index(
         upload_to_remarkable=not no_upload
     )
 
     if success:
-        click.echo(f"Notebook index created successfully!")
+        click.echo("Notebook index created successfully!")
         click.echo(f"Notebook count: {result.get('notebook_count', 0)}")
         click.echo(f"EPUB saved to: {result.get('path')}")
 
@@ -251,21 +246,19 @@ def create_notebook_index(no_upload):
 )
 def create_master_index(no_upload):
     """Create a master index combining entity, topic, and notebook indices in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)
     index_service = provider.get(KnowledgeIndexService)
 
-    click.echo(f"Creating master index notebook...")
+    click.echo("Creating master index notebook...")
 
     success, result = index_service.create_master_index(
         upload_to_remarkable=not no_upload
     )
 
     if success:
-        click.echo(f"Master index created successfully!")
+        click.echo("Master index created successfully!")
         click.echo(f"Entity count: {result.get('entity_count', 0)}")
         click.echo(f"Topic count: {result.get('topic_count', 0)}")
         click.echo(f"Notebook count: {result.get('notebook_count', 0)}")
@@ -305,7 +298,7 @@ def update_knowledge_graph(
             "name": notebook_name,
             "entityType": "Notebook",
             "observations": [
-                f"Remarkable notebook processed by Cassidy assistant",
+                "Remarkable notebook processed by Cassidy assistant",
                 f"Contains page: {page_name}",
                 f"Last processed: {timestamp}",
             ],
@@ -456,7 +449,6 @@ def lilly(interval, tag, rmapi, output_dir, claude_command, lilly_workspace, onc
     if not rmapi:
         rmapi = CONFIG.get("RMAPI_PATH")
         if not rmapi:
-            import os
 
             home_dir = os.path.expanduser("~")
             potential_paths = [
@@ -627,7 +619,6 @@ def penpal(
     use_conversation_ids,
 ):
     """Start the Claude Penpal monitoring service."""
-    import logging
 
     from inklink.services.claude_penpal_service import ClaudePenpalService
 
@@ -641,9 +632,9 @@ def penpal(
     if mcp_tools:
         mcp_tool_tags = [tool.strip() for tool in mcp_tools.split(",")]
 
-    click.echo(f"Starting Claude Penpal monitoring service")
+    click.echo("Starting Claude Penpal monitoring service")
     click.echo(f"Using Claude command: {claude_command}")
-    click.echo(f"Looking for pages with tags:")
+    click.echo("Looking for pages with tags:")
     click.echo(f"  - '{query_tag}' for queries to Claude")
     click.echo(f"  - '{context_tag}' for additional context")
     click.echo(f"  - '{kg_tag}' for Knowledge Graph processing")

@@ -103,9 +103,8 @@ def ensure_python_package(package_name, upgrade=False):
     if exit_code == 0:
         logger.info(f"Package {package_name} installed or upgraded successfully")
         return True
-    else:
-        logger.error(f"Failed to install package {package_name}: {stderr}")
-        return False
+    logger.error(f"Failed to install package {package_name}: {stderr}")
+    return False
 
 
 def ensure_rmapi(version: str = DEFAULT_RMAPI_VERSION) -> Tuple[bool, str]:
@@ -274,8 +273,6 @@ def ensure_neo4j(version: str = DEFAULT_NEO4J_VERSION) -> Tuple[bool, str]:
 
             # Verify Neo4j is running by connecting
             logger.info("Verifying Neo4j connection...")
-            import time
-
             max_retries = 5
             for i in range(max_retries):
                 try:

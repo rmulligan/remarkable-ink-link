@@ -45,8 +45,7 @@ class DocumentProcessor(Processor):
             # Generate document based on content type
             if content_type == "pdf":
                 return self._process_pdf_document(context)
-            else:
-                return self._process_web_document(context)
+            return self._process_web_document(context)
 
         except Exception as e:
             logger.error(f"Error generating document: {str(e)}")

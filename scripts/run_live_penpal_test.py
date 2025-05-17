@@ -202,13 +202,10 @@ def run_live_test(args, rmapi_path, claude_command):
         if processed_count > 0:
             logger.info(f"✅ Success! Processed {processed_count} page(s)")
             return True
-        else:
-            logger.warning(f"⚠️ No pages processed within {wait_time} seconds")
-            logger.warning("This may be normal if there are no new pages to process")
-            logger.warning(
-                f"Check if your notebook has pages with the '{args.tag}' tag"
-            )
-            return False
+        logger.warning(f"⚠️ No pages processed within {wait_time} seconds")
+        logger.warning("This may be normal if there are no new pages to process")
+        logger.warning(f"Check if your notebook has pages with the '{args.tag}' tag")
+        return False
 
     finally:
         # Stop monitoring
@@ -234,9 +231,8 @@ def main():
         )
         logger.info("This confirms that the metadata fix is working properly")
         return 0
-    else:
-        logger.error("❌ Live test FAILED or INCONCLUSIVE")
-        return 1
+    logger.error("❌ Live test FAILED or INCONCLUSIVE")
+    return 1
 
 
 if __name__ == "__main__":

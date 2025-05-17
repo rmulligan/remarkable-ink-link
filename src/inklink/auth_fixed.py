@@ -78,12 +78,11 @@ def auth_submit(code: str = Form(...)):
                 """,
                 status_code=200,
             )
-        else:
-            # Don't expose stderr/stdout in the response
-            return HTMLResponse(
-                "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
-                status_code=400,
-            )
+        # Don't expose stderr/stdout in the response
+        return HTMLResponse(
+            "<html><body><h2>Authentication failed</h2><p>Please check your pairing code and try again.</p></body></html>",
+            status_code=400,
+        )
     except subprocess.TimeoutExpired:
         return HTMLResponse(
             "<html><body><h2>Request timed out</h2><p>Please try again.</p></body></html>",

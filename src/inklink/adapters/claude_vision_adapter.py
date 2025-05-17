@@ -7,7 +7,6 @@ to recognize handwritten text from rendered images of reMarkable notebook pages.
 """
 
 import concurrent.futures
-import json
 import logging
 import os
 import random
@@ -101,9 +100,8 @@ class ClaudeVisionAdapter(Adapter):
             if result.returncode == 0:
                 self.logger.info(f"Claude CLI available: {result.stdout.strip()}")
                 return True
-            else:
-                self.logger.warning(f"Claude CLI check failed: {result.stderr}")
-                return False
+            self.logger.warning(f"Claude CLI check failed: {result.stderr}")
+            return False
         except Exception as e:
             self.logger.error(f"Failed to check Claude CLI availability: {e}")
             return False
@@ -333,10 +331,9 @@ class ClaudeVisionAdapter(Adapter):
             # Simplified density calculations
             if edge_density > 10:  # High edge density suggests diagram
                 return "diagram"
-            elif structure_score > 5:  # More structured content suggests math
+            if structure_score > 5:  # More structured content suggests math
                 return "math"
-            else:
-                return "text"  # Default to text
+            return "text"  # Default to text
 
         except Exception as e:
             self.logger.warning(

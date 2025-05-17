@@ -9,7 +9,6 @@ through the Proton Bridge IMAP/SMTP service.
 import datetime
 import email
 import imaplib
-import json
 import logging
 import os
 import re
@@ -962,15 +961,13 @@ class ProtonMailAdapter:
             email = email_match.group(1)
             name = name_match.group(1).strip() if name_match else None
             return name, email
-        else:
-            # If no email found in angle brackets, the whole string might be an email
-            email_simple_pattern = r"[\w\.-]+@[\w\.-]+"
-            email_simple_match = re.search(email_simple_pattern, sender)
+        # If no email found in angle brackets, the whole string might be an email
+        email_simple_pattern = r"[\w\.-]+@[\w\.-]+"
+        email_simple_match = re.search(email_simple_pattern, sender)
 
-            if email_simple_match:
-                return None, email_simple_match.group(0)
-            else:
-                return None, sender
+        if email_simple_match:
+            return None, email_simple_match.group(0)
+        return None, sender
 
 
 # Command-line functionality for testing
