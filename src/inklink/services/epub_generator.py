@@ -11,7 +11,6 @@ import re
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
-import ebooklib
 from ebooklib import epub
 from markdown import markdown
 

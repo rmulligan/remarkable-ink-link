@@ -1,0 +1,1 @@
+- Always use available mcp tools that can help you reach your goals.

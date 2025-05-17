@@ -606,7 +606,6 @@ class CassidyAdapter(RmapiAdapter):
                     # This may not preserve all SVG features
                     try:
                         # PIL Image already imported at module level
-                        import io
 
                         return (
                             False,

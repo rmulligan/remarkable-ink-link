@@ -1,0 +1,88 @@
+# Agent Framework Configuration
+framework:
+  version: "1.0.0"
+  log_level: INFO
+  storage_base: "${HOME}/.inklink/agents"
+  
+adapters:
+  ollama:
+    base_url: "${OLLAMA_BASE_URL:http://localhost:11434}"
+    timeout: 600  # seconds
+    retry_attempts: 3
+    retry_delay: 1  # seconds
+    
+  limitless:
+    api_key: "${LIMITLESS_API_KEY}"
+    base_url: "${LIMITLESS_BASE_URL:https://api.limitless.ai/v1}"
+    
+  remarkable:
+    device_token: "${REMARKABLE_DEVICE_TOKEN}"
+    sync_interval: 300  # seconds
+
+agents:
+  limitless_insight:
+    class: LimitlessContextualInsightAgent
+    enabled: true
+    config:
+      name: "limitless_insight"
+      description: "Processes Limitless pendant data for insights"
+      version: "1.0.0"
+      capabilities:
+        - spoken_summary
+        - action_items
+        - context_search
+      ollama_model: "${LIMITLESS_OLLAMA_MODEL:llama3:8b}"
+      mcp_enabled: true
+      storage_subdir: "limitless"
+      processing_interval: 300  # 5 minutes
+      
+  daily_briefing:
+    class: DailyBriefingAgent
+    enabled: true
+    config:
+      name: "daily_briefing"
+      description: "Generates daily briefings with personalized context"
+      version: "1.0.0"
+      capabilities:
+        - generate_briefing
+        - briefing_status
+      ollama_model: "${BRIEFING_OLLAMA_MODEL:llama3:8b}"
+      mcp_enabled: true
+      storage_subdir: "briefings"
+      briefing_time: "06:00"  # 6 AM
+      
+  project_tracker:
+    class: ProactiveProjectTrackerAgent
+    enabled: true
+    config:
+      name: "project_tracker"
+      description: "Tracks projects and commitments"
+      version: "1.0.0"
+      capabilities:
+        - project_status
+        - commitment_tracking
+      ollama_model: "${TRACKER_OLLAMA_MODEL:llama3:8b}"
+      mcp_enabled: true
+      storage_subdir: "projects"
+      check_interval: 3600  # 1 hour
+      
+  control_center:
+    class: ControlCenterAgent
+    enabled: true
+    config:
+      name: "control_center"
+      description: "Manages the ink-based control interface"
+      version: "1.0.0"
+      capabilities:
+        - process_ink
+        - update_display
+        - sync_status
+      mcp_enabled: true
+      storage_subdir: "control_center"
+
+monitoring:
+  health_check_interval: 30  # seconds
+  max_restart_attempts: 3
+  restart_backoff_factor: 2  # exponential backoff
+  metrics_enabled: true
+  metrics_port: 9090

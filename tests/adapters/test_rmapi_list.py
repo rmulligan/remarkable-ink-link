@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import os
 import sys
 
 from src.inklink.adapters.rmapi_adapter import RmapiAdapter
@@ -12,7 +13,9 @@ logging.basicConfig(
 )
 
 # Initialize adapter with the path to rmapi
-adapter = RmapiAdapter("/home/ryan/bin/rmapi")
+# Use environment variable or relative path
+rmapi_path = os.environ.get("RMAPI_PATH", "rmapi")
+adapter = RmapiAdapter(rmapi_path)
 
 # Test ping to check basic connectivity
 print("Testing connectivity...")

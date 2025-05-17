@@ -322,8 +322,6 @@ class PDFAdapter(Adapter):
             True if successful, False otherwise
         """
         try:
-            import tempfile
-
             from graphviz import Digraph
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import letter

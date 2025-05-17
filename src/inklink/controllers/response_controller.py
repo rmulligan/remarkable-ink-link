@@ -39,5 +39,28 @@ class ResponseController(BaseController):
         # Get response data
         resp = self.get_server().responses[response_id]
 
-        # Send response data
-        self.send_json({"markdown": resp["markdown"], "raw": resp["raw"]})
+        # Sanitize response data before sending to prevent XSS attacks
+        sanitized_markdown = (
+            resp.get("markdown", "")
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#x27;")
+        )
+
+        # If raw data is HTML, sanitize it as well
+        raw_data = resp.get("raw", "")
+        if isinstance(raw_data, str):
+            sanitized_raw = (
+                raw_data.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;")
+                .replace("'", "&#x27;")
+            )
+        else:
+            sanitized_raw = raw_data
+
+        # Send sanitized response data
+        self.send_json({"markdown": sanitized_markdown, "raw": sanitized_raw})

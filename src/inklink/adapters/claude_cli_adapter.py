@@ -9,7 +9,6 @@ import os
 import re
 import subprocess
 import tempfile
-import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from inklink.adapters.adapter import Adapter

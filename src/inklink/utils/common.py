@@ -235,7 +235,6 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
         If failed, result is the error message
     """
     try:
-        import tempfile
 
         from inklink.config import CONFIG
 
@@ -272,8 +271,6 @@ def convert_html_to_rm(html_path: str, title: str = None) -> Tuple[bool, str]:
             html_content = f.read()
 
         # Simple regex to extract text (not ideal but works for basic HTML)
-        import re
-
         text_content = re.sub(r"<[^>]*>", " ", html_content)
         text_content = re.sub(r"\s+", " ", text_content).strip()
 
