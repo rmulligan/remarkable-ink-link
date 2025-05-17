@@ -144,10 +144,8 @@ def test_mock_conversion():
                 return True
             print("\n⚠️ iink_data missing expected top-level structure")
             return False
-
-        else:
-            print("\n❌ Failed to convert mock strokes to iink format")
-            return False
+        print("\n❌ Failed to convert mock strokes to iink format")
+        return False
 
     except Exception as e:
         print(f"❌ Test failed with error: {e}")

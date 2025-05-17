@@ -84,9 +84,8 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             if "diagram" in text:
                 return "Diagram"
             return "Text"
-        else:
-            # Default to Text on failure
-            return "Text"
+        # Default to Text on failure
+        return "Text"
 
     def initialize_api(self, claude_command: str, model: str = None) -> bool:
         """

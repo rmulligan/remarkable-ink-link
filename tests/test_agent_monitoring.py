@@ -360,7 +360,7 @@ class TestEnhancedOllamaAdapter:
             if url == f"{adapter.config.base_url}/":
                 return MockResponse(200, {"status": "OK"})
             # For tags endpoint
-            elif "tags" in url:
+            if "tags" in url:
                 return MockResponse(
                     200, {"models": [{"name": "test-model", "model": "test-model"}]}
                 )
