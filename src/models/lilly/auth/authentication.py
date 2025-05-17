@@ -12,7 +12,6 @@ import time
 import urllib.parse
 import webbrowser
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
 # Import credential manager

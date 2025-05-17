@@ -17,7 +17,6 @@ sys.path.insert(
 
 from lilly.auth.authentication import (  # noqa: E402
     SERVICE_GOOGLE_DRIVE,
-    SERVICE_PROTON_CALENDAR,
     SERVICE_PROTON_MAIL,
     AuthenticationError,
     AuthenticationProvider,

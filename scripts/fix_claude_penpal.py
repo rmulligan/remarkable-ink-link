@@ -5,16 +5,9 @@ Fix for the Claude Penpal Service.
 This script patches the ClaudePenpalService to correctly handle metadata
 for reMarkable notebooks, fixing the issues with uploading modified notebooks.
 """
-
-import json
 import logging
-import os
 import shutil
 import sys
-import tempfile
-import time
-import zipfile
-from datetime import datetime
 
 # Setup logging
 logging.basicConfig(

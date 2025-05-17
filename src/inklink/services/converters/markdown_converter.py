@@ -9,7 +9,7 @@ import os
 from typing import Any, Dict, Optional
 
 from inklink.services.converters.base_converter import BaseConverter
-from inklink.utils import convert_markdown_to_rm, retry_operation
+from inklink.utils import convert_markdown_to_rm
 
 logger = logging.getLogger(__name__)
 

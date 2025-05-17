@@ -5,7 +5,6 @@ This script tests if rmscene is working correctly.
 """
 
 import logging
-import os
 import sys
 
 # Configure logging

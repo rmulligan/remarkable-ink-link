@@ -5,8 +5,6 @@ Live test script for ClaudeVisionAdapter
 This script tests the ClaudeVisionAdapter with real images and live Claude API calls
 to verify recognition quality, performance, and handling of different content types.
 """
-
-import argparse
 import logging
 import os
 import sys
@@ -14,17 +12,12 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import pytest
-
 try:
     import cv2
 
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
-
-import numpy as np
-from PIL import Image
 
 # Add the src directory to the path so we can import our modules
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))

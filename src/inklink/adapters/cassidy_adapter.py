@@ -16,8 +16,6 @@ import uuid
 import zipfile
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from PIL import Image
-
 from src.inklink.adapters.rmapi_adapter import RmapiAdapter
 
 logger = logging.getLogger(__name__)

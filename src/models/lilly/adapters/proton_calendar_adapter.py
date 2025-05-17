@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import caldav
-from caldav.elements import cdav, dav
+from caldav.elements import dav
 
 logger = logging.getLogger(__name__)
 

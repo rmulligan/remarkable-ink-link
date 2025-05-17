@@ -4,10 +4,7 @@ Script to fetch all Limitless life logs without any date restrictions.
 """
 
 import json
-import os
-import sys
 from datetime import datetime, timedelta
-from pprint import pprint
 
 import requests
 

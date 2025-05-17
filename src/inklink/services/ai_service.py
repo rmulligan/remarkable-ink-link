@@ -3,7 +3,6 @@
 import logging
 from typing import Any, Dict, List, Optional, Union
 
-from inklink.adapters.ai_adapter import AIAdapter
 from inklink.adapters.claude_cli_adapter import ClaudeCliAdapter
 from inklink.config import CONFIG
 from inklink.services.interfaces import IAIService
