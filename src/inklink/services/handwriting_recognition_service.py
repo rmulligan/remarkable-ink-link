@@ -389,7 +389,6 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             else:
                 # Process pages individually
                 for i, image_path in enumerate(rendered_images):
-                    # page_prompt = f"Please transcribe the handwritten content on this page (Page {i + 1})."  # Currently unused
                     result = self.adapter.recognize_handwriting(
                         image_path, "Text", language
                     )

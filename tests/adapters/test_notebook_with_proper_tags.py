@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Create a notebook with proper page tagging structure."""
 
 import argparse
@@ -50,7 +49,6 @@ def create_test_rm_file():
     # Number of points
     num_points = struct.pack("<I", 3)
 
-    # Points (x, y, pressure, rotation, tilt)
     point1 = struct.pack("<fffff", 100.0, 100.0, 1.0, 0.0, 0.0)
     point2 = struct.pack("<fffff", 200.0, 200.0, 1.0, 0.0, 0.0)
     point3 = struct.pack("<fffff", 300.0, 300.0, 1.0, 0.0, 0.0)

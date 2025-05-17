@@ -168,8 +168,6 @@ def test_process_image(claude_vision_adapter, mock_subprocess):
     # Arrange
     image_path = "/tmp/test_image.png"
 
-    # Act
-    # result = claude_vision_adapter.process_image(image_path)    # Unused variable
 
     claude_vision_adapter.process_image(image_path)
 
@@ -193,8 +191,6 @@ def test_process_multiple_images(claude_vision_adapter, mock_subprocess):
     # Arrange
     image_paths = ["/tmp/test_image1.png", "/tmp/test_image2.png"]
 
-    # Act
-    # result = claude_vision_adapter.process_multiple_images(image_paths)  # Unused variable
     claude_vision_adapter.process_multiple_images(image_paths)
 
     # Assert
@@ -242,8 +238,6 @@ def test_handwriting_adapter_integration(
     with patch.object(
         handwriting_adapter, "render_rm_file", return_value=rendered_image_path
     ):
-        # Act
-        # result = handwriting_adapter.process_rm_file(rm_file_path)    # Unused variable
 
         handwriting_adapter.process_rm_file(rm_file_path)
 
@@ -291,8 +285,6 @@ def test_preprocess_image_text(claude_vision_adapter, mock_pil, mock_os_path_exi
     # Act
     _ = claude_vision_adapter.preprocess_image(image_path, content_type="text")
 
-    # Assert
-    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     mock_pil["brightness"].assert_called_once_with(mock_pil["image"])
@@ -316,8 +308,6 @@ def test_preprocess_image_math(claude_vision_adapter, mock_pil, mock_os_path_exi
     # Act
     _ = claude_vision_adapter.preprocess_image(image_path, content_type="math")
 
-    # Assert
-    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     mock_pil["brightness"].assert_called_once_with(mock_pil["image"])
@@ -340,8 +330,6 @@ def test_preprocess_image_diagram(claude_vision_adapter, mock_pil, mock_os_path_
     # Act
     _ = claude_vision_adapter.preprocess_image(image_path, content_type="diagram")
 
-    # Assert
-    # assert result == "/tmp/test_image_preprocessed.png"
     mock_pil["open"].assert_called_once_with(image_path)
     mock_pil["contrast"].assert_called_once_with(mock_pil["image"])
     # Verify contrast is even lower for diagrams (0.8 factor)
@@ -423,8 +411,6 @@ def test_process_image_with_preprocessing(
     with patch.object(
         claude_vision_adapter, "preprocess_image", return_value=preprocessed_path
     ):
-        # Act
-        # result = claude_vision_adapter.process_image(image_path, content_type="text")    # Unused variable
         claude_vision_adapter.process_image(image_path, content_type="text")
 
         # Assert
@@ -455,8 +441,6 @@ def test_cleanup_preprocessed_image(
     with patch.object(
         claude_vision_adapter, "preprocess_image", return_value=preprocessed_path
     ), patch("os.unlink"):
-        # Act
-        # result = claude_vision_adapter.process_image(image_path, content_type="text")    # Unused variable
 
         claude_vision_adapter.process_image(image_path, content_type="text")
 
@@ -500,7 +484,6 @@ def test_detect_content_type_text(claude_vision_adapter, mock_pil, mock_os_path_
 
     # Configure mock for text detection
     mock_edge_img = MagicMock()
-    # mock_edge_array = MagicMock()    # Unused variable
     mock_pil["image"].filter.return_value = mock_edge_img
     mock_edge_img.convert.return_value = mock_edge_img
 
@@ -512,8 +495,6 @@ def test_detect_content_type_text(claude_vision_adapter, mock_pil, mock_os_path_
         # Act
         _ = claude_vision_adapter.detect_content_type(image_path)
 
-        # Assert
-        # assert result == "text"
         mock_pil["open"].assert_called_once_with(image_path)
         mock_pil["image"].filter.assert_called_once()  # Called for edge detection
 
@@ -527,7 +508,6 @@ def test_detect_content_type_diagram(
 
     # Configure mock for diagram detection
     mock_edge_img = MagicMock()
-    # mock_edge_array = MagicMock()    # Unused variable
     mock_pil["image"].filter.return_value = mock_edge_img
     mock_edge_img.convert.return_value = mock_edge_img
 
@@ -539,8 +519,6 @@ def test_detect_content_type_diagram(
         # Act
         _ = claude_vision_adapter.detect_content_type(image_path)
 
-        # Assert
-        # assert result == "diagram"
         mock_pil["open"].assert_called_once_with(image_path)
         mock_pil["image"].filter.assert_called_once()  # Called for edge detection
 
