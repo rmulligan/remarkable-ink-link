@@ -16,6 +16,7 @@ try:
     import rmscene
     import rmscene.scene_items as si
     from rmscene.scene_stream import TaggedBlockWriter, read_tree
+    from rmscene.scene_tree import SceneTree
 
     RMSCENE_AVAILABLE = True
 except ImportError:
@@ -153,40 +154,23 @@ class InkGenerationService:
             return False
 
         try:
-            # Create a new scene tree
-            scene_tree = si.SceneTree()
+            # Create simple text document using rmscene helper
+            from rmscene.scene_stream import simple_text_document
 
-            # Create root group
-            root_group = si.Group(children=[], node_id=scene_tree.root_id)
+            # Generate blocks for text document
+            blocks = list(simple_text_document(text))
 
-            # Add root group to tree
-            scene_tree.add_item(root_group)
+            logger.info(f"Generated {len(blocks)} blocks for text")
 
-            # Generate strokes from text
-            strokes = self.text_to_strokes(text)
-
-            # Add strokes to the root group
-            for stroke in strokes:
-                # Add stroke to tree and get its ID
-                stroke_id = scene_tree.add_item(stroke)
-                # Add stroke ID to root group's children
-                root_group.children.append(stroke_id)
+            # For now, let's just write the simple text document
+            # TODO: Replace text with actual strokes later
 
             # Write to file
             with open(output_path, "wb") as f:
-                # Create a TaggedBlockWriter
-                writer = TaggedBlockWriter(f)
+                # Use rmscene's write_blocks function to write all blocks
+                from rmscene.scene_stream import write_blocks
 
-                # Write the header
-                writer.write_tag(
-                    tag=rmscene.scene_stream.TagType.FILE_ID_V2, data=rmscene.HEADER_V6
-                )
-
-                # Write tree structure
-                scene_tree.to_stream(writer)
-
-                # Finalize
-                writer.flush()
+                write_blocks(f, blocks)
 
             logger.info(f"Created .rm file with text at {output_path}")
             return True
