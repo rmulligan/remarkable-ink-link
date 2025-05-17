@@ -119,7 +119,7 @@ def create_and_upload_test_notebook():
         # Create page files
         page_path = os.path.join(pages_dir, f"{page1_id}.rm")
         with open(page_path, "w") as f:
-            f.write(f"This is a test query for Lilly. #Lilly")
+            f.write("This is a test query for Lilly. #Lilly")
 
         # Create notebook zip
         notebook_path = os.path.join(temp_dir, f"{NOTEBOOK_NAME}.rmdoc")
@@ -154,7 +154,7 @@ def create_and_upload_test_notebook():
             logger.error(f"Failed to upload notebook: {stderr}")
 
             # Examine the notebook to help with debugging
-            logger.info(f"Examining notebook structure for debugging...")
+            logger.info("Examining notebook structure for debugging...")
             with zipfile.ZipFile(notebook_path, "r") as zip_ref:
                 files = zip_ref.namelist()
                 logger.info(f"Zip contains files: {files}")
@@ -187,5 +187,5 @@ if __name__ == "__main__":
     if create_and_upload_test_notebook():
         print(f"Successfully created and uploaded test notebook '{NOTEBOOK_NAME}'")
     else:
-        print(f"Failed to create and upload test notebook")
+        print("Failed to create and upload test notebook")
         sys.exit(1)

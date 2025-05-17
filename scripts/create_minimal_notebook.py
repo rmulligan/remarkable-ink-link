@@ -104,7 +104,7 @@ def create_and_upload_minimal_notebook():
         # Create a simple page file
         page_path = os.path.join(pages_dir, f"{page1_id}.rm")
         with open(page_path, "w") as f:
-            f.write(f"This is a simple test page")
+            f.write("This is a simple test page")
 
         # Create notebook zip
         notebook_path = os.path.join(temp_dir, f"{NOTEBOOK_NAME}.rmdoc")
@@ -144,7 +144,7 @@ def create_and_upload_minimal_notebook():
                     logger.info(f"Found existing notebook to analyze: {existing_name}")
 
                     # Download it
-                    example_path = os.path.join(debug_dir, f"example_notebook.rmdoc")
+                    example_path = os.path.join(debug_dir, "example_notebook.rmdoc")
                     download_cmd = f"get '{existing_name}'"
                     success, stdout, stderr = run_rmapi_command(download_cmd)
 
@@ -220,7 +220,7 @@ def create_and_upload_minimal_notebook():
                                                             metadata, f2, indent=2
                                                         )
                                                         logger.info(
-                                                            f"Updated metadata to match example format"
+                                                            "Updated metadata to match example format"
                                                         )
 
                                             # Re-create the zip with updated metadata
@@ -257,7 +257,7 @@ def create_and_upload_minimal_notebook():
             logger.error(f"Failed to upload notebook: {stderr}")
 
             # Examine the notebook to help with debugging
-            logger.info(f"Examining notebook structure for debugging...")
+            logger.info("Examining notebook structure for debugging...")
             with zipfile.ZipFile(notebook_path, "r") as zip_ref:
                 files = zip_ref.namelist()
                 logger.info(f"Zip contains files: {files}")
@@ -300,5 +300,5 @@ if __name__ == "__main__":
             f"Successfully created and uploaded minimal test notebook '{NOTEBOOK_NAME}'"
         )
     else:
-        print(f"Failed to create and upload minimal test notebook")
+        print("Failed to create and upload minimal test notebook")
         sys.exit(1)

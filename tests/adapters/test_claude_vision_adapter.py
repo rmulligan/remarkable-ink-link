@@ -923,7 +923,7 @@ def test_concurrent_error_handling(claude_vision_adapter_parallel, mock_os_path_
 
         # Verify error was logged
         mock_logger.error.assert_any_call(
-            f"Error processing page 2: Error in thread processing"
+            "Error processing page 2: Error in thread processing"
         )
 
 

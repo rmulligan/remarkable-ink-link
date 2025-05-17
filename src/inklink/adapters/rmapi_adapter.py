@@ -151,7 +151,7 @@ class RmapiAdapter:
 
                     if not found:
                         raise FileNotFoundError(
-                            f"Could not find rmapi binary in extracted files"
+                            "Could not find rmapi binary in extracted files"
                         )
 
                 # Make it executable
@@ -525,7 +525,7 @@ class RmapiAdapter:
                 return False, []
 
             # Debug output for troubleshooting
-            logger.info(f"Raw output from rmapi ls command:")
+            logger.info("Raw output from rmapi ls command:")
             for line in stdout.split("\n"):
                 if line.strip():
                     logger.info(f"  {line}")

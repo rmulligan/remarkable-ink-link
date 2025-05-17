@@ -166,7 +166,7 @@ def main():
             for item in os.listdir(test_notebook_dir):
                 logger.info(f"  - {item}")
 
-            logger.info(f"Contents of extracted directory:")
+            logger.info("Contents of extracted directory:")
             extracted_dir = os.path.join(test_notebook_dir, "extracted")
             for item in os.listdir(extracted_dir):
                 logger.info(f"  - {item}")

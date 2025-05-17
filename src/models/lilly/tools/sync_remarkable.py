@@ -204,7 +204,7 @@ def main():
             extract_dir = extract_notebook(notebook_path)
 
             if extract_dir:
-                print(f"Rendering notebook pages...")
+                print("Rendering notebook pages...")
                 rendered_pages = render_notebook_pages(extract_dir)
 
                 if args.process and rendered_pages:
@@ -230,7 +230,7 @@ def main():
             extract_dir = extract_notebook(notebook_path)
 
             if extract_dir:
-                print(f"Rendering notebook pages...")
+                print("Rendering notebook pages...")
                 rendered_pages = render_notebook_pages(extract_dir)
 
                 if args.process and rendered_pages:

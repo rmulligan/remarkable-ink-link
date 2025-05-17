@@ -253,7 +253,7 @@ class WebAdapterTester:
                 f"✅ Conversion successful - {len(test_strokes)} strokes converted"
             )
         else:
-            logger.error(f"❌ Conversion failed - Invalid format")
+            logger.error("❌ Conversion failed - Invalid format")
             logger.debug(json.dumps(iink_data, indent=2))
 
         return success, iink_data
@@ -272,7 +272,7 @@ class WebAdapterTester:
 
         # Check if recognition was successful
         if "error" not in result:
-            logger.info(f"✅ Recognition successful")
+            logger.info("✅ Recognition successful")
             if "result" in result:
                 logger.info(f"Recognized text: {result['result']}")
             elif "candidates" in result and len(result["candidates"]) > 0:
@@ -301,7 +301,7 @@ class WebAdapterTester:
 
             # Check if processing was successful
             if "error" not in result:
-                logger.info(f"✅ File processing successful")
+                logger.info("✅ File processing successful")
                 if "result" in result:
                     logger.info(f"Recognized text: {result['result']}")
                 elif "candidates" in result and len(result["candidates"]) > 0:
@@ -335,7 +335,7 @@ class WebAdapterTester:
 
         # Check if recognition was successful
         if "error" not in result:
-            logger.info(f"✅ Standard adapter integration successful")
+            logger.info("✅ Standard adapter integration successful")
             if "result" in result:
                 logger.info(f"Recognized text: {result['result']}")
             elif "candidates" in result and len(result["candidates"]) > 0:
@@ -361,7 +361,7 @@ class WebAdapterTester:
 
         # Check if recognition was successful
         if result.get("success", False):
-            logger.info(f"✅ Service integration successful")
+            logger.info("✅ Service integration successful")
 
             # Look at raw result
             raw_result = result.get("raw_result", {})

@@ -124,7 +124,7 @@ def extract_strokes_using_adapter():
             print("\n❌ Failed to convert strokes to iink format")
             return False
         else:
-            print(f"❌ No strokes extracted from file")
+            print("❌ No strokes extracted from file")
             return False
     except Exception as e:
         logger.error(f"Error in adapter extraction: {e}")

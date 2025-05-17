@@ -113,20 +113,20 @@ def create_hcl_from_content(
             f.write(f"margin: {margin}\n\n")
 
             # Add QR code for source URL
-            f.write(f"# QR Code for original source\n")
-            f.write(f"image\n")
+            f.write("# QR Code for original source\n")
+            f.write("image\n")
             f.write(f'  path: "{qr_path}"\n')
             f.write(f"  x: {page_width - 200}\n")
             f.write(f"  y: {50}\n")
-            f.write(f"  width: 150\n")
-            f.write(f"  height: 150\n\n")
+            f.write("  width: 150\n")
+            f.write("  height: 150\n\n")
 
             # Add title
-            f.write(f"# Document title\n")
-            f.write(f"text\n")
+            f.write("# Document title\n")
+            f.write("text\n")
             f.write(f'  text: "{escape_hcl(page_title)}"\n')
             f.write(f'  font: "{heading_font}"\n')
-            f.write(f"  size: 24\n")
+            f.write("  size: 24\n")
             f.write(f"  x: {margin}\n")
             f.write(f"  y: {margin}\n\n")
 
@@ -136,7 +136,7 @@ def create_hcl_from_content(
             # Placeholder for content rendering
             if content.get("structured_content"):
                 # This would be replaced with actual content rendering code
-                f.write(f"# Structured content would be rendered here\n")
+                f.write("# Structured content would be rendered here\n")
 
         return hcl_path
 

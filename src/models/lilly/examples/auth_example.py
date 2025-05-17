@@ -84,7 +84,7 @@ def main():
         print("\nAlready authenticated with Google Drive")
         google_drive_auth = auth_provider.get_authenticator(SERVICE_GOOGLE_DRIVE)
         credentials = google_drive_auth.get_credentials()
-        print(f"Google Drive authentication is valid")
+        print("Google Drive authentication is valid")
 
     # Show final authenticated services
     print("\nUpdated authenticated services list:")

@@ -1401,7 +1401,7 @@ if __name__ == "__main__":
 
             status, file = adapter.get_file_by_id(args.file)
             if status:
-                print(f"File details:")
+                print("File details:")
                 print(f"Name: {file.name}")
                 print(f"ID: {file.id}")
                 print(f"Type: {'Folder' if file.is_folder else 'File'}")
@@ -1478,7 +1478,7 @@ if __name__ == "__main__":
         elif args.action == "recent":
             status, files = adapter.get_recent_files()
             if status:
-                print(f"Recent files:")
+                print("Recent files:")
                 for file in files:
                     if file.is_folder:
                         print(

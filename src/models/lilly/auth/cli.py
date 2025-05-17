@@ -100,7 +100,7 @@ def proton_mail(username, password, host, imap_port, smtp_port):
             imap_port=imap_port,
             smtp_port=smtp_port,
         )
-        click.echo(f"Successfully authenticated with Proton Mail")
+        click.echo("Successfully authenticated with Proton Mail")
     except AuthenticationError as e:
         click.echo(f"Authentication failed: {str(e)}")
 
@@ -133,7 +133,7 @@ def proton_calendar(username, password, host, caldav_port):
             bridge_host=host,
             caldav_port=caldav_port,
         )
-        click.echo(f"Successfully authenticated with Proton Calendar")
+        click.echo("Successfully authenticated with Proton Calendar")
     except AuthenticationError as e:
         click.echo(f"Authentication failed: {str(e)}")
 
@@ -164,7 +164,7 @@ def google_drive(client_id, client_secret, redirect_uri):
             redirect_uri=redirect_uri,
             scopes=get_config("GOOGLE_DRIVE_SCOPES"),
         )
-        click.echo(f"Successfully authenticated with Google Drive")
+        click.echo("Successfully authenticated with Google Drive")
     except AuthenticationError as e:
         click.echo(f"Authentication failed: {str(e)}")
     except Exception as e:

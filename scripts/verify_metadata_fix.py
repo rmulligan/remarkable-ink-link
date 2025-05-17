@@ -183,11 +183,11 @@ def download_and_extract_notebook(rmapi_adapter, notebook_id, notebook_name):
                     break
 
         if not content_file_path or not os.path.exists(content_file_path):
-            logger.error(f"Content file not found in extracted notebook")
+            logger.error("Content file not found in extracted notebook")
             return None, None
 
         if not metadata_file_path or not os.path.exists(metadata_file_path):
-            logger.error(f"Metadata file not found in extracted notebook")
+            logger.error("Metadata file not found in extracted notebook")
             return None, None
 
         logger.info(f"Found content file: {content_file_path}")
@@ -205,7 +205,7 @@ def download_and_extract_notebook(rmapi_adapter, notebook_id, notebook_name):
         for key, value in metadata.items():
             logger.info(f"  {key}: {type(value).__name__} = {value}")
 
-        logger.info(f"Successfully downloaded and extracted notebook")
+        logger.info("Successfully downloaded and extracted notebook")
         return temp_dir, {
             "notebook_id": notebook_id,
             "notebook_name": notebook_name,
