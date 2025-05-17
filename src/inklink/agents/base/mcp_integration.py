@@ -91,6 +91,7 @@ class MCPAgentMixin:
 
         # Create a JSON-RPC message for MCP communication
         jsonrpc_message = MCP_JSONRPCMessage(
+            jsonrpc="2.0",
             method=f"{target}.{capability}",
             params=data,
             id=f"{self.config.name}_{target}_{capability}_{id(data)}",

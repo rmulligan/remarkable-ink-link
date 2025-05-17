@@ -26,7 +26,9 @@ class MCPRequest:
 
     def to_jsonrpc(self) -> JSONRPCMessage:
         """Convert to JSON-RPC message."""
-        return JSONRPCMessage(method=self.method, params=self.params, id=self.id)
+        return JSONRPCMessage(
+            jsonrpc="2.0", method=self.method, params=self.params, id=self.id
+        )
 
 
 @dataclass
