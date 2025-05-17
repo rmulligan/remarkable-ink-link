@@ -1,6 +1,7 @@
 """Test to verify CI environment is properly configured."""
 
 import os
+
 import pytest
 
 
