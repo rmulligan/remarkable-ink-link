@@ -21,6 +21,7 @@ class MarkdownConverter(BaseConverter):
         """Check if this converter can handle the given content type."""
         return content_type in ["structured", "markdown"]
 
+    @staticmethod
     def convert(
         self, content: Dict[str, Any], output_path: Optional[str] = None
     ) -> Optional[str]:

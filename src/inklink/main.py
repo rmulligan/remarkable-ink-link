@@ -10,6 +10,8 @@ from typing import Any, Dict
 import click
 
 from inklink.config import CONFIG
+from inklink.di.container import Container
+from inklink.services.knowledge_index_service import KnowledgeIndexService
 
 
 @click.group()
@@ -126,8 +128,6 @@ def roundtrip(input_file, output):
 )
 def create_entity_index(entity_types, min_references, no_upload):
     """Create an entity index notebook in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Parse entity types if provided
     entity_type_list = None
@@ -180,8 +180,6 @@ def create_entity_index(entity_types, min_references, no_upload):
 )
 def create_topic_index(top_n, min_connections, no_upload):
     """Create a topic index notebook in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)
@@ -216,8 +214,6 @@ def create_topic_index(top_n, min_connections, no_upload):
 )
 def create_notebook_index(no_upload):
     """Create a notebook index in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)
@@ -250,8 +246,6 @@ def create_notebook_index(no_upload):
 )
 def create_master_index(no_upload):
     """Create a master index combining entity, topic, and notebook indices in EPUB format."""
-    from inklink.di.container import Container
-    from inklink.services.knowledge_index_service import KnowledgeIndexService
 
     # Get service via dependency injection
     provider = Container.create_provider(CONFIG)

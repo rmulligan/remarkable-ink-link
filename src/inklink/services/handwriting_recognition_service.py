@@ -512,7 +512,9 @@ class HandwritingRecognitionService(IHandwritingRecognitionService):
             logger.error(f"Error converting strokes to iink format: {e}")
             return {"type": "Raw Content", "strokes": [], "error": str(e)}
 
-    def _split_multi_page_result(self, result: str, page_count: int) -> List[str]:
+    @staticmethod
+    @staticmethod
+    def _split_multi_page_result(result: str, page_count: int) -> List[str]:
         """
         Split a multi-page result into individual pages.
 

@@ -640,7 +640,6 @@ class ClaudePenpalService:
             except Exception as e:
                 logger.warning(f"Failed to sort pages: {e}")
                 # If sorting fails, keep original order
-                pass
 
             # If we found pages with the Lilly tag, log them
             lilly_pages = [p for p in pages_data if self.query_tag in p["tags"]]

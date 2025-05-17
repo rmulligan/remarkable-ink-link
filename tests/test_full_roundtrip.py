@@ -40,12 +40,6 @@ class TestHandler(URLHandler):
 @pytest.mark.skip(reason="Test needs to be updated for new architecture")
 def test_webpage_ai_summary_integration(tmp_path):
     """Unit test: injects a mock AIService and checks AI summary in content and context passing."""
-    from inklink.server import URLHandler
-    from inklink.services.document_service import DocumentService
-    from inklink.services.pdf_service import PDFService
-    from inklink.services.qr_service import QRCodeService
-    from inklink.services.remarkable_service import RemarkableService
-    from inklink.services.web_scraper_service import WebScraperService
 
     class MockAIService:
         """Mock AI Service implementation for testing."""
@@ -134,8 +128,6 @@ def test_webpage_ai_summary_integration(tmp_path):
 @pytest.mark.skip(reason="Test needs to be updated for new architecture")
 def test_math_and_diagram_blocks_roundtrip(tmp_path):
     """Test that math (LaTeX) and diagram (mermaid) blocks are preserved in markdown export."""
-    from inklink.services.document_service import DocumentService
-
     doc_tmp = tmp_path / "doc_tmp"
     document_service = DocumentService(str(doc_tmp))
 
