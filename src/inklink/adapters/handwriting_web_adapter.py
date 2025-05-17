@@ -470,7 +470,7 @@ class HandwritingWebAdapter(Adapter):
                     return {"content": content["candidates"][0], "format": "text"}
                 # Try to extract text from JIIX or other formats
                 return {"content": json.dumps(content), "format": "json"}
-            elif format_type.lower() in ["latex", "mathml"] and "result" in content:
+            if format_type.lower() in ["latex", "mathml"] and "result" in content:
                 # For math content, extract the specific format
                 math_formats = content.get("result", {})
                 if format_type.upper() in math_formats:
@@ -479,9 +479,8 @@ class HandwritingWebAdapter(Adapter):
                         "format": format_type,
                     }
                 return {"content": json.dumps(math_formats), "format": "json"}
-            else:
-                # For other formats, return the full result in JSON
-                return {"content": json.dumps(content), "format": "json"}
+            # For other formats, return the full result in JSON
+            return {"content": json.dumps(content), "format": "json"}
 
         except Exception as e:
             logger.error(f"Failed to export content: {e}")

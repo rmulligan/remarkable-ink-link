@@ -216,9 +216,8 @@ class DocumentService(IDocumentService):
                     return self.create_rmdoc_legacy(url, qr_path, content)
                 logger.error("No available conversion method.")
                 return None
-            else:
-                logger.error("No suitable converter found for structured content")
-                return None
+            logger.error("No suitable converter found for structured content")
+            return None
 
         except Exception as e:
             logger.error(f"Error creating document: {str(e)}")
@@ -265,9 +264,8 @@ class DocumentService(IDocumentService):
                     return result
                 logger.error("HTML conversion failed")
                 return None
-            else:
-                logger.error("No HTML converter found")
-                return None
+            logger.error("No HTML converter found")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting HTML to document: {str(e)}")
@@ -308,9 +306,8 @@ class DocumentService(IDocumentService):
                     return result
                 logger.error("PDF conversion failed")
                 return None
-            else:
-                logger.error("No PDF converter found")
-                return None
+            logger.error("No PDF converter found")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting PDF to document: {str(e)}")
