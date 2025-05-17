@@ -11,8 +11,8 @@ import logging
 from typing import Any, Dict
 
 from inklink.adapters.claude_code_adapter import ClaudeCodeAdapter
-from inklink.services.llm_service_manager import LLMServiceManager
 from inklink.config import CONFIG
+from inklink.services.llm_service_manager import LLMServiceManager
 
 logger = logging.getLogger(__name__)
 

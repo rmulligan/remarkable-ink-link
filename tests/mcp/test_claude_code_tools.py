@@ -5,16 +5,17 @@ Tests for Claude Code MCP tools.
 This module tests the MCP tool implementations for Claude Code integration.
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from inklink.mcp.claude_code_tools import (
-    claude_code_generate,
-    claude_code_review,
-    claude_code_debug,
     claude_code_best_practices,
-    claude_code_summarize,
+    claude_code_debug,
+    claude_code_generate,
     claude_code_manage_session,
+    claude_code_review,
+    claude_code_summarize,
     register_claude_code_tools,
 )
 

@@ -7,15 +7,16 @@ tools interface within InkLink.
 """
 
 import json
-from inklink.mcp.registry import get_registry, register_all_tools
+
 from inklink.mcp.claude_code_tools import (
-    claude_code_generate,
-    claude_code_review,
-    claude_code_debug,
     claude_code_best_practices,
-    claude_code_summarize,
+    claude_code_debug,
+    claude_code_generate,
     claude_code_manage_session,
+    claude_code_review,
+    claude_code_summarize,
 )
+from inklink.mcp.registry import get_registry, register_all_tools
 
 
 def demo_code_generation():
