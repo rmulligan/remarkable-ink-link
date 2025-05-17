@@ -158,9 +158,9 @@ def create_test_rm_file():
             line.color = "#000000"
 
             # Add points
-            for i in range(len(stroke["x"])):
+            for i, item in enumerate(stroke["x"]):
                 point = rmscene.Point()
-                point.x = stroke["x"][i]
+                point.x = item
                 point.y = stroke["y"][i]
                 point.pressure = stroke["p"][i]
                 point.timestamp_ms = stroke["t"][i]

@@ -166,9 +166,9 @@ def create_and_save_test_rm_file():
 
             # Add points
             points = []
-            for i in range(len(stroke["x"])):
+            for i, item in enumerate(stroke["x"]):
                 point = si.Point(
-                    x=stroke["x"][i],
+                    x=item,
                     y=stroke["y"][i],
                     pressure=stroke["p"][i],
                     t=stroke["t"][i],  # t is the timestamp in ms

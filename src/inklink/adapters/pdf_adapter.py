@@ -285,8 +285,7 @@ class PDFAdapter(Adapter):
                     watermark_page = watermark.pages[0]
 
                     # Apply watermark to each page
-                    for page_num in range(len(reader.pages)):
-                        page = reader.pages[page_num]
+                    for page_num, page in enumerate(reader.pages):
                         page.merge_page(watermark_page)
                         writer.add_page(page)
 
