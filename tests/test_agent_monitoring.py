@@ -5,9 +5,9 @@ from datetime import datetime
 from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock, patch
 
+import aiohttp
 import pytest
 from anyio import create_task_group
-import aiohttp
 
 from inklink.adapters.ollama_adapter_enhanced import OllamaAdapter
 from inklink.agents.base.agent import AgentConfig, LocalAgent
