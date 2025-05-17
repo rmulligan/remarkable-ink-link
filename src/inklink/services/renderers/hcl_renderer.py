@@ -154,19 +154,18 @@ class HCLRenderer(IDocumentRenderer):
                     raise FileNotFoundError(
                         f"Expected output file not created: {rm_path}"
                     )
-                else:
-                    file_size = os.path.getsize(rm_path)
-                    logger.info(
-                        f"Output file successfully created: {rm_path} ({file_size} bytes)"
+                file_size = os.path.getsize(rm_path)
+                logger.info(
+                    f"Output file successfully created: {rm_path} ({file_size} bytes)"
+                )
+                if file_size < 50:
+                    logger.error(
+                        f"Output file size is suspiciously small: {file_size} bytes. Possible conversion error."
                     )
-                    if file_size < 50:
-                        logger.error(
-                            f"Output file size is suspiciously small: {file_size} bytes. Possible conversion error."
-                        )
-                        raise ValueError(f"Output file too small: {file_size} bytes")
-                    with open(rm_path, "rb") as rf:
-                        preview = rf.read(100)
-                    logger.info(f"Output file preview (first 100 bytes): {preview}")
+                    raise ValueError(f"Output file too small: {file_size} bytes")
+                with open(rm_path, "rb") as rf:
+                    preview = rf.read(100)
+                logger.info(f"Output file preview (first 100 bytes): {preview}")
 
                 return rm_path
 
