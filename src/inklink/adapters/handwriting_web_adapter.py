@@ -140,7 +140,8 @@ class HandwritingWebAdapter(Adapter):
         # Return the base64 encoded digest
         return base64.b64encode(h.digest()).decode("utf-8")
 
-    def extract_strokes_from_rm_file(self, rm_file_path: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def extract_strokes_from_rm_file(rm_file_path: str) -> List[Dict[str, Any]]:
         """
         Extract strokes from a reMarkable file.
 
@@ -211,10 +212,9 @@ class HandwritingWebAdapter(Adapter):
                             f"Extracted {len(strokes)} strokes using current rmscene API"
                         )
                         return strokes
-                    else:
-                        logger.warning(
-                            "No strokes found in file using current rmscene API"
-                        )
+                    logger.warning(
+                        "No strokes found in file using current rmscene API"
+                    )
 
                 except Exception as scene_tree_error:
                     logger.error(
@@ -230,7 +230,8 @@ class HandwritingWebAdapter(Adapter):
             logger.error(f"Failed to extract strokes from .rm file: {e}")
             return []
 
-    def convert_to_iink_format(self, strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    @staticmethod
+    def convert_to_iink_format(strokes: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Convert reMarkable strokes to MyScript Web API compatible format.
 
@@ -423,23 +424,23 @@ class HandwritingWebAdapter(Adapter):
                     result["id"] = f"web-recognition-{int(time.time())}"
 
                 return result
-            else:
-                error_message = f"Recognition failed: HTTP {response.status_code}"
-                try:
-                    error_details = response.json()
-                    error_message = f"{error_message} - {json.dumps(error_details)}"
-                except Exception:
-                    error_message = f"{error_message} - {response.text}"
+            error_message = f"Recognition failed: HTTP {response.status_code}"
+            try:
+                error_details = response.json()
+                error_message = f"{error_message} - {json.dumps(error_details)}"
+            except Exception:
+                error_message = f"{error_message} - {response.text}"
 
-                logger.error(error_message)
-                return {"error": error_message}
+            logger.error(error_message)
+            return {"error": error_message}
 
         except Exception as e:
             logger.error(f"Failed to recognize handwriting: {e}")
             return {"error": str(e)}
 
+    @staticmethod
     def export_content(
-        self, content_id: str, format_type: str = "text"
+        content_id: str, format_type: str = "text"
     ) -> Dict[str, Any]:
         """
         Export recognized content in the specified format.
@@ -469,11 +470,10 @@ class HandwritingWebAdapter(Adapter):
             if format_type.lower() == "text":
                 if "result" in content:
                     return {"content": content["result"], "format": "text"}
-                elif "candidates" in content and len(content["candidates"]) > 0:
+                if "candidates" in content and len(content["candidates"]) > 0:
                     return {"content": content["candidates"][0], "format": "text"}
-                else:
-                    # Try to extract text from JIIX or other formats
-                    return {"content": json.dumps(content), "format": "json"}
+                # Try to extract text from JIIX or other formats
+                return {"content": json.dumps(content), "format": "json"}
             elif format_type.lower() in ["latex", "mathml"] and "result" in content:
                 # For math content, extract the specific format
                 math_formats = content.get("result", {})

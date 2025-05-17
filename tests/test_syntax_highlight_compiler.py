@@ -1,9 +1,7 @@
 """Tests for syntax highlight compiler refactoring."""
 
-import pytest
-
 from inklink.services.syntax_highlight_compiler import SyntaxHighlightCompiler
-from inklink.services.syntax_tokens import Token, TokenType
+from inklink.services.syntax_tokens import TokenType
 
 
 def test_simple_tokenize_basic():

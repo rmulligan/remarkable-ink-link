@@ -447,8 +447,9 @@ class SyntaxHighlightCompiler:
 
         return tokens
 
+    @staticmethod
     def _tokenize_whitespace(
-        self, line: str, i: int, line_num: int, position: int
+        line: str, i: int, line_num: int, position: int
     ) -> Optional[Tuple[Token, int]]:
         """Tokenize whitespace."""
 
@@ -496,8 +497,9 @@ class SyntaxHighlightCompiler:
 
         return token, len(line)  # Comments consume rest of line
 
+    @staticmethod
     def _tokenize_string(
-        self, line: str, i: int, line_num: int, position: int
+        line: str, i: int, line_num: int, position: int
     ) -> Optional[Tuple[Token, int]]:
         """Tokenize string literals."""
 
@@ -536,8 +538,9 @@ class SyntaxHighlightCompiler:
 
         return token, i
 
+    @staticmethod
     def _tokenize_number(
-        self, line: str, i: int, line_num: int, position: int
+        line: str, i: int, line_num: int, position: int
     ) -> Optional[Tuple[Token, int]]:
         """Tokenize numeric literals."""
 
@@ -599,13 +602,11 @@ class SyntaxHighlightCompiler:
 
             return TokenType.KEYWORD
 
-        elif word in self.current_language.builtin_functions:
+        if word in self.current_language.builtin_functions:
 
             return TokenType.BUILTIN
 
-        else:
-
-            return TokenType.IDENTIFIER
+        return TokenType.IDENTIFIER
 
     def _tokenize_operator(
         self, line: str, i: int, line_num: int, position: int
@@ -635,8 +636,9 @@ class SyntaxHighlightCompiler:
 
         return None
 
+    @staticmethod
     def _tokenize_punctuation(
-        self, line: str, i: int, line_num: int, position: int
+        line: str, i: int, line_num: int, position: int
     ) -> Optional[Tuple[Token, int]]:
         """Tokenize punctuation as fallback."""
 

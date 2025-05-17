@@ -6,7 +6,6 @@ replacing the old approach of using drawj2d to create static text.
 
 import logging
 import math
-import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from inklink.services.character_strokes import CharacterStrokes
@@ -139,7 +138,8 @@ class InkGenerationService:
         )
         return line
 
-    def create_rm_file_with_text(self, text: str, output_path: str) -> bool:
+    @staticmethod
+    def create_rm_file_with_text(text: str, output_path: str) -> bool:
         """
         Create a .rm file with editable text strokes.
 
