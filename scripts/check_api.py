@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Simple test to check Limitless API connectivity.
-"""
+"""Simple test to check Limitless API connectivity."""
 from pprint import pprint
 
 import requests

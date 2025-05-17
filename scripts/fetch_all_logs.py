@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Script to fetch all Limitless life logs without any date restrictions.
-"""
+"""Script to fetch all Limitless life logs without any date restrictions."""
 
 import json
 from datetime import datetime, timedelta

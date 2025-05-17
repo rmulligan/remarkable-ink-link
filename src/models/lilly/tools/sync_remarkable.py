@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Sync reMarkable notebooks to Lilly's workspace.
-"""
+"""Sync reMarkable notebooks to Lilly's workspace."""
 
 import argparse
 import os

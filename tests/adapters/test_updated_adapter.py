@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the updated HandwritingWebAdapter with rmscene v0.7.0+.
-"""
+"""Test script for the updated HandwritingWebAdapter with rmscene v0.7.0+."""
 
 import json
 import logging
@@ -124,9 +122,7 @@ def create_test_rm_file():
 
 
 def test_updated_adapter():
-    """
-    Test the updated HandwritingWebAdapter with a test .rm file.
-    """
+    """Test the updated HandwritingWebAdapter with a test .rm file."""
     print("\n" + "=" * 80)
     print("UPDATED HANDWRITING WEB ADAPTER TEST")
     print("=" * 80)

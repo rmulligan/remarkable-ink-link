@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Live test script for Limitless integration.
-"""
+"""Live test script for Limitless integration."""
 import logging
 import os
 import sys

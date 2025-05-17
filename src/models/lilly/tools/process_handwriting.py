@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Process handwritten notes from reMarkable using Claude's vision capabilities.
-"""
+"""Process handwritten notes from reMarkable using Claude's vision capabilities."""
 
 import argparse
 import json

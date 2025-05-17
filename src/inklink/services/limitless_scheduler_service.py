@@ -86,9 +86,7 @@ class LimitlessSchedulerService:
         return True
 
     def _scheduler_loop(self):
-        """
-        Main scheduler loop that runs in the background thread.
-        """
+        """Main scheduler loop that runs in the background thread."""
         # Wait for initial delay
         if self.initial_delay > 0:
             logger.info(f"Waiting {self.initial_delay}s before first sync")

@@ -89,9 +89,7 @@ def mock_strokes() -> List[Dict[str, Any]]:
 
 
 def test_mock_conversion():
-    """
-    Test the conversion of mock strokes to iink format.
-    """
+    """Test the conversion of mock strokes to iink format."""
     print("\n" + "=" * 80)
     print("MOCK STROKES CONVERSION TEST")
     print("=" * 80)

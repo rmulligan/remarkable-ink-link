@@ -1,3 +1,1 @@
-"""
-Authentication package for Lilly service adapters.
-"""
+"""Authentication package for Lilly service adapters."""
