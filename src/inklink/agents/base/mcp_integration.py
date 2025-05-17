@@ -1,6 +1,7 @@
 """MCP integration for LocalAgent framework."""
 
 import logging
+from abc import ABC
 from dataclasses import dataclass
 from typing import Any, Callable, Coroutine, Dict, List, Optional
 
@@ -105,7 +106,7 @@ class MCPAgentMixin:
         return list(self._mcp_capabilities.keys())
 
 
-class MCPEnabledAgent(MCPAgentMixin, LocalAgent):
+class MCPEnabledAgent(MCPAgentMixin, LocalAgent, ABC):
     """LocalAgent with MCP capabilities."""
 
     def __init__(self, config: "AgentConfig"):
