@@ -65,10 +65,10 @@ try:
     print("\nCreating a simple scene tree...")
     scene_tree = st.SceneTree()
 
-    # Create and add a group
-    group = si.Group()
-    group_id = scene_tree.add_item(group)
-    print(f"Added group with ID: {group_id}")
+    # Get the existing root group
+    root_group = scene_tree.root
+    group_id = root_group.node_id
+    print(f"Got root group with ID: {group_id}")
 
     # Create and add a line
     line = si.Line()
