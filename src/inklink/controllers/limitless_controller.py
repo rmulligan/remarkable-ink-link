@@ -245,8 +245,7 @@ class LimitlessController(BaseController):
             return self.json_response(
                 {"error": f"Unknown action: {action}"}, status=400
             )
-        else:
-            return self.json_response({"error": "Method not allowed"}, status=405)
+        return self.json_response({"error": "Method not allowed"}, status=405)
 
     def handle_cache(self, method: str) -> Dict[str, Any]:
         """
