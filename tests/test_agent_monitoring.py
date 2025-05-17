@@ -15,7 +15,7 @@ from inklink.agents.base.monitoring import (
     HealthStatus,
     MonitoredAgent,
     MonitoringService,
-    )
+)
 from inklink.agents.exceptions import (
     AgentCommunicationError,
     AgentError,
