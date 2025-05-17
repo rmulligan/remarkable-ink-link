@@ -141,7 +141,7 @@ class AgentLifecycle:
                 self.logger.error(f"Error in health monitor: {e}")
                 await asyncio.sleep(interval)
 
-    @retry(max_attempts=3, delay=1.0)
+    @retry(max_attempts=3, base_delay=1.0)
     async def resilient_startup(self) -> None:
         """Start up with retry logic."""
         await self.startup()

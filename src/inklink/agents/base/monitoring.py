@@ -18,6 +18,14 @@ class HealthStatus(Enum):
     UNKNOWN = "unknown"
 
 
+class RestartPolicy(Enum):
+    """Restart policy for agents."""
+
+    ALWAYS = "always"
+    ON_FAILURE = "on_failure"
+    NEVER = "never"
+
+
 @dataclass
 class HealthCheck:
     """Health check result."""
