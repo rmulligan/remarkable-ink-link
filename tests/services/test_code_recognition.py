@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Tests for the Code Recognition Service."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from inklink.services.code_recognition_service import CodeRecognitionService
 from inklink.services.interfaces import IHandwritingRecognitionService

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Tests for the Ink-to-Code Service."""
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from inklink.services.ink_to_code_service import InkToCodeService
 
