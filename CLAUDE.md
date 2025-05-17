@@ -9,7 +9,7 @@ InkLink is an open-source toolkit that transforms your reMarkable tablet into an
 Key capabilities:
 - Web-to-ink conversion (native, editable ink format)
 - AI-augmented handwritten notes with Claude Vision recognition
-- Tag-driven workflows (#summarize, #task, #calendar, #entity)
+- Tag-driven workflows (#summarize, #task, #calendar, #entity, #code)
 - Knowledge graph generation from handwritten content
 - MCP (Multi-Connection Protocol) agent framework
 - Automatic sync with reMarkable Cloud
@@ -93,6 +93,10 @@ python -m inklink.main create_entity_index
 python -m inklink.main create_topic_index
 python -m inklink.main create_notebook_index
 python -m inklink.main create_master_index
+
+# Ink-to-Code workflow
+python -m inklink.main process_code --input_file path/to/file.rm
+python -m inklink.main ink_to_code --notebook_id notebook-uuid
 ```
 
 ### Integration Testing
