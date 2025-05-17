@@ -6,6 +6,7 @@ import signal
 from typing import Callable, List, Optional
 
 from inklink.utils.retry import retry
+
 from .registry import AgentRegistry
 
 
