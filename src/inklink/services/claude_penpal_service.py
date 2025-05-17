@@ -163,7 +163,7 @@ class ClaudePenpalService:
         self._running = True
         self._monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._monitor_thread.start()
-        logger.info(f"Started monitoring for tagged pages")
+        logger.info("Started monitoring for tagged pages")
 
     def stop_monitoring(self):
         """Stop the monitoring thread."""

@@ -126,8 +126,8 @@ def create_test_notebook():
 
         if success:
             logger.info(f"Successfully uploaded test notebook: {NOTEBOOK_NAME}")
-            logger.info(f"Notebook has the following tags: Subject:Work, HasLilly")
-            logger.info(f"Page 2 has the Lilly tag. Page 3 has the Context tag.")
+            logger.info("Notebook has the following tags: Subject:Work, HasLilly")
+            logger.info("Page 2 has the Lilly tag. Page 3 has the Context tag.")
             logger.info(
                 "You can now run the Claude Penpal service to process this notebook."
             )

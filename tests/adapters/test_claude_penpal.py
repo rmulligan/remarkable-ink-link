@@ -67,7 +67,7 @@ def main():
         poll_interval=args.poll_interval,
     )
 
-    logger.info(f"Starting Claude Penpal Service with:")
+    logger.info("Starting Claude Penpal Service with:")
     logger.info(f"  Query tag: {args.query_tag}")
     logger.info(f"  Context tag: {args.context_tag}")
     logger.info(f"  Subject tag: {args.subject_tag}")

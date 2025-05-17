@@ -86,7 +86,7 @@ def create_modified_rmdoc():
             )
 
         # List all files that will be included in the rmdoc
-        logger.info(f"Files to be included in rmdoc:")
+        logger.info("Files to be included in rmdoc:")
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 logger.info(f"  {os.path.join(root, file)}")
@@ -115,12 +115,12 @@ def upload_to_remarkable(rmdoc_path):
     delete_cmd = f"{RMAPI_PATH} rm '{NOTEBOOK_NAME}'"
     try:
         subprocess.run(delete_cmd, shell=True, check=False, capture_output=True)
-        logger.info(f"Deleted existing notebook (if it existed)")
+        logger.info("Deleted existing notebook (if it existed)")
     except Exception as e:
         logger.warning(f"Error deleting notebook (may not exist): {e}")
 
     # Upload the modified notebook
-    logger.info(f"Uploading modified notebook to reMarkable...")
+    logger.info("Uploading modified notebook to reMarkable...")
     upload_cmd = f"{RMAPI_PATH} put '{rmdoc_path}'"
 
     try:
@@ -129,7 +129,7 @@ def upload_to_remarkable(rmdoc_path):
         )
         logger.info(f"Upload output: {process.stdout}")
         if process.returncode == 0:
-            logger.info(f"Successfully uploaded notebook")
+            logger.info("Successfully uploaded notebook")
 
             # Rename to original name if needed
             id_line = next(

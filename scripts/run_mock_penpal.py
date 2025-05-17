@@ -79,7 +79,7 @@ def process_notebook(notebook_dir):
                 context_pages.append(page)
 
     if not query_pages:
-        logger.warning(f"No pages with Lilly tag found in notebook")
+        logger.warning("No pages with Lilly tag found in notebook")
         return False
 
     # Process each query page
@@ -178,7 +178,7 @@ def add_response_to_notebook(content_data, content_file, query_page, response_te
             logger.info(f"Added response page {response_page_id} to notebook")
             return True
 
-    logger.error(f"Failed to add response page to notebook")
+    logger.error("Failed to add response page to notebook")
     return False
 
 

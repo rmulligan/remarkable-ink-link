@@ -209,5 +209,5 @@ if __name__ == "__main__":
         )
         print("You can now run the Claude Penpal service to process this notebook.")
     else:
-        print(f"Failed to create and upload complete test notebook")
+        print("Failed to create and upload complete test notebook")
         sys.exit(1)

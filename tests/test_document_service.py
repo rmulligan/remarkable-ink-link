@@ -158,7 +158,7 @@ def test_create_pdf_hcl_with_images(document_service, tmp_path, monkeypatch):
             def mock_create_hcl_with_images(pdf_path, title, images, output_dir):
                 hcl_path = os.path.join(output_dir, "test_pdf.hcl")
                 with open(hcl_path, "w", encoding="utf-8") as f:
-                    f.write(f'puts "size 2160 1620"\n')
+                    f.write('puts "size 2160 1620"\n')
                     f.write(f'puts "text 120 120 \\"{title}\\""\n')
                     for img in images:
                         f.write('puts "newpage"\n')

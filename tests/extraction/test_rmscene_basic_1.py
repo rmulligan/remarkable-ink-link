@@ -105,7 +105,7 @@ try:
         print(f"  {type_name}: {count}")
 
     # Print information about the line
-    print(f"\nLine information:")
+    print("\nLine information:")
     print(f"  Pen: {line.pen}")
     print(f"  Color: {line.color}")
     print(f"  Points: {len(line.points)}")

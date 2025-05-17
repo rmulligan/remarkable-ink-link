@@ -81,7 +81,7 @@ def update_metadata(content_file, metadata_file):
                 with open(metadata_file, "r") as f:
                     metadata = json.load(f)
             except json.JSONDecodeError:
-                logger.warning(f"Failed to parse metadata file, creating new one")
+                logger.warning("Failed to parse metadata file, creating new one")
 
         # Update metadata based on content
         now = datetime.now().isoformat()
@@ -165,7 +165,7 @@ def create_modified_rmdoc():
                     shutil.copy2(src, dst)
 
         # List all files that will be included in the rmdoc
-        logger.info(f"Files to be included in rmdoc:")
+        logger.info("Files to be included in rmdoc:")
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 logger.info(f"  {os.path.join(root, file)}")
@@ -192,7 +192,7 @@ def upload_to_remarkable(rmdoc_path):
         return False
 
     # Upload the modified notebook
-    logger.info(f"Uploading modified notebook to reMarkable...")
+    logger.info("Uploading modified notebook to reMarkable...")
 
     # First remove any existing notebook with the same name
     import subprocess
@@ -248,7 +248,7 @@ def main():
     success = upload_to_remarkable(modified_rmdoc)
 
     if success:
-        logger.info(f"Successfully uploaded notebook with fixed metadata")
+        logger.info("Successfully uploaded notebook with fixed metadata")
         return 0
     logger.error("Failed to upload notebook")
     return 1

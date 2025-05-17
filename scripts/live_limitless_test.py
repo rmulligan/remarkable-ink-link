@@ -172,7 +172,7 @@ def test_get_specific_log(log_id):
         title = log.get("title", "No Title")
         start_time = log.get("startTime", "Unknown")
 
-        print(f"Log Details:")
+        print("Log Details:")
         print(f"  ID: {log_id}")
         print(f"  Title: {title}")
         print(f"  Start Time: {start_time}")

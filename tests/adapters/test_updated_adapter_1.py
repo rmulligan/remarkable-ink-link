@@ -192,7 +192,7 @@ def test_updated_adapter():
             print("\n❌ Failed to convert strokes to iink format")
             return False
         else:
-            print(f"❌ No strokes extracted from test file")
+            print("❌ No strokes extracted from test file")
             return False
 
     except Exception as e:

@@ -99,7 +99,7 @@ class RoundTripService:
             md_path = os.path.join(self.temp_dir, md_filename)
 
             with open(md_path, "w", encoding="utf-8") as f:
-                f.write(f"# Response to Query\n\n")
+                f.write("# Response to Query\n\n")
                 f.write(f"**Your Question:** {recognized_text}\n\n")
                 f.write(f"**Response:**\n\n{response_text}\n")
 

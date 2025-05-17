@@ -627,7 +627,7 @@ class KnowledgeIndexService:
 
         # Add Entity Index
         content += f"## <a id='{entity_section_id}'></a>Entity Index\n\n"
-        content += f"[Back to Contents](#contents)\n\n"
+        content += "[Back to Contents](#contents)\n\n"
 
         # Filter to top entities by reference count
         top_entities = sorted(
@@ -672,7 +672,7 @@ class KnowledgeIndexService:
 
         # Add Topic Index
         content += f"## <a id='{topic_section_id}'></a>Topic Index\n\n"
-        content += f"[Back to Contents](#contents)\n\n"
+        content += "[Back to Contents](#contents)\n\n"
 
         # Create anchor IDs for all topics
         topic_anchors = {}
@@ -696,7 +696,7 @@ class KnowledgeIndexService:
 
         # Add Notebook Index
         content += f"## <a id='{notebook_section_id}'></a>Notebook Index\n\n"
-        content += f"[Back to Contents](#contents)\n\n"
+        content += "[Back to Contents](#contents)\n\n"
 
         # Create anchor IDs for all notebooks
         notebook_anchors = {}
@@ -722,7 +722,7 @@ class KnowledgeIndexService:
             anchor_id = entity_anchors[name]
 
             content += f"### <a id='{anchor_id}'></a>{name}\n\n"
-            content += f"[Back to Contents](#contents)\n\n"
+            content += "[Back to Contents](#contents)\n\n"
 
             # Add entity description if available
             if entity.get("description"):
@@ -754,7 +754,7 @@ class KnowledgeIndexService:
             anchor_id = topic_anchors[name]
 
             content += f"### <a id='{anchor_id}'></a>{name}\n\n"
-            content += f"[Back to Contents](#contents)\n\n"
+            content += "[Back to Contents](#contents)\n\n"
 
             # Add topic description if available
             if topic.get("description"):
@@ -782,7 +782,7 @@ class KnowledgeIndexService:
             anchor_id = notebook_anchors[name]
 
             content += f"### <a id='{anchor_id}'></a>{name}\n\n"
-            content += f"[Back to Contents](#contents)\n\n"
+            content += "[Back to Contents](#contents)\n\n"
 
             # Add notebook summary if available
             if notebook.get("summary"):

@@ -294,7 +294,7 @@ class GoogleDriveAuthentication(AuthenticationBase):
         # Start the server
         httpd = socketserver.TCPServer(server_address, OAuthCallbackHandler)
 
-        print(f"Opening browser for Google authentication...")
+        print("Opening browser for Google authentication...")
         webbrowser.open(auth_url)
 
         # Handle one request, then stop
