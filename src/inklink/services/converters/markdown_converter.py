@@ -86,9 +86,8 @@ class MarkdownConverter(BaseConverter):
                     return result
                 logger.error(f"Markdown conversion failed: {result}")
                 return None
-            else:
-                logger.error("drawj2d not available for Markdown conversion")
-                return None
+            logger.error("drawj2d not available for Markdown conversion")
+            return None
 
         except Exception as e:
             logger.error(f"Error converting markdown: {str(e)}")

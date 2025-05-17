@@ -293,9 +293,8 @@ def tag_notebook(notebook_name):
                         "You can now run the Claude Penpal service to process this notebook."
                     )
                     return True
-                else:
-                    logger.error(f"Failed to rename uploaded file: {stderr}")
-                    return False
+                logger.error(f"Failed to rename uploaded file: {stderr}")
+                return False
 
             return False
         logger.info(f"Successfully tagged notebook: {notebook_name}")
