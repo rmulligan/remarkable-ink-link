@@ -12,10 +12,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.inklink.services.augmented_notebook_service_v2 import (  # noqa: E402
     AugmentedNotebookServiceV2,
 )
-from src.inklink.services.syntax_scanner import ScannerFactory  # noqa: E402
 from src.inklink.services.syntax_highlight_compiler_v2 import (  # noqa: E402
     SyntaxHighlightCompilerV2,
 )
+from src.inklink.services.syntax_scanner import ScannerFactory  # noqa: E402
 
 
 def test_code_extraction():
