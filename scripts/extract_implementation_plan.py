@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Extract text from Claude Code Integration Implementation Plan PDF"""
 
-import sys
 import os
+import sys
+
+from inklink.adapters.pdf_adapter import PDFAdapter
 
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Import after path manipulation to satisfy flake8
-from inklink.adapters.pdf_adapter import PDFAdapter
 
 
 def main():

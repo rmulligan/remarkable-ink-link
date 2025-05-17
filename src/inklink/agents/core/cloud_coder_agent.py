@@ -11,10 +11,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from inklink.agents.base.agent import AgentConfig
 from inklink.agents.base.mcp_integration import MCPCapability, MCPEnabledAgent
 from inklink.providers.claude_code_provider import ClaudeCodeProvider
-from inklink.services.llm_interface import UnifiedLLMInterface
-from inklink.services.remarkable_service import RemarkableService
 from inklink.services.document_service import DocumentService
 from inklink.services.knowledge_graph_service import KnowledgeGraphService
+from inklink.services.llm_interface import UnifiedLLMInterface
+from inklink.services.remarkable_service import RemarkableService
 
 
 class CloudCoderAgent(MCPEnabledAgent):
