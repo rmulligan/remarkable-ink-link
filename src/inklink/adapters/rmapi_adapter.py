@@ -896,7 +896,7 @@ class RmapiAdapter:
                         has_tag = True
                         break
                     # Also check for case-insensitive match
-                    elif any(t.lower() == tag.lower() for t in page_tags):
+                    if any(t.lower() == tag.lower() for t in page_tags):
                         logger.info(
                             f"Found case-insensitive tag match for '{tag}' in page '{page_name}'"
                         )
